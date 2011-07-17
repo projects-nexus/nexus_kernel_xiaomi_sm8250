@@ -475,7 +475,7 @@ static void debug_objects_fill_pool(void)
 	 * On RT enabled kernels the pool refill must happen in preemptible
 	 * context:
 	 */
-	if (!IS_ENABLED(CONFIG_PREEMPT_RT) || preemptible())
+	if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL) || preemptible())
 		fill_pool();
 }
 
