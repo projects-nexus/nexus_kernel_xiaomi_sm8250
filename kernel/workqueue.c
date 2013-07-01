@@ -53,6 +53,7 @@
 #include <linux/delay.h>
 #include <linux/kvm_para.h>
 #include <linux/locallock.h>
+#include <linux/delay.h>
 
 #include "workqueue_internal.h"
 
@@ -1314,7 +1315,7 @@ fail:
 	local_unlock_irqrestore(pendingb_lock, *flags);
 	if (work_is_canceling(work))
 		return -ENOENT;
-	cpu_relax();
+	cpu_chill();
 	/*
 	 * The queueing is in progress in another context. If we keep
 	 * taking the pool->lock in a busy loop, the other context may
