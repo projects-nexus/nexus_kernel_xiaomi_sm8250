@@ -160,6 +160,9 @@ enum mq_rq_state {
  */
 struct request {
 	struct request_queue *q;
+#ifdef CONFIG_PREEMPT_RT_FULL
+	struct work_struct work;
+#endif
 	struct blk_mq_ctx *mq_ctx;
 
 	int cpu;
