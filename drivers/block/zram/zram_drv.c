@@ -1439,6 +1439,7 @@ static int zram_read_from_zspool(struct zram *zram, struct page *page,
 	void *src, *dst;
 	u32 prio;
 	int ret;
+	struct zcomp_strm *zstrm;
 
 	handle = zram_get_handle(zram, index);
 	if (!handle || zram_test_flag(zram, index, ZRAM_SAME)) {
