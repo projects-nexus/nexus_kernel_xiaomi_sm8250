@@ -1269,7 +1269,7 @@ TRACE_EVENT(sched_task_util,
 		__entry->unfilter		= 0;
 		__entry->low_latency		= 0;
 #endif
-		__entry->cpus_allowed           = cpumask_bits(&p->cpus_allowed)[0];
+		__entry->cpus_allowed           = cpumask_bits(p->cpus_ptr)[0];
 	),
 
 	TP_printk("pid=%d comm=%s util=%lu prev_cpu=%d candidates=%#lx best_energy_cpu=%d sync=%d need_idle=%d fastpath=%d placement_boost=%d latency=%llu stune_boosted=%d is_rtg=%d rtg_skip_min=%d start_cpu=%d unfilter=%u affine=%#lx low_latency=%d",
