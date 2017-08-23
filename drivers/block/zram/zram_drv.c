@@ -76,19 +76,19 @@ static int zram_slot_trylock(struct zram *zram, u32 index)
 
 	ret = spin_trylock(&zram->table[index].lock);
 	if (ret)
-		__set_bit(ZRAM_LOCK, &zram->table[index].value);
+		__set_bit(ZRAM_LOCK, &zram->table[index].flags);
 	return ret;
 }
 
 static void zram_slot_lock(struct zram *zram, u32 index)
 {
 	spin_lock(&zram->table[index].lock);
-	__set_bit(ZRAM_LOCK, &zram->table[index].value);
+	__set_bit(ZRAM_LOCK, &zram->table[index].flags);
 }
 
 static void zram_slot_unlock(struct zram *zram, u32 index)
 {
-	__clear_bit(ZRAM_LOCK, &zram->table[index].value);
+	__clear_bit(ZRAM_LOCK, &zram->table[index].flags);
 	spin_unlock(&zram->table[index].lock);
 }
 
