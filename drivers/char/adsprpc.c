@@ -54,7 +54,7 @@
 #define FASTRPC_DMAHANDLE_NOMAP (16)
 
 #define FASTRPC_ENOSUCH 39
-#define VMID_SSC_Q6     5
+#define VMID_SSC_Q6     38
 #define VMID_ADSP_Q6    6
 #define DEBUGFS_SIZE 3072
 #define UL_SIZE 25
