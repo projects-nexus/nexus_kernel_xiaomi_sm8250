@@ -139,11 +139,10 @@ static inline int rcu_nocb_cpu_deoffload(int cpu) { return 0; }
  * RCU_NONIDLE - Indicate idle-loop code that needs RCU readers
  * @a: Code that RCU needs to pay attention to.
  *
- * RCU, RCU-bh, and RCU-sched read-side critical sections are forbidden
- * in the inner idle loop, that is, between the rcu_idle_enter() and
- * the rcu_idle_exit() -- RCU will happily ignore any such read-side
- * critical sections.  However, things like powertop need tracepoints
- * in the inner idle loop.
+ * RCU read-side critical sections are forbidden in the inner idle loop,
+ * that is, between the rcu_idle_enter() and the rcu_idle_exit() -- RCU
+ * will happily ignore any such read-side critical sections.  However,
+ * things like powertop need tracepoints in the inner idle loop.
  *
  * This macro provides the way out:  RCU_NONIDLE(do_something_with_RCU())
  * will tell RCU that it needs to pay attention, invoke its argument
@@ -211,7 +210,7 @@ void exit_tasks_rcu_finish(void);
 #else /* #ifdef CONFIG_TASKS_RCU_GENERIC */
 #define rcu_tasks_qs(t, preempt) do { } while (0)
 #define rcu_note_voluntary_context_switch(t) do { } while (0)
-#define call_rcu_tasks call_rcu_sched
+#define call_rcu_tasks call_rcu
 #define synchronize_rcu_tasks synchronize_rcu
 static inline void exit_tasks_rcu_start(void) { }
 static inline void exit_tasks_rcu_finish(void) { }
@@ -364,8 +363,8 @@ static inline void rcu_preempt_sleep_check(void) { }
  * Helper functions for rcu_dereference_check(), rcu_dereference_protected()
  * and rcu_assign_pointer().  Some of these could be folded into their
  * callers, but they are left separate in order to ease introduction of
- * multiple flavors of pointers to match the multiple flavors of RCU
- * (e.g., __rcu_sched, and __srcu), should this make sense in the future.
+ * multiple pointers markings to match different RCU implementations
+ * (e.g., __srcu), should this make sense in the future.
  */
 
 #ifdef __CHECKER__
@@ -727,9 +726,8 @@ static inline void rcu_read_unlock(void)
  * rcu_read_lock_bh() - mark the beginning of an RCU-bh critical section
  *
  * This is equivalent of rcu_read_lock(), but also disables softirqs.
- * Note that synchronize_rcu() and friends may be used for the update
- * side, although synchronize_rcu_bh() is available as a wrapper in the
- * short term.  Longer term, the _bh update-side API will be eliminated.
+ * Note that anything else that disables softirqs can also serve as
+ * an RCU read-side critical section.
  *
  * Note that rcu_read_lock_bh() and the matching rcu_read_unlock_bh()
  * must occur in the same context, for example, it is illegal to invoke
@@ -762,10 +760,9 @@ static inline void rcu_read_unlock_bh(void)
 /**
  * rcu_read_lock_sched() - mark the beginning of a RCU-sched critical section
  *
- * This is equivalent of rcu_read_lock(), but to be used when updates
- * are being done using call_rcu_sched() or synchronize_rcu_sched().
- * Read-side critical sections can also be introduced by anything that
- * disables preemption, including local_irq_disable() and friends.
+ * This is equivalent of rcu_read_lock(), but disables preemption.
+ * Read-side critical sections can also be introduced by anything else
+ * that disables preemption, including local_irq_disable() and friends.
  *
  * Note that rcu_read_lock_sched() and the matching rcu_read_unlock_sched()
  * must occur in the same context, for example, it is illegal to invoke
