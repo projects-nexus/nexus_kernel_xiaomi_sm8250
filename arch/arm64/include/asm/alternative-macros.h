@@ -13,6 +13,12 @@
 
 #include <linux/stringify.h>
 
+#ifdef CONFIG_KVM_ARM_HOST
+void kvm_compute_layout(void);
+#else
+static inline void kvm_compute_layout(void) { }
+#endif
+
 #define ALTINSTR_ENTRY(feature)					              \
 	" .word 661b - .\n"				/* label           */ \
 	" .word 663f - .\n"				/* new instruction */ \

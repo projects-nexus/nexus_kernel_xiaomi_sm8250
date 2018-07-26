@@ -22,7 +22,7 @@
 #include <linux/init.h>
 #include <linux/cpu.h>
 #include <asm/cacheflush.h>
-#include <asm/alternative.h>
+#include <asm/alternative-macros.h>
 #include <asm/cpufeature.h>
 #include <asm/insn.h>
 #include <asm/sections.h>
@@ -212,6 +212,7 @@ static int __apply_alternatives_multi_stop(void *unused)
 void __init apply_alternatives_all(void)
 {
 	/* better not try code patching on a live SMP system */
+	kvm_compute_layout();
 	stop_machine(__apply_alternatives_multi_stop, NULL, cpu_online_mask);
 }
 
