@@ -1384,6 +1384,7 @@ const struct file_operations random_fops = {
 	.write_iter = random_write_iter,
 	.poll = random_poll,
 	.unlocked_ioctl = random_ioctl,
+	.compat_ioctl = compat_ptr_ioctl,
 	.fasync = random_fasync,
 	.llseek = noop_llseek,
 	.splice_read = generic_file_splice_read,
