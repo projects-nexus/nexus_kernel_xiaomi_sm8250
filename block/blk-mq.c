@@ -517,6 +517,9 @@ inline void __blk_mq_end_request(struct request *rq, blk_status_t error)
 		blk_stat_add(rq, now);
 	}
 
+	if (rq->internal_tag != -1)
+		blk_mq_sched_completed_request(rq, now);
+
 	blk_account_io_done(rq, now);
 
 	if (rq->end_io) {
@@ -555,8 +558,6 @@ static void __blk_mq_complete_request(struct request *rq)
 
 	if (!blk_mq_mark_complete(rq))
 		return;
-	if (rq->internal_tag != -1)
-		blk_mq_sched_completed_request(rq);
 
 	if (!test_bit(QUEUE_FLAG_SAME_COMP, &q->queue_flags)) {
 		q->mq_ops->complete(rq);
