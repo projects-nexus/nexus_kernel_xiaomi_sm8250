@@ -302,14 +302,10 @@ typedef bool (poll_q_fn) (struct request_queue *q, blk_qc_t);
 
 struct bio_vec;
 typedef int (dma_drain_needed_fn)(struct request *);
-typedef int (bsg_job_fn) (struct bsg_job *);
-
 enum blk_eh_timer_return {
 	BLK_EH_DONE,		/* drivers has completed the command */
 	BLK_EH_RESET_TIMER,	/* reset timer and try again */
 };
-
-typedef enum blk_eh_timer_return (rq_timed_out_fn)(struct request *);
 
 enum blk_queue_state {
 	Queue_down,
@@ -565,8 +561,6 @@ struct request_queue {
 
 	atomic_t		mq_freeze_depth;
 
-	bsg_job_fn		*bsg_job_fn;
-	rq_timed_out_fn		*bsg_job_timeout_fn;
 	struct bsg_class_device bsg_dev;
 
 #ifdef CONFIG_BLK_DEV_THROTTLING
