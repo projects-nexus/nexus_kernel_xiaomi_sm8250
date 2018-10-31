@@ -1073,15 +1073,26 @@ static irqreturn_t nvme_irq_check(int irq, void *data)
 
 static int __nvme_poll(struct nvme_queue *nvmeq, unsigned int tag)
 {
+	unsigned long __maybe_unused flags; /* gcc 7.x fail */
 	u16 start, end;
-	bool found;
+	bool found, has_irq;
 
 	if (!nvme_cqe_pending(nvmeq))
 		return 0;
 
-	spin_lock_irq(&nvmeq->cq_lock);
+	/*
+	 * Polled queue doesn't have an IRQ, no need to disable ints
+	 */
+	has_irq = !nvmeq->polled;
+	if (has_irq)
+		local_irq_save(flags);
+
+	spin_lock(&nvmeq->cq_lock);
 	found = nvme_process_cq(nvmeq, &start, &end, tag);
-	spin_unlock_irq(&nvmeq->cq_lock);
+	spin_unlock(&nvmeq->cq_lock);
+
+	if (has_irq)
+		local_irq_restore(flags);
 
 	nvme_complete_cqes(nvmeq, start, end);
 	return found;
