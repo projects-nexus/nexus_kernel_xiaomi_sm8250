@@ -301,7 +301,6 @@ typedef blk_qc_t (make_request_fn) (struct request_queue *q, struct bio *bio);
 typedef bool (poll_q_fn) (struct request_queue *q, blk_qc_t);
 
 struct bio_vec;
-typedef void (softirq_done_fn)(struct request *);
 typedef int (dma_drain_needed_fn)(struct request *);
 typedef int (bsg_job_fn) (struct bsg_job *);
 
@@ -414,7 +413,6 @@ struct request_queue {
 
 	make_request_fn		*make_request_fn;
 	poll_q_fn		*poll_fn;
-	softirq_done_fn		*softirq_done_fn;
 	rq_timed_out_fn		*rq_timed_out_fn;
 	dma_drain_needed_fn	*dma_drain_needed;
 
@@ -1113,7 +1111,6 @@ extern void blk_queue_segment_boundary(struct request_queue *, unsigned long);
 extern void blk_queue_virt_boundary(struct request_queue *, unsigned long);
 extern void blk_queue_dma_alignment(struct request_queue *, int);
 extern void blk_queue_update_dma_alignment(struct request_queue *, int);
-extern void blk_queue_softirq_done(struct request_queue *, softirq_done_fn *);
 extern void blk_queue_rq_timed_out(struct request_queue *, rq_timed_out_fn *);
 extern void blk_queue_rq_timeout(struct request_queue *, unsigned int);
 extern void blk_queue_flush_queueable(struct request_queue *q, bool queueable);
