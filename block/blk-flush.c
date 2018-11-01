@@ -213,28 +213,27 @@ static void flush_end_io(struct request *flush_rq, blk_status_t error)
 	struct blk_flush_queue *fq = blk_get_flush_queue(q, flush_rq->mq_ctx);
 	struct blk_mq_hw_ctx *hctx;
 
-		/* release the tag's ownership to the req cloned from */
-		spin_lock_irqsave(&fq->mq_flush_lock, flags);
+	/* release the tag's ownership to the req cloned from */
+	spin_lock_irqsave(&fq->mq_flush_lock, flags);
 
-		if (!refcount_dec_and_test(&flush_rq->ref)) {
-			fq->rq_status = error;
-			spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
-			return;
-		}
+	if (!refcount_dec_and_test(&flush_rq->ref)) {
+		fq->rq_status = error;
+		spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
+		return;
+	}
 
-		if (fq->rq_status != BLK_STS_OK) {
-			error = fq->rq_status;
-			fq->rq_status = BLK_STS_OK;
-		}
+	if (fq->rq_status != BLK_STS_OK) {
+		error = fq->rq_status;
+		fq->rq_status = BLK_STS_OK;
+	}
 
-		hctx = blk_mq_map_queue(q, flush_rq->mq_ctx->cpu);
-		if (!q->elevator) {
-			blk_mq_tag_set_rq(hctx, flush_rq->tag, fq->orig_rq);
-			flush_rq->tag = -1;
-		} else {
-			blk_mq_put_driver_tag_hctx(hctx, flush_rq);
-			flush_rq->internal_tag = -1;
-		}
+	hctx = blk_mq_map_queue(q, flush_rq->mq_ctx->cpu);
+	if (!q->elevator) {
+		blk_mq_tag_set_rq(hctx, flush_rq->tag, fq->orig_rq);
+		flush_rq->tag = -1;
+	} else {
+		blk_mq_put_driver_tag_hctx(hctx, flush_rq);
+		flush_rq->internal_tag = -1;
 	}
 
 	running = &fq->flush_queue[fq->flush_running_idx];
