@@ -237,8 +237,6 @@ struct request {
 	unsigned int timeout;
 	unsigned long deadline;
 
-	struct list_head timeout_list;
-
 	union {
 		struct __call_single_data csd;
 		u64 fifo_time;
