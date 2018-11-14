@@ -2361,7 +2361,6 @@ void blk_throtl_drain(struct request_queue *q)
 	struct bio *bio;
 	int rw;
 
-	queue_lockdep_assert_held(q);
 	rcu_read_lock();
 
 	/*
