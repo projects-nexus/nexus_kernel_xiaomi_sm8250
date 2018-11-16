@@ -580,7 +580,6 @@ struct request_queue {
 	bool			mq_sysfs_init_done;
 
 	size_t			cmd_size;
-	void			*rq_alloc_data;
 
 	struct work_struct	release_work;
 
