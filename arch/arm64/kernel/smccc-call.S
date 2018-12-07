@@ -13,7 +13,9 @@
  */
 #include <linux/linkage.h>
 #include <linux/arm-smccc.h>
+
 #include <asm/asm-offsets.h>
+#include <asm/assembler.h>
 
 	.macro SMCCC instr
 	.cfi_startproc
@@ -39,7 +41,8 @@
  */
 SYM_FUNC_START(__arm_smccc_smc)
 	SMCCC	smc
-SYM_FUNC_END(__arm_smccc_smc)
+ENDPROC(__arm_smccc_smc)
+EXPORT_SYMBOL(__arm_smccc_smc)
 
 /*
  * void arm_smccc_hvc(unsigned long a0, unsigned long a1, unsigned long a2,
@@ -49,4 +52,5 @@ SYM_FUNC_END(__arm_smccc_smc)
  */
 SYM_FUNC_START(__arm_smccc_hvc)
 	SMCCC	hvc
-SYM_FUNC_END(__arm_smccc_hvc)
+ENDPROC(__arm_smccc_hvc)
+EXPORT_SYMBOL(__arm_smccc_hvc)
