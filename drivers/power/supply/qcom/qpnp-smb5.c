@@ -1510,6 +1510,7 @@ static enum power_supply_property smb5_usb_props[] = {
 #endif
 	POWER_SUPPLY_PROP_CHARGER_STATUS,
 	POWER_SUPPLY_PROP_INPUT_VOLTAGE_SETTLED,
+	POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE,
 };
 
 static int smb5_usb_get_prop(struct power_supply *psy,
@@ -1523,6 +1524,9 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 	val->intval = 0;
 
 	switch (psp) {
+	case POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE:
+		val->intval = chg->moisture_detection_enabled ? 1 : 0;
+		break;
 	case POWER_SUPPLY_PROP_PRESENT:
 		rc = smblib_get_prop_usb_present(chg, val);
 		break;
@@ -1758,6 +1762,9 @@ static int smb5_usb_set_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_FAKE_HVDCP3:
 		chg->fake_hvdcp3 = val->intval;
 		break;
+	case POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE:
+		rc = smblib_enable_moisture_detection(chg, val->intval == 1);
+		break;
 #endif
 	case POWER_SUPPLY_PROP_PD_CURRENT_MAX:
 		rc = smblib_set_prop_pd_current_max(chg, val);
@@ -1898,6 +1905,7 @@ static int smb5_usb_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_APSD_RERUN:
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 	case POWER_SUPPLY_PROP_APDO_MAX:
+	case POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE:
 #endif
 		return 1;
 	default:
@@ -5089,6 +5097,7 @@ static int smb5_probe(struct platform_device *pdev)
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 	chg->warm_fake_charging = false;
 	chg->fake_dc_on = false;
+	chg->moisture_detection_enabled = true;
 #endif
 	mutex_init(&chg->adc_lock);
 
