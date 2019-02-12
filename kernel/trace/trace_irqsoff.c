@@ -18,6 +18,7 @@
 #include <linux/sched.h>
 #include <linux/sched/clock.h>
 #include <linux/sched/sysctl.h>
+#include <linux/kprobes.h>
 
 #include "trace.h"
 
