@@ -366,6 +366,11 @@ void lockdep_set_selftest_task(struct task_struct *task)
 	lockdep_selftest_task_struct = task;
 }
 
+void lockdep_set_selftest_task(struct task_struct *task)
+{
+	lockdep_selftest_task_struct = task;
+}
+
 /*
  * Debugging switches:
  */
