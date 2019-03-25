@@ -104,7 +104,7 @@ void xen_mc_flush(void)
 			       ret, smp_processor_id());
 			dump_stack();
 			for (i = 0; i < b->mcidx; i++) {
-				printk(KERN_DEBUG "  call %2d/%d: op=%lu arg=[%lx] result=%ld\t%pF\n",
+				printk(KERN_DEBUG "  call %2d/%d: op=%lu arg=[%lx] result=%ld\t%pS\n",
 				       i+1, b->mcidx,
 				       b->debug[i].op,
 				       b->debug[i].args[0],
