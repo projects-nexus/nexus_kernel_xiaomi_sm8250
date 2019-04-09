@@ -631,7 +631,7 @@ static int torture_stutter(void *arg)
 /*
  * Initialize and kick off the torture_stutter kthread.
  */
-int torture_stutter_init(const int s, int sgap)
+int torture_stutter_init(const int s, const int sgap)
 {
 	stutter = s;
 	stutter_gap = sgap;
