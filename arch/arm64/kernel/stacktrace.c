@@ -144,8 +144,6 @@ void save_stack_trace_regs(struct pt_regs *regs, struct stack_trace *trace)
 #endif
 
 	walk_stackframe(current, &frame, save_trace, &data);
-	if (trace->nr_entries < trace->max_entries)
-		trace->entries[trace->nr_entries++] = ULONG_MAX;
 }
 
 static noinline void __save_stack_trace(struct task_struct *tsk,
@@ -175,8 +173,6 @@ static noinline void __save_stack_trace(struct task_struct *tsk,
 #endif
 
 	walk_stackframe(tsk, &frame, save_trace, &data);
-	if (trace->nr_entries < trace->max_entries)
-		trace->entries[trace->nr_entries++] = ULONG_MAX;
 
 	put_task_stack(tsk);
 }
