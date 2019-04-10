@@ -141,8 +141,6 @@ static noinline void __save_stack_trace(struct task_struct *tsk,
 		 * running on another CPU?  For now, ignore it as we
 		 * can't guarantee we won't explode.
 		 */
-		if (trace->nr_entries < trace->max_entries)
-			trace->entries[trace->nr_entries++] = ULONG_MAX;
 		return;
 #else
 		frame.fp = thread_saved_fp(tsk);
@@ -160,8 +158,6 @@ static noinline void __save_stack_trace(struct task_struct *tsk,
 	}
 
 	walk_stackframe(&frame, save_trace, &data);
-	if (trace->nr_entries < trace->max_entries)
-		trace->entries[trace->nr_entries++] = ULONG_MAX;
 }
 
 void save_stack_trace_regs(struct pt_regs *regs, struct stack_trace *trace)
@@ -179,8 +175,6 @@ void save_stack_trace_regs(struct pt_regs *regs, struct stack_trace *trace)
 	frame.pc = regs->ARM_pc;
 
 	walk_stackframe(&frame, save_trace, &data);
-	if (trace->nr_entries < trace->max_entries)
-		trace->entries[trace->nr_entries++] = ULONG_MAX;
 }
 
 void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
