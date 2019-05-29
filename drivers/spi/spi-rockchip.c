@@ -23,7 +23,6 @@
 #include <linux/spi/spi.h>
 #include <linux/pm_runtime.h>
 #include <linux/scatterlist.h>
-#include <linux/interrupt.h>
 
 #define DRIVER_NAME "rockchip-spi"
 

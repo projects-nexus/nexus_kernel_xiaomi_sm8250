@@ -754,21 +754,6 @@ static void hrtimer_switch_to_hres(void)
 	retrigger_next_event(NULL);
 }
 
-#ifdef CONFIG_PREEMPT_RT_FULL
-
-static void run_clock_set_delay(struct swork_event *event)
-{
-	clock_was_set();
-}
-
-static DEFINE_SWORK(clock_set_delay_work, run_clock_set_delay);
-
-void clock_was_set_delayed(void)
-{
-	swork_queue(&clock_set_delay_work);
-}
-#else /* PREEMPT_RT_FULL */
-
 static void clock_was_set_work(struct work_struct *work)
 {
 	clock_was_set();
@@ -784,7 +769,6 @@ void clock_was_set_delayed(void)
 {
 	schedule_work(&hrtimer_work);
 }
-#endif
 
 #else
 
