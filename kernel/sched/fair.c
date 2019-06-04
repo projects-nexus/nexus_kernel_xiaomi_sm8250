@@ -168,12 +168,12 @@ unsigned int sysctl_sched_cfs_bandwidth_slice		= 5000UL;
 #endif
 
 /*
- * The margin used when comparing utilization with CPU capacity:
- * util * margin < capacity * 1024
+ * The margin used when comparing utilization with CPU capacity.
  *
  * (default: ~20%)
  */
-unsigned int capacity_margin				= 1280;
+#define fits_capacity(cap, max, margin)	((cap) * margin < (max) * 1024)
+
 unsigned int sched_capacity_margin_up[CPU_NR] = {
 			[0 ... CPU_NR-1] = 1078}; /* ~5% margin */
 unsigned int sched_capacity_margin_down[CPU_NR] = {
@@ -4006,7 +4006,7 @@ static inline bool task_fits_capacity(struct task_struct *p,
 			sched_capacity_margin_up_boosted[task_cpu(p)] :
 			sched_capacity_margin_up[task_cpu(p)];
 
-	return capacity * 1024 > uclamp_task(p) * margin;
+	return fits_capacity(uclamp_task_util(p), capacity, margin);
 }
 
 static inline bool task_fits_max(struct task_struct *p, int cpu)
@@ -5532,8 +5532,8 @@ static unsigned long capacity_of(int cpu);
 
 bool __cpu_overutilized(int cpu, int delta)
 {
-	return (capacity_orig_of(cpu) * 1024) <
-		((cpu_util(cpu) + delta) * sched_capacity_margin_up[cpu]);
+	return !fits_capacity((cpu_util(cpu) + delta), capacity_orig_of(cpu),
+			      sched_capacity_margin_up[cpu]);
 }
 
 bool cpu_overutilized(int cpu)
@@ -7879,8 +7879,8 @@ static void select_cpu_candidates(struct sched_domain *sd, cpumask_t *cpus,
 			 */
 			util = uclamp_rq_util_with(cpu_rq(cpu), util, p);
 
-			if (cpu_cap * 1024 <
-					util * sched_capacity_margin_up[cpu])
+			if (!fits_capacity(util, cpu_cap,
+					   sched_capacity_margin_up[cpu]))
 				continue;
 
 			/*
@@ -10262,8 +10262,8 @@ next_group:
 	 * needs to be done at the next sched domain level as well.
 	 */
 	if (env->sd->parent &&
-	    sds->total_capacity * 1024 < sds->total_util *
-			 sched_capacity_margin_up[group_first_cpu(sds->local)])
+	    !fits_capacity(sds->total_util, sds->total_capacity,
+			   sched_capacity_margin_up[group_first_cpu(sds->local)]))
 		set_sd_overutilized(env->sd->parent);
 
 }
