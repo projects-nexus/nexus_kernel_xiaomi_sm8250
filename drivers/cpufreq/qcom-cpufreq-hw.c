@@ -827,7 +827,7 @@ static int qcom_cpufreq_hw_driver_probe(struct platform_device *pdev)
 	struct cpu_cycle_counter_cb cycle_counter_cb = {
 		.get_cpu_cycle_counter = qcom_cpufreq_get_cpu_cycle_counter,
 	};
-	int rc, cpu;
+	int rc;
 
 	/* Get the bases of cpufreq for domains */
 	rc = qcom_resources_init(pdev);
