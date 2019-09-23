@@ -99,8 +99,8 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 	s->tcf_action = parm->action;
 	s->rate = rate;
 	s->psample_group_num = psample_group_num;
-	rcu_swap_protected(s->psample_group, psample_group,
-			   lockdep_is_held(&s->tcf_lock));
+	psample_group = rcu_replace_pointer(s->psample_group, psample_group,
+					    lockdep_is_held(&s->tcf_lock));
 
 	if (tb[TCA_SAMPLE_TRUNC_SIZE]) {
 		s->truncate = true;

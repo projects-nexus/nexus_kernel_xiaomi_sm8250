@@ -599,7 +599,7 @@ metadata_parse_err:
 		spin_lock_bh(&ife->tcf_lock);
 	ife->tcf_action = parm->action;
 	/* protected by tcf_lock when modifying existing action */
-	rcu_swap_protected(ife->params, p, 1);
+	p = rcu_replace_pointer(ife->params, p, 1);
 
 	if (exists)
 		spin_unlock_bh(&ife->tcf_lock);
