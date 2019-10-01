@@ -284,14 +284,6 @@ static void f2fs_read_end_io(struct bio *bio)
 		return;
 	}
 
-	if (first_page != NULL &&
-		__read_io_type(first_page) == F2FS_RD_DATA) {
-		trace_android_fs_dataread_end(
-					page_file_mapping(first_page)->host,
-					page_file_offset(first_page),
-					bio->bi_iter.bi_size);
-	}
-
 	if (ctx) {
 		unsigned int enabled_steps = ctx->enabled_steps &
 					(STEP_DECRYPT | STEP_DECOMPRESS);
@@ -530,26 +522,6 @@ void f2fs_submit_read_bio(struct f2fs_sb_info *sbi, struct bio *bio,
 static void __f2fs_submit_read_bio(struct f2fs_sb_info *sbi,
 				struct bio *bio, enum page_type type)
 {
-	if (trace_android_fs_dataread_start_enabled() && (type == DATA)) {
-		struct page *first_page = bio->bi_io_vec[0].bv_page;
-
-		if (first_page != NULL &&
-			__read_io_type(first_page) == F2FS_RD_DATA) {
-			char *path, pathbuf[MAX_TRACE_PATHBUF_LEN];
-
-			path = android_fstrace_get_pathname(pathbuf,
-						MAX_TRACE_PATHBUF_LEN,
-						first_page->mapping->host);
-
-			trace_android_fs_dataread_start(
-				first_page->mapping->host,
-				page_offset(first_page),
-				bio->bi_iter.bi_size,
-				current->pid,
-				path,
-				current->comm);
-		}
-	}
 	f2fs_submit_read_bio(sbi, bio, type);
 }
 
