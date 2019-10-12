@@ -82,6 +82,10 @@ struct task_struct init_task
 	.cpus_mask	= CPU_MASK_ALL,
 	.nr_cpus_allowed= NR_CPUS,
 	.cpus_requested	= CPU_MASK_ALL,
+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE) && \
+    defined(CONFIG_SCHED_DEBUG)
+	.pinned_on_cpu	= -1,
+#endif
 	.mm		= NULL,
 	.active_mm	= &init_mm,
 	.restart_block	= {
