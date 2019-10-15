@@ -941,4 +941,8 @@ static inline void cond_synchronize_sched(unsigned long oldstate)
 	cond_synchronize_rcu(oldstate);
 }
 
+/* kernel/ksysfs.c definitions */
+extern int rcu_expedited;
+extern int rcu_normal;
+
 #endif /* __LINUX_RCUPDATE_H */
