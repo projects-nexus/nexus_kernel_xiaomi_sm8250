@@ -24,7 +24,7 @@ static inline bool vtime_accounting_cpu_enabled(void) { return true; }
  */
 static inline bool vtime_accounting_enabled(void)
 {
-	return context_tracking_is_enabled();
+	return context_tracking_enabled();
 }
 
 static inline bool vtime_accounting_cpu_enabled(void)
