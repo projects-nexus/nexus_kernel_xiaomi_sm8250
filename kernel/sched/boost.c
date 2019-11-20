@@ -50,7 +50,7 @@ static void set_boost_policy(int type)
 		return;
 	}
 
-	if (min_possible_efficiency != max_possible_efficiency) {
+	if (CONFIG_ARCH_KONA) {
 		boost_policy = SCHED_BOOST_ON_BIG;
 		return;
 	}
@@ -81,13 +81,13 @@ static bool verify_boost_top_app_params(int type)
 static void sched_full_throttle_boost_enter(void)
 {
 	core_ctl_set_boost(true);
-	walt_enable_frequency_aggregation(true);
+	//walt_enable_frequency_aggregation(true);
 }
 
 static void sched_full_throttle_boost_exit(void)
 {
 	core_ctl_set_boost(false);
-	walt_enable_frequency_aggregation(false);
+	//walt_enable_frequency_aggregation(false);
 }
 
 static void sched_conservative_boost_enter(void)
@@ -102,12 +102,12 @@ static void sched_conservative_boost_exit(void)
 
 static void sched_restrained_boost_enter(void)
 {
-	walt_enable_frequency_aggregation(true);
+	//walt_enable_frequency_aggregation(true);
 }
 
 static void sched_restrained_boost_exit(void)
 {
-	walt_enable_frequency_aggregation(false);
+	//walt_enable_frequency_aggregation(false);
 }
 
 struct sched_boost_data {
