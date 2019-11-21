@@ -4733,7 +4733,7 @@ retry:
 				&compaction_retries))
 		goto retry;
 
-	if (order <= PAGE_ALLOC_COSTLY_ORDER && should_ulmk_retry(gfp_mask))
+	if (order <= PAGE_ALLOC_COSTLY_ORDER && should_ulmk_retry())
 		goto retry;
 
 	/*
