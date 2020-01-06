@@ -88,11 +88,11 @@ CPU_BE(	rev16		w3, w3		)
 	.endm
 
 	.align		5
-ENTRY(crc32_le)
+SYM_FUNC_START(crc32_le)
 	__crc32
-ENDPROC(crc32_le)
+SYM_FUNC_END(crc32_le)
 
 	.align		5
-ENTRY(__crc32c_le)
+SYM_FUNC_START(__crc32c_le)
 	__crc32		c
-ENDPROC(__crc32c_le)
+SYM_FUNC_END(__crc32c_le)
