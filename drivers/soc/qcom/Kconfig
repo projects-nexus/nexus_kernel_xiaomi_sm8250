@@ -761,7 +761,7 @@ config MSM_EVENT_TIMER
 
 config MSM_PM
 	depends on PM
-	select MSM_IDLE_STATS if DEBUG_FS
+	select MSM_IDLE_STATS
 	select CPU_IDLE_MULTIPLE_DRIVERS
 	select QTI_SYSTEM_PM if QCOM_RPMH
 	bool "Qualcomm Technologies, Inc. (QTI) Power Management Drivers"
