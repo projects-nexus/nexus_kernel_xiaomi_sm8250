@@ -87,9 +87,6 @@
  */
 #define RCU_DYNTICK_CTRL_MASK 0x1
 #define RCU_DYNTICK_CTRL_CTR  (RCU_DYNTICK_CTRL_MASK + 1)
-#ifndef rcu_eqs_special_exit
-#define rcu_eqs_special_exit() do { } while (0)
-#endif
 
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct rcu_data, rcu_data) = {
 	.dynticks_nesting = 1,
@@ -241,7 +238,7 @@ void rcu_softirq_qs(void)
  * RCU is watching prior to the call to this function and is no longer
  * watching upon return.
  */
-static void rcu_dynticks_eqs_enter(void)
+static noinstr void rcu_dynticks_eqs_enter(void)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 	int seq;
@@ -266,7 +263,7 @@ static void rcu_dynticks_eqs_enter(void)
  * called from an extended quiescent state, that is, RCU is not watching
  * prior to the call to this function and is watching upon return.
  */
-static void rcu_dynticks_eqs_exit(void)
+static noinstr void rcu_dynticks_eqs_exit(void)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 	int seq;
@@ -284,8 +281,6 @@ static void rcu_dynticks_eqs_exit(void)
 	if (seq & RCU_DYNTICK_CTRL_MASK) {
 		atomic_andnot(RCU_DYNTICK_CTRL_MASK, &rdp->dynticks);
 		smp_mb__after_atomic(); /* _exit after clearing mask. */
-		/* Prefer duplicate flushes to losing a flush. */
-		rcu_eqs_special_exit();
 	}
 }
 
@@ -313,7 +308,7 @@ static void rcu_dynticks_eqs_online(void)
  *
  * No ordering, as we are sampling CPU-local information.
  */
-static bool rcu_dynticks_curr_cpu_in_eqs(void)
+static __always_inline bool rcu_dynticks_curr_cpu_in_eqs(void)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
@@ -602,7 +597,7 @@ EXPORT_SYMBOL_GPL(rcutorture_get_gp_data);
  * the possibility of usermode upcalls having messed up our count
  * of interrupt nesting level during the prior busy period.
  */
-static void rcu_eqs_enter(bool user)
+static noinstr void rcu_eqs_enter(bool user)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
@@ -617,12 +612,14 @@ static void rcu_eqs_enter(bool user)
 	}
 
 	lockdep_assert_irqs_disabled();
+	instrumentation_begin();
 	trace_rcu_dyntick(TPS("Start"), rdp->dynticks_nesting, 0, atomic_read(&rdp->dynticks));
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && !user && !is_idle_task(current));
 	rdp = this_cpu_ptr(&rcu_data);
 	do_nocb_deferred_wakeup(rdp);
 	rcu_prepare_for_idle();
 	rcu_preempt_deferred_qs(current);
+	instrumentation_end();
 	WRITE_ONCE(rdp->dynticks_nesting, 0); /* Avoid irq-access tearing. */
 	// RCU is watching here ...
 	rcu_dynticks_eqs_enter();
@@ -659,7 +656,7 @@ void rcu_idle_enter(void)
  * If you add or remove a call to rcu_user_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_user_enter(void)
+noinstr void rcu_user_enter(void)
 {
 	lockdep_assert_irqs_disabled();
 	rcu_eqs_enter(true);
@@ -692,19 +689,23 @@ static __always_inline void rcu_nmi_exit_common(bool irq)
 	 * leave it in non-RCU-idle state.
 	 */
 	if (rdp->dynticks_nmi_nesting != 1) {
+		instrumentation_begin();
 		trace_rcu_dyntick(TPS("--="), rdp->dynticks_nmi_nesting, rdp->dynticks_nmi_nesting - 2,
 				  atomic_read(&rdp->dynticks));
 		WRITE_ONCE(rdp->dynticks_nmi_nesting, /* No store tearing. */
 			   rdp->dynticks_nmi_nesting - 2);
+		instrumentation_end();
 		return;
 	}
 
+	instrumentation_begin();
 	/* This NMI interrupted an RCU-idle CPU, restore RCU-idleness. */
 	trace_rcu_dyntick(TPS("Startirq"), rdp->dynticks_nmi_nesting, 0, atomic_read(&rdp->dynticks));
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0); /* Avoid store tearing. */
 
 	if (irq)
 		rcu_prepare_for_idle();
+	instrumentation_end();
 
 	// RCU is watching here ...
 	rcu_dynticks_eqs_enter();
@@ -720,7 +721,7 @@ static __always_inline void rcu_nmi_exit_common(bool irq)
  * If you add or remove a call to rcu_nmi_exit(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_nmi_exit(void)
+void noinstr rcu_nmi_exit(void)
 {
 	rcu_nmi_exit_common(false);
 }
@@ -744,7 +745,7 @@ void rcu_nmi_exit(void)
  * If you add or remove a call to rcu_irq_exit(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_exit(void)
+void noinstr rcu_irq_exit(void)
 {
 	lockdep_assert_irqs_disabled();
 	rcu_nmi_exit_common(true);
@@ -773,7 +774,7 @@ void rcu_irq_exit_irqson(void)
  * allow for the possibility of usermode upcalls messing up our count of
  * interrupt nesting level during the busy period that is just now starting.
  */
-static void rcu_eqs_exit(bool user)
+static void noinstr rcu_eqs_exit(bool user)
 {
 	struct rcu_data *rdp;
 	long oldval;
@@ -791,12 +792,14 @@ static void rcu_eqs_exit(bool user)
 	// RCU is not watching here ...
 	rcu_dynticks_eqs_exit();
 	// ... but is watching here.
+	instrumentation_begin();
 	rcu_cleanup_after_idle();
 	trace_rcu_dyntick(TPS("End"), rdp->dynticks_nesting, 1, atomic_read(&rdp->dynticks));
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && !user && !is_idle_task(current));
 	WRITE_ONCE(rdp->dynticks_nesting, 1);
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting);
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, DYNTICK_IRQ_NONIDLE);
+	instrumentation_end();
 }
 
 /**
@@ -827,7 +830,7 @@ void rcu_idle_exit(void)
  * If you add or remove a call to rcu_user_exit(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_user_exit(void)
+void noinstr rcu_user_exit(void)
 {
 	rcu_eqs_exit(1);
 }
@@ -875,28 +878,35 @@ static __always_inline void rcu_nmi_enter_common(bool irq)
 			rcu_cleanup_after_idle();
 
 		incby = 1;
-	} else if (irq && tick_nohz_full_cpu(rdp->cpu) &&
-		   rdp->dynticks_nmi_nesting == DYNTICK_IRQ_NONIDLE &&
-		   READ_ONCE(rdp->rcu_urgent_qs) &&
-		   !READ_ONCE(rdp->rcu_forced_tick)) {
-		// We get here only if we had already exited the extended
-		// quiescent state and this was an interrupt (not an NMI).
-		// Therefore, (1) RCU is already watching and (2) The fact
-		// that we are in an interrupt handler and that the rcu_node
-		// lock is an irq-disabled lock prevents self-deadlock.
-		// So we can safely recheck under the lock.
-		raw_spin_lock_rcu_node(rdp->mynode);
-		if (rdp->rcu_urgent_qs && !rdp->rcu_forced_tick) {
-			// A nohz_full CPU is in the kernel and RCU
-			// needs a quiescent state.  Turn on the tick!
-			WRITE_ONCE(rdp->rcu_forced_tick, true);
-			tick_dep_set_cpu(rdp->cpu, TICK_DEP_BIT_RCU);
+	} else if (irq) {
+		instrumentation_begin();
+		if (tick_nohz_full_cpu(rdp->cpu) &&
+		    rdp->dynticks_nmi_nesting == DYNTICK_IRQ_NONIDLE &&
+		    READ_ONCE(rdp->rcu_urgent_qs) &&
+		    !READ_ONCE(rdp->rcu_forced_tick)) {
+			// We get here only if we had already exited the
+			// extended quiescent state and this was an
+			// interrupt (not an NMI).  Therefore, (1) RCU is
+			// already watching and (2) The fact that we are in
+			// an interrupt handler and that the rcu_node lock
+			// is an irq-disabled lock prevents self-deadlock.
+			// So we can safely recheck under the lock.
+			raw_spin_lock_rcu_node(rdp->mynode);
+			if (rdp->rcu_urgent_qs && !rdp->rcu_forced_tick) {
+				// A nohz_full CPU is in the kernel and RCU
+				// needs a quiescent state.  Turn on the tick!
+				WRITE_ONCE(rdp->rcu_forced_tick, true);
+				tick_dep_set_cpu(rdp->cpu, TICK_DEP_BIT_RCU);
+			}
+			raw_spin_unlock_rcu_node(rdp->mynode);
 		}
-		raw_spin_unlock_rcu_node(rdp->mynode);
+		instrumentation_end();
 	}
+	instrumentation_begin();
 	trace_rcu_dyntick(incby == 1 ? TPS("Endirq") : TPS("++="),
 			  rdp->dynticks_nmi_nesting,
 			  rdp->dynticks_nmi_nesting + incby, atomic_read(&rdp->dynticks));
+	instrumentation_end();
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, /* Prevent store tearing. */
 		   rdp->dynticks_nmi_nesting + incby);
 	barrier();
@@ -905,7 +915,7 @@ static __always_inline void rcu_nmi_enter_common(bool irq)
 /**
  * rcu_nmi_enter - inform RCU of entry to NMI context
  */
-void rcu_nmi_enter(void)
+noinstr void rcu_nmi_enter(void)
 {
 	rcu_nmi_enter_common(false);
 }
@@ -932,7 +942,7 @@ void rcu_nmi_enter(void)
  * If you add or remove a call to rcu_irq_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_enter(void)
+noinstr void rcu_irq_enter(void)
 {
 	lockdep_assert_irqs_disabled();
 	rcu_nmi_enter_common(true);
@@ -977,7 +987,7 @@ static void rcu_disable_urgency_upon_qs(struct rcu_data *rdp)
  * if the current CPU is not in its idle loop or is in an interrupt or
  * NMI handler, return true.
  */
-bool notrace rcu_is_watching(void)
+bool rcu_is_watching(void)
 {
 	bool ret;
 
@@ -1029,12 +1039,12 @@ bool rcu_lockdep_current_cpu_online(void)
 
 	if (in_nmi() || !rcu_scheduler_fully_active)
 		return true;
-	preempt_disable();
+	preempt_disable_notrace();
 	rdp = this_cpu_ptr(&rcu_data);
 	rnp = rdp->mynode;
 	if (rdp->grpmask & rcu_rnp_online_cpus(rnp))
 		ret = true;
-	preempt_enable();
+	preempt_enable_notrace();
 	return ret;
 }
 EXPORT_SYMBOL_GPL(rcu_lockdep_current_cpu_online);
