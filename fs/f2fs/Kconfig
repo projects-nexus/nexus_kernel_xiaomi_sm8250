@@ -115,7 +115,10 @@ config F2FS_FS_LZO
 
 config F2FS_FS_LZORLE
 	bool "LZO-RLE compression support"
+	depends on F2FS_FS_COMPRESSION
 	depends on F2FS_FS_LZO
+	select LZO_COMPRESS
+	select LZO_DECOMPRESS
 	default y
 	help
 	  Support LZO-RLE compress algorithm, if unsure, say Y.

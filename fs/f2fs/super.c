@@ -1080,6 +1080,14 @@ static int parse_options(struct super_block *sb, char *options, bool is_remount)
 #else
 				f2fs_info(sbi, "kernel doesn't support lzo compression");
 #endif
+			} else if (!strcmp(name, "lzo-rle")) {
+#ifdef CONFIG_F2FS_FS_LZORLE
+				F2FS_OPTION(sbi).compress_level = 0;
+				F2FS_OPTION(sbi).compress_algorithm =
+								COMPRESS_LZORLE;
+#else
+				f2fs_info(sbi, "kernel doesn't support lzo-rle compression");
+#endif
 			} else if (!strncmp(name, "lz4", 3)) {
 #ifdef CONFIG_F2FS_FS_LZ4
 				ret = f2fs_set_lz4hc_level(sbi, name);
@@ -1901,6 +1909,9 @@ static inline void f2fs_show_compress_options(struct seq_file *seq,
 		break;
 	case COMPRESS_ZSTD:
 		algtype = "zstd";
+		break;
+	case COMPRESS_LZORLE:
+		algtype = "lzo-rle";
 		break;
 	}
 	seq_printf(seq, ",compress_algorithm=%s", algtype);

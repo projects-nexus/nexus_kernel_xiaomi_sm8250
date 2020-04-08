@@ -163,7 +163,8 @@ TRACE_DEFINE_ENUM(EX_BLOCK_AGE);
 	__print_symbolic(type,						\
 		{ COMPRESS_LZO,		"LZO" },			\
 		{ COMPRESS_LZ4,		"LZ4" },			\
-		{ COMPRESS_ZSTD,	"ZSTD" })
+		{ COMPRESS_ZSTD,	"ZSTD" },			\
+		{ COMPRESS_LZORLE,	"LZO-RLE" })
 
 #define show_extent_type(type)						\
 	__print_symbolic(type,						\
