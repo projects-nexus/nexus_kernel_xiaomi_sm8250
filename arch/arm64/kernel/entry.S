@@ -926,20 +926,9 @@ el0_error_naked:
 ENDPROC(el0_error)
 
 /*
- * Ok, we need to do extra processing, enter the slow path.
- */
-work_pending:
-	mov	x0, sp				// 'regs'
-	bl	do_notify_resume
-#ifdef CONFIG_TRACE_IRQFLAGS
-	bl	trace_hardirqs_on		// enabled while in userspace
-#endif
-	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for single-step
-	b	finish_ret_to_user
-/*
  * "slow" syscall return path.
  */
-ret_to_user:
+SYM_CODE_START_LOCAL(ret_to_user)
 	disable_daif
 	ldr	x1, [tsk, #TSK_TI_FLAGS]
 	and	x2, x1, #_TIF_WORK_MASK
@@ -950,7 +939,19 @@ finish_ret_to_user:
 	bl	stackleak_erase
 #endif
 	kernel_exit 0
-ENDPROC(ret_to_user)
+
+/*
+ * Ok, we need to do extra processing, enter the slow path.
+ */
+work_pending:
+	mov	x0, sp				// 'regs'
+	bl	do_notify_resume
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_on		// enabled while in userspace
+#endif
+	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for single-step
+	b	finish_ret_to_user
+SYM_CODE_END(ret_to_user)
 
 /*
  * SVC handler.
