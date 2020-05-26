@@ -964,6 +964,9 @@ struct rq {
 	/* capture load from *all* tasks on this CPU: */
 	struct load_weight	load;
 	unsigned long		nr_load_updates;
+#ifdef CONFIG_SMP
+	unsigned int		ttwu_pending;
+#endif
 	u64			nr_switches;
 
 #ifdef CONFIG_UCLAMP_TASK
