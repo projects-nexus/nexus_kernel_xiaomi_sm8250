@@ -690,6 +690,7 @@ static int smb5_parse_dt_misc(struct smb5 *chip, struct device_node *node)
 
 	chg->lpd_disabled = chg->lpd_disabled ||
 			of_property_read_bool(node, "qcom,lpd-disable");
+	chg->moisture_detection_enabled = !chg->lpd_disabled;
 
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 	chg->use_bq_pump = of_property_read_bool(node,
