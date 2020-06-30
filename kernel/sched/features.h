@@ -103,8 +103,15 @@ SCHED_FEAT(FIND_BEST_TARGET, true)
  *   Direct tasks in a schedtune.prefer_idle=1 group through
  *   the EAS path for wakeup task placement. Otherwise, put
  *   those tasks through the mainline slow path.
+ * EAS_CRUCIAL
+ *   Direct tasks in a schedtune.crucial=1 group to the idle CPU
+ *   with the greatest original capacity. Unlike prefer_idle,
+ *   the crucial path iterates through all available CPUs. If a
+ *   crucial CPU is found, it takes precedence over a prefer_idle
+ *   selection.
  */
 SCHED_FEAT(EAS_PREFER_IDLE, true)
+SCHED_FEAT(EAS_CRUCIAL, true)
 
 /*
  * Request max frequency from schedutil whenever a RT task is running.

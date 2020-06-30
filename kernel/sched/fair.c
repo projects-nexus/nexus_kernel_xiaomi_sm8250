@@ -7006,14 +7006,18 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	unsigned long best_idle_cuml_util = ULONG_MAX;
 	bool prefer_idle = schedtune_prefer_idle(p);
 	bool boosted;
+	bool crucial = sched_feat(EAS_CRUCIAL) ?
+				(schedtune_crucial(p) > 0) : false;
 	/* Initialise with deepest possible cstate (INT_MAX) */
 	int shallowest_idle_cstate = INT_MAX;
 	struct sched_domain *start_sd;
+	unsigned long crucial_max_cap = 0;
 	struct sched_group *sg;
 	int best_active_cpu = -1;
 	int best_idle_cpu = -1;
 	int target_cpu = -1;
 	int backup_cpu = -1;
+	int crucial_cpu = -1;
 	int i, start_cpu;
 	long spare_wake_cap, most_spare_wake_cap = 0;
 	int most_spare_cap_cpu = -1;
@@ -7105,6 +7109,13 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 			if (spare_wake_cap > most_spare_wake_cap) {
 				most_spare_wake_cap = spare_wake_cap;
 				most_spare_cap_cpu = i;
+			}
+
+			/* Track the idle CPU with the largest capacity */
+			if (crucial && idle_cpu(i) &&
+					capacity_orig > crucial_max_cap) {
+				crucial_max_cap = capacity_orig;
+				crucial_cpu = i;
 			}
 
 			if (per_task_boost(cpu_rq(i)->curr) ==
@@ -7397,6 +7408,12 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 		}
 
 	} while (sg = sg->next, sg != start_sd->groups);
+
+	/* If a compatible crucial CPU was found, use it and skip the backup path */
+	if (crucial && (crucial_cpu != -1)) {
+		target_cpu = crucial_cpu;
+		goto target;
+	}
 
 	adjust_cpus_for_packing(p, &target_cpu, &best_idle_cpu,
 				shallowest_idle_cstate,
