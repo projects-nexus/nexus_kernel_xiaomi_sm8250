@@ -8812,6 +8812,10 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 	if (unlikely(p->policy == SCHED_IDLE))
 		return 0;
 
+	/* SMT siblings share cache */
+	if (env->sd->flags & SD_SHARE_CPUCAPACITY)
+		return 0;
+
 	/*
 	 * Buddy candidates are cache hot:
 	 */
