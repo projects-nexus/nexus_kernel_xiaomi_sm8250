@@ -3437,6 +3437,7 @@ bool __zone_watermark_ok(struct zone *z, unsigned int order, unsigned long mark,
 
 	if (alloc_flags & ALLOC_HIGH)
 		min -= min / 2;
+		
 #if IS_ENABLED(CONFIG_EMERGENCY_MEMORY)
 	/*
 	 * If the migration type MIGRATE_EMERGENCY enable,then subtract
