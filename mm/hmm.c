@@ -312,7 +312,7 @@ static int hmm_vma_do_fault(struct mm_walk *walk, unsigned long addr,
 
 	flags |= hmm_vma_walk->block ? 0 : FAULT_FLAG_ALLOW_RETRY;
 	flags |= write_fault ? FAULT_FLAG_WRITE : 0;
-	ret = handle_mm_fault(vma, addr, flags);
+	ret = handle_mm_fault(vma, addr, flags, NULL);
 	if (ret & VM_FAULT_RETRY)
 		return -EBUSY;
 	if (ret & VM_FAULT_ERROR) {
