@@ -393,7 +393,8 @@ static void do_bad_area(unsigned long addr, unsigned int esr, struct pt_regs *re
 #define VM_FAULT_BADACCESS	0x020000
 
 static int __do_page_fault(struct vm_area_struct *vma, unsigned long addr,
-			   unsigned int mm_flags, unsigned long vm_flags)
+				  unsigned int mm_flags, unsigned long vm_flags,
+				  struct pt_regs *regs)
 {
 	vm_fault_t fault;
 
@@ -417,7 +418,7 @@ good_area:
 		goto out;
 	}
 
-	return handle_mm_fault(vma, addr & PAGE_MASK, mm_flags, NULL);
+	return handle_mm_fault(vma, addr & PAGE_MASK, mm_flags, regs);
 
 check_stack:
 	if (vma->vm_flags & VM_GROWSDOWN && !expand_stack(vma, addr))
@@ -436,7 +437,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 {
 	struct mm_struct *mm = current->mm;
 	struct siginfo si;
-	vm_fault_t fault, major = 0;
+	vm_fault_t fault;
 	unsigned long vm_flags = VM_READ | VM_WRITE | VM_EXEC;
 	unsigned int mm_flags = FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_KILLABLE;
 	bool was_major = false;
@@ -514,8 +515,7 @@ retry:
 
 	if (!vma || !can_reuse_spf_vma(vma, addr))
 		vma = find_vma(mm, addr);
-	fault = __do_page_fault(vma, addr, mm_flags, vm_flags);
-	major |= fault & VM_FAULT_MAJOR;
+	fault = __do_page_fault(vma, addr, mm_flags, vm_flags, regs);
 
 	if (fault & VM_FAULT_RETRY) {
 		/*
@@ -555,35 +555,8 @@ done:
 	 * Handle the "normal" (no error) case first.
 	 */
 	if (likely(!(fault & (VM_FAULT_ERROR | VM_FAULT_BADMAP |
-			      VM_FAULT_BADACCESS)))) {
-		/*
-		 * Major/minor page fault accounting is only done
-		 * once. If we go through a retry, it is extremely
-		 * likely that the page will be found in page cache at
-		 * that point.
-		 */
-		if (major) {
-			was_major = true;
-			current->maj_flt++;
-			perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MAJ, 1, regs,
-				      addr);
-		} else {
-			current->min_flt++;
-			perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MIN, 1, regs,
-				      addr);
-		}
-
-		if (was_major) {
-			if (fault & VM_FAULT_SWAP)
-				mm_event_end(MM_SWP_FAULT, event_ts);
-			else
-				mm_event_end(MM_MAJ_FAULT, event_ts);
-		} else {
-			mm_event_end(MM_MIN_FAULT, event_ts);
-		}
-
+			      VM_FAULT_BADACCESS))))
 		return 0;
-	}
 
 	/*
 	 * If we are in kernel mode at this point, we have no context to
