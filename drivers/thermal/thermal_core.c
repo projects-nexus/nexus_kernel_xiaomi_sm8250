@@ -2143,7 +2143,6 @@ static int __init thermal_init(void)
 {
 	int result;
 
-	mutex_init(&poweroff_lock);
 	thermal_passive_wq = alloc_workqueue("thermal_passive_wq",
 						WQ_UNBOUND | WQ_FREEZABLE,
 						THERMAL_MAX_ACTIVE);
