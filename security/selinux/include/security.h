@@ -15,7 +15,9 @@
 #include <linux/types.h>
 #include <linux/refcount.h>
 #include <linux/workqueue.h>
+#ifndef CONFIG_VBSWAP_HELPER
 #include "flask.h"
+#endif
 
 #define SECSID_NULL			0x00000000 /* unspecified SID */
 #define SECSID_WILD			0xffffffff /* wildcard SID */
@@ -410,5 +412,10 @@ extern void hashtab_cache_init(void);
 extern void selinux_nlmsg_init(void);
 extern int security_sidtab_hash_stats(struct selinux_state *state, char *page);
 extern void selinux_nlmsg_init(void);
+
+#ifdef CONFIG_VBSWAP_HELPER
+extern int get_enforce_value(void);
+extern void set_selinux(int value);
+#endif /* CONFIG_VBSWAP_HELPER */
 
 #endif /* _SELINUX_SECURITY_H_ */
