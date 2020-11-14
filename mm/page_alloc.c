@@ -7616,12 +7616,12 @@ void __init mem_init_print_info(const char *str)
 			size -= adj; \
 	} while (0)
 
-	adj_init_size(__init_begin[0], __init_end, init_data_size,
-		     _sinittext[0], init_code_size);
-	adj_init_size(_stext[0], _etext, codesize, _sinittext[0], init_code_size);
-	adj_init_size(_sdata[0], _edata, datasize, __init_begin[0], init_data_size);
-	adj_init_size(_stext[0], _etext, codesize, __start_rodata[0], rosize);
-	adj_init_size(_sdata[0], _edata, datasize, __start_rodata[0], rosize);
+	adj_init_size(__init_begin, __init_end, init_data_size,
+		     _sinittext, init_code_size);
+	adj_init_size(_stext, _etext, codesize, _sinittext, init_code_size);
+	adj_init_size(_sdata, _edata, datasize, __init_begin, init_data_size);
+	adj_init_size(_stext, _etext, codesize, __start_rodata, rosize);
+	adj_init_size(_sdata, _edata, datasize, __start_rodata, rosize);
 
 #undef	adj_init_size
 
