@@ -2551,6 +2551,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
 void rcu_sched_clock_irq(int user)
 {
 	trace_rcu_utilization(TPS("Start scheduler-tick"));
+	lockdep_assert_irqs_disabled();
 	raw_cpu_inc(rcu_data.ticks_this_gp);
 	rcu_flavor_sched_clock_irq(user);
 	/* The load-acquire pairs with the store-release setting to true. */
@@ -2564,6 +2565,7 @@ void rcu_sched_clock_irq(int user)
 	}
 	if (rcu_pending(user))
 		invoke_rcu_core();
+	lockdep_assert_irqs_disabled();
 
 	trace_rcu_utilization(TPS("End scheduler-tick"));
 }
@@ -3718,6 +3720,8 @@ static int rcu_pending(int user)
 	bool gp_in_progress;
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 	struct rcu_node *rnp = rdp->mynode;
+
+	lockdep_assert_irqs_disabled();
 
 	/* Check for CPU stalls, if enabled. */
 	check_cpu_stall(rdp);
