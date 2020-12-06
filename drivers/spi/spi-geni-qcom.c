@@ -178,6 +178,13 @@ static struct spi_master *get_spi_master(struct device *dev)
 	return spi;
 }
 
+int geni_spi_get_master_irq(struct spi_device *spi_slv)
+{
+	struct spi_geni_master *mas = spi_master_get_devdata(spi_slv->master);
+
+	return mas->irq;
+}
+
 static inline void spi_geni_clk_conf(struct spi_geni_master *mas,
 		int clk_div, int clk_idx)
 {
