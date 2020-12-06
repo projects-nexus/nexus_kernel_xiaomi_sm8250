@@ -193,6 +193,18 @@ static inline void spi_geni_clk_conf(struct spi_geni_master *mas,
 	 * Ensure Clk config completes before return.
 	 */
 	mb();
+int geni_spi_get_master_irq(struct spi_device *spi_slv)
+{
+	struct spi_geni_master *mas = spi_master_get_devdata(spi_slv->master);
+
+	return mas->irq;
+}
+
+int geni_spi_get_master_irq(struct spi_device *spi_slv)
+{
+	struct spi_geni_master *mas = spi_master_get_devdata(spi_slv->master);
+
+	return mas->irq;
 }
 
 static int get_spi_clk_cfg(u32 speed_hz, struct spi_geni_master *mas,
