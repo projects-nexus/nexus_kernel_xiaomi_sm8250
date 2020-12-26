@@ -709,6 +709,7 @@
 	qcom,mdss-brightness-init-level = <307>;
 	qcom,platform-te-gpio = <&tlmm 66 0>;
 	qcom,platform-reset-gpio = <&tlmm 75 0>;
+	qcom,ulps-enabled;
 };
 
 &dsi_m82_42_02_0b_dual_dphy_video {
@@ -720,6 +721,7 @@
 	qcom,mdss-brightness-init-level = <307>;
 	qcom,platform-te-gpio = <&tlmm 66 0>;
 	qcom,platform-reset-gpio = <&tlmm 75 0>;
+	qcom,ulps-enabled;
 };
 
 &dsi_j2s_mp_42_02_0a_dsc_cmd {
