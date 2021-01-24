@@ -8585,9 +8585,10 @@ int dsi_display_unprepare(struct dsi_display *display)
 
 	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_CORE_CLK, DSI_CLK_OFF);
-	if (rc)
+	if (rc) {
 		DSI_ERR("[%s] failed to disable DSI clocks, rc=%d\n",
 		       display->name, rc);
+	}
 
 	/* destrory dsi isr set up */
 	dsi_display_ctrl_isr_configure(display, false);
