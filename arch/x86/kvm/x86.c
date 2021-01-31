@@ -1362,7 +1362,57 @@ static int do_get_msr(struct kvm_vcpu *vcpu, unsigned index, u64 *data)
 	if (r)
 		return r;
 
-	*data = msr.data;
+	if (!r)
+		trace_kvm_msr_write(ecx, data);
+	else
+		trace_kvm_msr_write_ex(ecx, data);
+
+	return kvm_x86_ops.complete_emulated_msr(vcpu, r);
+}
+EXPORT_SYMBOL_GPL(kvm_emulate_wrmsr);
+
+bool kvm_vcpu_exit_request(struct kvm_vcpu *vcpu)
+{
+	xfer_to_guest_mode_prepare();
+	return vcpu->mode == EXITING_GUEST_MODE || kvm_request_pending(vcpu) ||
+		xfer_to_guest_mode_work_pending();
+}
+EXPORT_SYMBOL_GPL(kvm_vcpu_exit_request);
+
+/*
+ * The fast path for frequent and performance sensitive wrmsr emulation,
+ * i.e. the sending of IPI, sending IPI early in the VM-Exit flow reduces
+ * the latency of virtual IPI by avoiding the expensive bits of transitioning
+ * from guest to host, e.g. reacquiring KVM's SRCU lock. In contrast to the
+ * other cases which must be called after interrupts are enabled on the host.
+ */
+static int handle_fastpath_set_x2apic_icr_irqoff(struct kvm_vcpu *vcpu, u64 data)
+{
+	if (!lapic_in_kernel(vcpu) || !apic_x2apic_mode(vcpu->arch.apic))
+		return 1;
+
+	if (((data & APIC_SHORT_MASK) == APIC_DEST_NOSHORT) &&
+		((data & APIC_DEST_MASK) == APIC_DEST_PHYSICAL) &&
+		((data & APIC_MODE_MASK) == APIC_DM_FIXED) &&
+		((u32)(data >> 32) != X2APIC_BROADCAST)) {
+
+		data &= ~(1 << 12);
+		kvm_apic_send_ipi(vcpu->arch.apic, (u32)data, (u32)(data >> 32));
+		kvm_lapic_set_reg(vcpu->arch.apic, APIC_ICR2, (u32)(data >> 32));
+		kvm_lapic_set_reg(vcpu->arch.apic, APIC_ICR, (u32)data);
+		trace_kvm_apic_write(APIC_ICR, (u32)data);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int handle_fastpath_set_tscdeadline(struct kvm_vcpu *vcpu, u64 data)
+{
+	if (!kvm_can_use_hv_timer(vcpu))
+		return 1;
+
+	kvm_set_lapic_tscdeadline_msr(vcpu, data);
 	return 0;
 }
 
