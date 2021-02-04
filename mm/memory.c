@@ -4343,8 +4343,9 @@ static vm_fault_t __handle_mm_fault(struct vm_area_struct *vma,
  * This is needed as the returned vma is kept in memory until the call to
  * can_reuse_spf_vma() is made.
  */
-int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
-			       unsigned int flags, struct vm_area_struct **vma)
+vm_fault_t __handle_speculative_fault(struct mm_struct *mm,
+			       unsigned long address, unsigned int flags,
+			       struct vm_area_struct **vma)
 {
 	struct vm_fault vmf = {
 		.address = address,
@@ -4352,7 +4353,8 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 	pgd_t *pgd, pgdval;
 	p4d_t *p4d, p4dval;
 	pud_t pudval;
-	int seq, ret;
+	int seq;
+	vm_fault_t ret;
 
 	/* Clear flags that may lead to release the mmap_sem to retry */
 	flags &= ~(FAULT_FLAG_ALLOW_RETRY|FAULT_FLAG_KILLABLE);
