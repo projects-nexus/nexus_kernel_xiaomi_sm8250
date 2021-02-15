@@ -239,8 +239,7 @@ struct smb5 {
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 static struct smb_charger *__smbchg;
 #endif
-
-static int __debug_mask;
+static int __debug_mask = 0;
 
 static ssize_t pd_disabled_show(struct device *dev, struct device_attribute
 				*attr, char *buf)
