@@ -4465,7 +4465,7 @@ static int mdss_dp_usbpd_setup(struct mdss_dp_drv_pdata *dp_drv)
 						    pd_phandle);
 
 	if (IS_ERR(dp_drv->pd)) {
-		pr_err("get_usbpd phandle failed (%ld)\n",
+		pr_debug("get_usbpd phandle failed (%ld)\n",
 				PTR_ERR(dp_drv->pd));
 		return PTR_ERR(dp_drv->pd);
 	}
@@ -4539,7 +4539,7 @@ static int mdss_dp_probe(struct platform_device *pdev)
 	init_completion(&dp_drv->audio_comp);
 
 	if (mdss_dp_usbpd_setup(dp_drv)) {
-		pr_err("Error usbpd setup!\n");
+		pr_debug("Error usbpd setup!\n");
 		dp_drv = NULL;
 		return -EPROBE_DEFER;
 	}
