@@ -1535,6 +1535,12 @@ struct task_struct {
 struct package_runtime_info pkg;
 #endif
 
+struct {
+		struct work_struct work;
+		atomic_t running;
+		bool free_stack;
+	} async_free;
+
 #ifdef CONFIG_ANDROID_SIMPLE_LMK
 	struct task_struct		*simple_lmk_next;
 #endif
