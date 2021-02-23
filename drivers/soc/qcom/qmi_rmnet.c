@@ -46,7 +46,6 @@ unsigned int rmnet_wq_frequency __read_mostly = 1000;
 					1 : rmnet_wq_frequency/10) * (HZ/100))
 #define NO_DELAY (0x0000 * HZ)
 #define PS_INTERVAL_MS (1000)
-#define PS_INTERVAL_KT (ms_to_ktime(PS_INTERVAL_MS))
 #define WATCHDOG_EXPIRE_JF (msecs_to_jiffies(50))
 
 #ifdef CONFIG_QCOM_QMI_DFC
@@ -1230,8 +1229,7 @@ static void qmi_rmnet_check_stats(struct work_struct *work)
 end:
 	rcu_read_lock();
 	if (!rmnet_work_quit)
-		queue_delayed_work(rmnet_ps_wq, &real_work->work,
-				   PS_INTERVAL);
+		queue_delayed_work(rmnet_ps_wq, &real_work->work, PS_INTERVAL);
 	rcu_read_unlock();
 }
 
@@ -1266,7 +1264,7 @@ void qmi_rmnet_work_init(void *port)
 		rmnet_ps_wq = NULL;
 		return;
 	}
-	INIT_DELAYED_WORK(&rmnet_work->work, qmi_rmnet_check_stats);
+	INIT_DEFERRABLE_WORK(&rmnet_work->work, qmi_rmnet_check_stats);
 	rmnet_work->port = port;
 	rmnet_get_packets(rmnet_work->port, &rmnet_work->old_rx_pkts,
 			  &rmnet_work->old_tx_pkts);
