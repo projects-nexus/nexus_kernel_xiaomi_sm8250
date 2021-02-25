@@ -7812,8 +7812,9 @@ cpu_util_next_walt(int cpu, struct task_struct *p, int dst_cpu)
 static long
 compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 {
-	unsigned int max_util, cpu_util, cpu_cap;
-	unsigned long sum_util, energy = 0;
+	unsigned long cpu_util, max_util, sum_util, util_freq, util_running;
+	unsigned long cpu_cap, energy = 0;
+	struct task_struct *tsk;
 	int cpu;
 
 	for (; pd; pd = pd->next) {
@@ -7841,10 +7842,24 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 			cpu_util = cpu_util_next_walt(cpu, p, dst_cpu);
 			sum_util += cpu_util;
 #else
-			unsigned int util_cfs;
-			struct task_struct *tsk;
+			util_freq = cpu_util_next(cpu, p, dst_cpu);
+			util_running = util_freq;
+			tsk = NULL;
 
-			util_cfs = cpu_util_next(cpu, p, dst_cpu);
+			/*
+			 * When @p is placed on @cpu:
+			 *
+			 * util_running = max(cpu_util, cpu_util_est) +
+			 *		  max(task_util, _task_util_est)
+			 *
+			 * while cpu_util_next is: max(cpu_util + task_util,
+			 *			       cpu_util_est + _task_util_est)
+			 */
+			if (cpu == dst_cpu) {
+				tsk = p;
+				util_running =
+					cpu_util_next(cpu, p, -1) + task_util_est(p);
+			}
 
 			/*
 			 * Busy time computation: utilization clamping is not
@@ -7852,7 +7867,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 			 * is already enough to scale the EM reported power
 			 * consumption at the (eventually clamped) cpu_capacity.
 			 */
-			sum_util += schedutil_cpu_util(cpu, util_cfs, cpu_cap,
+			sum_util += schedutil_cpu_util(cpu, util_running, cpu_cap,
 						       ENERGY_UTIL, NULL);
 
 			/*
@@ -7863,7 +7878,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 			 * FREQUENCY_UTIL's utilization can be max OPP.
 			 */
 			tsk = cpu == dst_cpu ? p : NULL;
-			cpu_util = schedutil_cpu_util(cpu, util_cfs, cpu_cap,
+			cpu_util = schedutil_cpu_util(cpu, util_freq, cpu_cap,
 						      FREQUENCY_UTIL, tsk);
 #endif
 			max_util = max(max_util, cpu_util);
