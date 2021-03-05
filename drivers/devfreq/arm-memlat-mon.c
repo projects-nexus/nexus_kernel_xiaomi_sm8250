@@ -647,9 +647,7 @@ static int memlat_mon_probe(struct platform_device *pdev, bool is_compute)
 		cpumask_copy(&mon->cpus, &cpu_grp->cpus);
 	} else {
 		if (!cpumask_subset(&mon->cpus, &cpu_grp->cpus)) {
-			dev_err(dev,
-				"Mon CPUs must be a subset of cpu_grp CPUs. mon=%*pbl cpu_grp=%*pbl\n",
-				mon->cpus, cpu_grp->cpus);
+			dev_err(dev, "Mon CPUs must be a subset of cpu_grp CPUs.\n");
 			ret = -EINVAL;
 			goto unlock_out;
 		}
