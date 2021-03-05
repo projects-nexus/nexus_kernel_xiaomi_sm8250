@@ -206,6 +206,7 @@ static int pm8008_write(struct regmap *regmap, u16 reg, const u8 *val,
 		pr_err("failed to write 0x%04x\n", reg);
 #else
 	pr_debug("Writing 0x%02x to 0x%04x\n", val, reg);
+	pr_debug("Writing 0x%2s to 0x%04x\n", val, reg);
 	rc = regmap_bulk_write(regmap, reg, val, count);
 	if (rc < 0)
 		pr_err("failed to write 0x%04x\n", reg);

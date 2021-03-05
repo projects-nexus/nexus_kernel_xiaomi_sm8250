@@ -1041,7 +1041,7 @@ static int cnss_wlfw_wlan_mac_req_send_sync(struct cnss_plat_data *plat_priv,
 	}
 
 	if (resp->resp.result != QMI_RESULT_SUCCESS_V01) {
-		cnss_pr_err("WLAN mac req failed, result: %d, err: %d\n",
+		cnss_pr_err("WLAN mac req failed, result: %d\n",
 			    resp->resp.result);
 
 		ret = -EIO;
@@ -2464,7 +2464,7 @@ int cnss_wlfw_server_exit(struct cnss_plat_data *plat_priv)
 
 	ret = cnss_qmi_init(plat_priv);
 	if (ret < 0) {
-		cnss_pr_err("QMI WLFW service registraton failed, ret\n", ret);
+		cnss_pr_err("QMI WLFW service registraton failed, ret: %d\n", ret);
 		CNSS_ASSERT(0);
 	}
 	return 0;

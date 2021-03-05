@@ -649,7 +649,7 @@ static int npu_notifier_cb(struct notifier_block *this, unsigned long code,
 	struct npu_device *npu_dev = host_ctx->npu_dev;
 	uint32_t reg_val;
 
-	NPU_DBG("notifier code %d\n", code);
+	NPU_DBG("notifier code %lu\n", code);
 	switch (code) {
 	case SUBSYS_BEFORE_POWERUP:
 	{

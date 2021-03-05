@@ -376,7 +376,7 @@ static void l2tp_recv_queue_skb(struct l2tp_session *session, struct sk_buff *sk
 		if (L2TP_SKB_CB(skbp)->ns > ns) {
 			__skb_queue_before(&session->reorder_q, skbp, skb);
 			l2tp_dbg(session, L2TP_MSG_SEQ,
-				 "%s: pkt %hu, inserted before %hu, reorder_q len=%d\n",
+				 "%s: pkt %u, inserted before %u, reorder_q len=%d\n",
 				 session->name, ns, L2TP_SKB_CB(skbp)->ns,
 				 skb_queue_len(&session->reorder_q));
 			atomic_long_inc(&session->stats.rx_oos_packets);
@@ -412,7 +412,7 @@ static void l2tp_recv_dequeue_skb(struct l2tp_session *session, struct sk_buff *
 		session->nr++;
 		session->nr &= session->nr_max;
 
-		l2tp_dbg(session, L2TP_MSG_SEQ, "%s: updated nr to %hu\n",
+		l2tp_dbg(session, L2TP_MSG_SEQ, "%s: updated nr to %u\n",
 			 session->name, session->nr);
 	}
 
