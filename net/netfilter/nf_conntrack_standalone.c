@@ -52,24 +52,24 @@ print_tuple(struct seq_file *s, const struct nf_conntrack_tuple *tuple,
 			   ntohs(tuple->src.u.icmp.id));
 		break;
 	case IPPROTO_TCP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		seq_printf(s, "sport=%d dport=%d ",
 			   ntohs(tuple->src.u.tcp.port),
 			   ntohs(tuple->dst.u.tcp.port));
 		break;
 	case IPPROTO_UDPLITE: /* fallthrough */
 	case IPPROTO_UDP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		seq_printf(s, "sport=%d dport=%d ",
 			   ntohs(tuple->src.u.udp.port),
 			   ntohs(tuple->dst.u.udp.port));
 
 		break;
 	case IPPROTO_DCCP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		seq_printf(s, "sport=%d dport=%d ",
 			   ntohs(tuple->src.u.dccp.port),
 			   ntohs(tuple->dst.u.dccp.port));
 		break;
 	case IPPROTO_SCTP:
-		seq_printf(s, "sport=%hu dport=%hu ",
+		seq_printf(s, "sport=%d dport=%d ",
 			   ntohs(tuple->src.u.sctp.port),
 			   ntohs(tuple->dst.u.sctp.port));
 		break;

@@ -506,14 +506,14 @@ static long spss_utils_ioctl(struct file *file,
 	size = _IOC_SIZE(cmd);
 	if (size && (cmd & IOC_IN)) {
 		if (size > sizeof(data)) {
-			pr_err("cmd [0x%x] size [0x%x] too large\n",
+			pr_err("cmd [0x%x] size [0x%lx] too large\n",
 				cmd, size);
 			return -EINVAL;
 		}
 
 		if (copy_from_user(data, (void __user *)arg, size)) {
 			pr_err("copy_from_user() failed, cmd [0x%x]\n",
-				cmd, size);
+				cmd);
 			return -EFAULT;
 		}
 	}
@@ -521,7 +521,7 @@ static long spss_utils_ioctl(struct file *file,
 	switch (cmd) {
 	case SPSS_IOC_SET_FW_CMAC:
 		if (size != sizeof(fw_and_apps_cmacs)) {
-			pr_err("cmd [0x%x] invalid size [0x%x]\n", cmd, size);
+			pr_err("cmd [0x%x] invalid size [0x%lx]\n", cmd, size);
 			return -EINVAL;
 		}
 
@@ -554,7 +554,7 @@ static long spss_utils_ioctl(struct file *file,
 	case SPSS_IOC_WAIT_FOR_EVENT:
 		/* check input params */
 		if (size != sizeof(struct spss_ioc_wait_for_event)) {
-			pr_err("cmd [0x%x] invalid size [0x%x]\n", cmd, size);
+			pr_err("cmd [0x%x] invalid size [0x%lx]\n", cmd, size);
 			return -EINVAL;
 		}
 		ret = spss_wait_for_event(req);
@@ -566,7 +566,7 @@ static long spss_utils_ioctl(struct file *file,
 	case SPSS_IOC_SIGNAL_EVENT:
 		/* check input params */
 		if (size != sizeof(struct spss_ioc_signal_event)) {
-			pr_err("cmd [0x%x] invalid size [0x%x]\n", cmd, size);
+			pr_err("cmd [0x%x] invalid size [0x%lx]\n", cmd, size);
 			return -EINVAL;
 		}
 		ret = spss_signal_event(req);
@@ -578,7 +578,7 @@ static long spss_utils_ioctl(struct file *file,
 	case SPSS_IOC_IS_EVENT_SIGNALED:
 		/* check input params */
 		if (size != sizeof(struct spss_ioc_is_signaled)) {
-			pr_err("cmd [0x%x] invalid size [0x%x]\n", cmd, size);
+			pr_err("cmd [0x%x] invalid size [0x%lx]\n", cmd, size);
 			return -EINVAL;
 		}
 		ret = spss_is_event_signaled(req);
@@ -856,7 +856,7 @@ static int spss_parse_dt(struct device_node *node)
 
 	/* cmac buffer after spss firmware end */
 	cmac_mem_addr = pil_addr + pil_size;
-	pr_info("iar_buf_addr [0x%08x].\n", cmac_mem_addr);
+	pr_info("iar_buf_addr [0x%08llx].\n", cmac_mem_addr);
 
 	ret = of_property_read_u32(node, "qcom,spss-fuse3-addr",
 		&spss_fuse3_addr);
