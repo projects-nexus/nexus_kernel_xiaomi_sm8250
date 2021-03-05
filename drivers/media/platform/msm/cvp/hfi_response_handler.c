@@ -531,7 +531,7 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 	memcpy(&sess_msg->pkt, pkt, get_msg_size());
 
 	dprintk(CVP_DBG,
-		"%s: Received msg %x cmd_done.status=%d sessionid=%x\n",
+		"%s: Received msg %x cmd_done.status=%d sessionid=%pK\n",
 		__func__, pkt->packet_type,
 		hfi_map_err_status(get_msg_errorcode(pkt)), session_id);
 

@@ -181,7 +181,7 @@ void dwc3_dbg_dma_dequeue(struct dwc3 *dwc, u8 ep_num, struct dwc3_request *req)
 		return;
 
 	ipc_log_string(dwc->dwc_dma_ipc_log_ctxt,
-		"%02X-%-3.3s %-25.25s 0x%pK 0x%lx 0x%lx", ep_num >> 1,
+		"%02X-%-3.3s %-25.25s 0x%pK 0x%llx 0x%llx", ep_num >> 1,
 		ep_num & 1 ? "IN":"OUT", "DEQUEUE", &req->request,
 		req->request.dma, req->trb_dma);
 }

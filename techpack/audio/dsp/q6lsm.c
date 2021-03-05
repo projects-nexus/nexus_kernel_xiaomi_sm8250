@@ -230,7 +230,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 		}
 
 		if (client->param_size != param_size) {
-			pr_err("%s: response payload size %d mismatched with user requested %zu\n",
+			pr_err("%s: response payload size %d mismatched with user requested %lu\n",
 			    __func__, param_size, client->param_size);
 			ret = -EINVAL;
 			goto done;
