@@ -247,7 +247,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 		break;
 
 	default:
-		hdd_err("Packet Filter Request: Invalid %d",
+		hdd_debug("Packet Filter Request: Invalid %d",
 		       request->filter_action);
 		return -EINVAL;
 	}
