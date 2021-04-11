@@ -34,6 +34,9 @@
 #include <linux/devfreq_boost.h>
 #include <linux/pm_qos.h>
 #include <linux/sync_file.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
+#include <linux/sched/sysctl.h>
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
@@ -2599,8 +2602,12 @@ static int __drm_mode_atomic_ioctl(struct drm_device *dev, void *data,
 			(arg->flags & DRM_MODE_PAGE_FLIP_EVENT))
 		return -EINVAL;
 
-	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY))
+	/* Boost CPU and DDR when committing a new frame if sched_boost > 0 */
+	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY) &&
+			sysctl_sched_boost) {
+		cpu_input_boost_kick();
 		devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
+	}
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
 
