@@ -213,7 +213,7 @@ ifeq ($(CONFIG_ROME_IF),usb)
 endif
 
 
-CONFIG_FEATURE_EPPING := y
+CONFIG_FEATURE_EPPING := n
 
 #Flag to enable offload packets feature
 CONFIG_WLAN_OFFLOAD_PACKETS := y
@@ -335,7 +335,6 @@ CONFIG_QCA_WIFI_QCA8074 := y
 CONFIG_QCA_WIFI_QCA8074_VP := y
 CONFIG_DP_INTR_POLL_BASED := y
 CONFIG_TX_PER_PDEV_DESC_POOL := y
-CONFIG_DP_TRACE := y
 CONFIG_FEATURE_TSO := y
 CONFIG_DP_LFR := y
 CONFIG_HTT_PADDR64 := y
@@ -369,21 +368,21 @@ ifneq ($(TARGET_BUILD_VARIANT),user)
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
-ifeq ($(CONFIG_DEBUG_FS), y)
+# ifeq ($(CONFIG_DEBUG_FS), y)
        # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
        # configuration.
-       CONFIG_WLAN_DEBUGFS := y
+       # CONFIG_WLAN_DEBUGFS := y
 
-       CONFIG_WLAN_POWER_DEBUGFS := y
-endif
+       # CONFIG_WLAN_POWER_DEBUGFS := y
+# endif
 
 # Feature flags which are not (currently) configurable via Kconfig
 
 #Whether to build debug version
-BUILD_DEBUG_VERSION := y
+BUILD_DEBUG_VERSION := n
 
 #Enable this flag to build driver in diag version
-BUILD_DIAG_VERSION := y
+BUILD_DIAG_VERSION := n
 
 ifeq ($(CONFIG_SLUB_DEBUG), y)
 	PANIC_ON_BUG := y
@@ -406,7 +405,7 @@ CONFIG_WLAN_LOG_INFO := y
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
 
 #Disable packet log
-CONFIG_REMOVE_PKT_LOG := n
+CONFIG_REMOVE_PKT_LOG := y
 
 #Enable 11AC TX
 ifeq ($(CONFIG_ROME_IF),pci)
@@ -563,7 +562,7 @@ CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 CONFIG_QCA_SINGLE_BINARY_SUPPORT := n
 
 #Enable collecting target RAM dump after kernel panic
-CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC := y
+CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC := n
 
 #Flag to enable/disable secure firmware feature
 CONFIG_FEATURE_SECURE_FIRMWARE := n
@@ -579,7 +578,7 @@ CONFIG_WLAN_DFS_STATIC_MEM_ALLOC := y
 CONFIG_FEATURE_HTC_CREDIT_HISTORY := y
 
 #Flag to enable MTRACE feature
-CONFIG_TRACE_RECORD_FEATURE := y
+CONFIG_TRACE_RECORD_FEATURE := n
 
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
@@ -588,7 +587,7 @@ CONFIG_WLAN_DFS_MASTER_ENABLE := y
 CONFIG_WLAN_WEXT_SUPPORT_ENABLE := y
 
 #Flag to enable nud tracking feature
-CONFIG_WLAN_NUD_TRACKING := y
+CONFIG_WLAN_NUD_TRACKING := n
 
 #Flag to enable wbuff feature
 CONFIG_WLAN_WBUFF := y
@@ -634,7 +633,7 @@ CONFIG_HDD_INIT_WITH_RTNL_LOCK := y
 CONFIG_WLAN_CONV_SPECTRAL_ENABLE := y
 CONFIG_WLAN_SPECTRAL_ENABLE := y
 CONFIG_WMI_CMD_STRINGS := y
-CONFIG_FEATURE_MONITOR_MODE_SUPPORT := y
+CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n
 CONFIG_WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY := n
 CONFIG_WLAN_FEATURE_TWT := y
 
@@ -718,13 +717,11 @@ ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
 	endif
 endif
 
-ifneq ($(CONFIG_HIF_USB), y)
-CONFIG_WLAN_LOGGING_SOCK_SVC := y
-endif
+CONFIG_WLAN_LOGGING_SOCK_SVC := n
 
 ifneq ($(TARGET_BUILD_VARIANT),user)
 CONFIG_DESC_DUP_DETECT_DEBUG := y
-CONFIG_DEBUG_RX_RING_BUFFER := y
+CONFIG_DEBUG_RX_RING_BUFFER := n
 endif
 
 
@@ -755,8 +752,8 @@ endif
 CONFIG_SM_ENG_HIST := n
 
 ifeq ($(CONFIG_WLAN_SYSFS), y)
-#Enable Beacon Reception Stats
-CONFIG_FEATURE_BECN_STATS := y
+#Disable Beacon Reception Stats
+CONFIG_FEATURE_BECN_STATS := n
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
