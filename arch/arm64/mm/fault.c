@@ -487,7 +487,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 	 * let's try a speculative page fault without grabbing the
 	 * mmap_sem.
 	 */
-	fault = handle_speculative_fault(mm, addr, mm_flags, &vma);
+	fault = handle_speculative_fault(mm, addr, mm_flags, &vma, regs);
 	if (fault != VM_FAULT_RETRY)
 		goto done;
 
