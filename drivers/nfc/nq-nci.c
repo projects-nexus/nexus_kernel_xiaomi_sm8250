@@ -21,7 +21,9 @@
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
 #endif
+#ifndef CONFIG_MACH_XIAOMI_SM8250
 #include <linux/jiffies.h>
+#endif
 #include <linux/regulator/consumer.h>
 
 struct nqx_platform_data {
@@ -1184,7 +1186,9 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 {
 	int ret = 0;
 
-
+#ifdef CONFIG_MACH_XIAOMI_SM8250
+	int send_retry_count = 0;
+#endif
 	unsigned int enable_gpio = nqx_dev->en_gpio;
 	char *nci_reset_cmd = NULL;
 	char *nci_reset_rsp = NULL;
@@ -1218,9 +1222,11 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 	}
 
 	/* making sure that the NFCC starts in a clean state. */
+#ifndef CONFIG_MACH_XIAOMI_SM8250
 	gpio_set_value(enable_gpio, 1);/* HPD : Enable*/
 	/* hardware dependent delay */
 	usleep_range(10000, 10100);
+#endif
 	gpio_set_value(enable_gpio, 0);/* ULPM: Disable */
 	/* hardware dependent delay */
 	usleep_range(10000, 10100);
@@ -1237,6 +1243,20 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 	if (ret < 0) {
 		dev_err(&client->dev,
 		"%s: - i2c_master_send core reset Error\n", __func__);
+#ifdef CONFIG_MACH_XIAOMI_SM8250
+		if (send_retry_count < MAX_RETRY_COUNT) {
+			send_retry_count  += 1;
+			goto reset_enable_gpio;
+		} else {
+			dev_warn(&client->dev,
+				"%s: - send core reset retry Max times, go on\n", __func__);
+			nqx_dev->nqx_info.info.chip_type = NFCC_SN100_A;
+			nqx_dev->nqx_info.info.rom_version = 0;
+			nqx_dev->nqx_info.info.fw_minor = 0;
+			nqx_dev->nqx_info.info.fw_major = 0;
+			goto err_nfcc_reset_failed;
+		}
+#endif
 
 		if (gpio_is_valid(nqx_dev->firm_gpio)) {
 			gpio_set_value(nqx_dev->firm_gpio, 1);
@@ -1287,11 +1307,16 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 		goto err_nfcc_reset_failed;
 	}
 
+#ifdef CONFIG_MACH_XIAOMI_SM8250
+	/* hardware dependent delay */
+	msleep(60);
+#else
 	ret = is_data_available_for_read(nqx_dev);
 	if (ret <= 0) {
 		nqx_disable_irq(nqx_dev);
 		goto err_nfcc_hw_check;
 	}
+#endif
 
 
 	/* Read Header of RESET command */
@@ -1301,6 +1326,10 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 		"%s: - i2c_master_recv get RESET rsp header Error\n", __func__);
 		goto err_nfcc_hw_check;
 	}
+#ifdef CONFIG_MACH_XIAOMI_SM8250
+	/* hardware dependent delay */
+	msleep(30);
+#else
 	ret = i2c_master_recv(client, &nci_reset_rsp[NCI_PAYLOAD_START_INDEX],
 				nci_reset_rsp[NCI_PAYLOAD_LENGTH_INDEX]);
 	if (ret != nci_reset_rsp[NCI_PAYLOAD_LENGTH_INDEX]) {
@@ -1308,6 +1337,7 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 		"%s: - i2c_master_recv get RESET rsp data Error\n", __func__);
 		goto err_nfcc_hw_check;
 	}
+#endif
 
 	/* Retrieve NFCC HW info */
 	ret = get_nfcc_hw_info(client, nqx_dev,
@@ -1317,7 +1347,6 @@ static int nfcc_hw_check(struct i2c_client *client, struct nqx_dev *nqx_dev)
 			"%s: - Error in getting NFCC HW info\n", __func__);
 		goto err_nfcc_hw_check;
 	}
-
 
 	dev_dbg(&client->dev,
 		"%s: - nq - reset cmd answer : NfcNciRx %x %x %x\n",
