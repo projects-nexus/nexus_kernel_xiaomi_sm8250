@@ -7126,15 +7126,14 @@ static bool ufshcd_wb_sup(struct ufs_hba *hba)
 #if defined(CONFIG_UFS3V1)
 	if (is_samsung_ufs(hba))
 		return false;
-#elif defined(UFS3V0)
-	return false;
+	else
+		return (hba->dev_info.d_ext_ufs_feature_sup &
+			UFS_DEV_WRITE_BOOSTER_SUP);
+#else
+	return (hba->dev_info.d_ext_ufs_feature_sup &
+		UFS_DEV_WRITE_BOOSTER_SUP);
 #endif
 #endif
-
-	return ((hba->dev_info.d_ext_ufs_feature_sup &
-		   UFS_DEV_WRITE_BOOSTER_SUP) &&
-		  (hba->dev_info.b_wb_buffer_type
-		   || hba->dev_info.wb_config_lun));
 }
 
 static int ufshcd_wb_ctrl(struct ufs_hba *hba, bool enable)
@@ -8728,6 +8727,7 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 	int err;
 	size_t buff_len;
 #ifdef CONFIG_MACH_XIAOMI_SM8250
+	u8 model_index;
 	u8 *desc_buf;
 #else
 	u8 *desc_buf, wb_buf[4];
@@ -8765,7 +8765,7 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 	    (dev_desc->wspecversion == 0x220) ||
 	    (dev_desc->wmanufacturerid == UFS_VENDOR_TOSHIBA &&
 	     dev_desc->wspecversion >= 0x300 &&
-	     hba->desc_size.dev_desc >= 0x59)) {
+	     hba->desc_size.dev_desc >= 0x59))
 		hba->dev_info.d_ext_ufs_feature_sup =
 			desc_buf[DEVICE_DESC_PARAM_EXT_UFS_FEATURE_SUP]
 								<< 24 |
@@ -8774,32 +8774,6 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 			desc_buf[DEVICE_DESC_PARAM_EXT_UFS_FEATURE_SUP + 2]
 								<< 8 |
 			desc_buf[DEVICE_DESC_PARAM_EXT_UFS_FEATURE_SUP + 3];
-		hba->dev_info.b_wb_buffer_type =
-			desc_buf[DEVICE_DESC_PARAM_WB_TYPE];
-
-		if (hba->dev_info.b_wb_buffer_type)
-			goto skip_unit_desc;
-
-		hba->dev_info.wb_config_lun = false;
-		for (lun = 0; lun < UFS_UPIU_MAX_GENERAL_LUN; lun++) {
-			d_lu_wb_buf_alloc = 0;
-			err = ufshcd_read_unit_desc_param(hba,
-					lun,
-					UNIT_DESC_PARAM_WB_BUF_ALLOC_UNITS,
-					(u8 *)&d_lu_wb_buf_alloc,
-					sizeof(d_lu_wb_buf_alloc));
-
-			if (err)
-				break;
-
-			if (d_lu_wb_buf_alloc) {
-				hba->dev_info.wb_config_lun = true;
-				break;
-			}
-		}
-	}
-
-skip_unit_desc:
 #endif
 	/* Zero-pad entire buffer for string termination. */
 	memset(desc_buf, 0, buff_len);
