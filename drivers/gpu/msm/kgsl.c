@@ -5457,7 +5457,7 @@ static long kgsl_run_one_worker(struct kthread_worker *worker,
 {
 	kthread_init_worker(worker);
 	if (perf_crit)
-		*thread = kthread_run_perf_critical(kthread_worker_fn, worker, name);
+		*thread = kthread_run_perf_critical(cpu_perf_mask, kthread_worker_fn, worker, name);
 	else
 		*thread = kthread_run(kthread_worker_fn, worker, name);
 	if (IS_ERR(*thread)) {
