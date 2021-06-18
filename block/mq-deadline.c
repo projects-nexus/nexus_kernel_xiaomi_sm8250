@@ -273,7 +273,6 @@ deadline_next_request(struct deadline_data *dd, int data_dir)
 static struct request *__dd_dispatch_request(struct deadline_data *dd)
 {
 	struct request *rq, *next_rq;
-	bool reads, writes;
 	int data_dir;
 
 	lockdep_assert_held(&dd->lock);
@@ -283,9 +282,6 @@ static struct request *__dd_dispatch_request(struct deadline_data *dd)
 		list_del_init(&rq->queuelist);
 		goto done;
 	}
-
-	reads = !list_empty(&dd->fifo_list[READ]);
-	writes = !list_empty(&dd->fifo_list[WRITE]);
 
 	/*
 	 * batches are currently reads XOR writes
@@ -303,7 +299,7 @@ static struct request *__dd_dispatch_request(struct deadline_data *dd)
 	 * data direction (read / write)
 	 */
 
-	if (reads) {
+	if (!list_empty(&dd->fifo_list[READ])) {
 		BUG_ON(RB_EMPTY_ROOT(&dd->sort_list[READ]));
 
 		if (deadline_fifo_request(dd, WRITE) &&
@@ -319,7 +315,7 @@ static struct request *__dd_dispatch_request(struct deadline_data *dd)
 	 * there are either no reads or writes have been starved
 	 */
 
-	if (writes) {
+	if (!list_empty(&dd->fifo_list[WRITE])) {
 dispatch_writes:
 		BUG_ON(RB_EMPTY_ROOT(&dd->sort_list[WRITE]));
 
