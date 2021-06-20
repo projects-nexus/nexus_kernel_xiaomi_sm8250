@@ -248,7 +248,7 @@ static int aarch32_alloc_kuser_vdso_page(void)
 	if (!IS_ENABLED(CONFIG_KUSER_HELPERS))
 		return 0;
 
-	vdso_page = get_zeroed_page(GFP_ATOMIC);
+	vdso_page = get_zeroed_page(GFP_KERNEL);
 	if (!vdso_page)
 		return -ENOMEM;
 
@@ -281,7 +281,7 @@ static int __aarch32_alloc_vdso_pages(void)
 	unsigned long sigpage;
 	int ret;
 
-	sigpage = get_zeroed_page(GFP_ATOMIC);
+	sigpage = get_zeroed_page(GFP_KERNEL);
 	if (!sigpage)
 		return -ENOMEM;
 
