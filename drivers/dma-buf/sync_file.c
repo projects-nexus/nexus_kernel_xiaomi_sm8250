@@ -373,12 +373,9 @@ static long sync_file_ioctl_fence_info(struct sync_file *sync_file,
 				       unsigned long arg)
 {
 	struct sync_file_info info;
-	struct sync_fence_info *fence_info = NULL;
 	struct dma_fence **fences;
-	__u32 size;
-	int num_fences, ret, i;
-	size_t offset;
-	size_t len;
+	size_t len, offset;
+	int num_fences, i;
 
 	arg += offsetof(typeof(info), status);
 	len = sizeof(info) - offsetof(typeof(info), status);
@@ -406,37 +403,31 @@ static long sync_file_ioctl_fence_info(struct sync_file *sync_file,
 	if (info.num_fences < num_fences)
 		return -EINVAL;
 
-	offset = offsetof(typeof(*fence_info), status);
-	size = sizeof(*fence_info) - offset;
-	fence_info = kzalloc(size * num_fences, GFP_KERNEL);
-	if (!fence_info)
-		return -ENOMEM;
-
+	offset = offsetof(struct sync_fence_info, status);
 	for (i = 0; i < num_fences; i++) {
-		struct sync_fence_info *fence = (void *)&fence_info[i] - offset;
-		int status = sync_fill_fence_info(fences[i], fence);
+		struct {
+			__s32	status;
+			__u32	flags;
+			__u64	timestamp_ns;
+		} fence_info;
+		struct sync_fence_info *finfo = (void *)&fence_info - offset;
+		int status = sync_fill_fence_info(fences[i], finfo);
 		u64 dest;
 
+		/* Don't leak kernel memory to userspace via finfo->flags */
+		finfo->flags = 0;
 		info.status = info.status <= 0 ? info.status : status;
-		dest = info.sync_fence_info + i * sizeof(*fence_info) + offset;
-		if (copy_to_user(u64_to_user_ptr(dest), &fence->status, size)) {
-			ret = -EFAULT;
-			goto out;
-		}
+		dest = info.sync_fence_info + i * sizeof(*finfo) + offset;
+		if (copy_to_user(u64_to_user_ptr(dest), &fence_info,
+				 sizeof(fence_info)))
+			return -EFAULT;
 	}
 
 no_fences:
 	info.num_fences = num_fences;
-
 	if (copy_to_user((void __user *)arg, &info.status, len))
-		ret = -EFAULT;
-	else
-		ret = 0;
-
-out:
-	kfree(fence_info);
-
-	return ret;
+		return -EFAULT;
+	return 0;
 }
 
 static long sync_file_ioctl(struct file *file, unsigned int cmd,
