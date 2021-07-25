@@ -148,7 +148,7 @@ int devfreq_add_devbw(struct device *dev)
 	d->num_paths = num_paths;
 
 	p = &d->dp;
-	p->polling_ms = 50;
+	p->polling_ms = 200;
 	p->target = devbw_target;
 	p->get_dev_status = devbw_get_dev_status;
 
