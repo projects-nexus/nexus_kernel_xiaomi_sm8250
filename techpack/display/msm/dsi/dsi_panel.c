@@ -1142,7 +1142,9 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	mode->clk_rate_hz = !rc ? tmp64 : 0;
 #ifdef CONFIG_MACH_XIAOMI_LMI
 	if (tmp64 == 1106000000) {
-		if (framerate_override == 4)
+	    if (framerate_override == 5)
+	        mode->clk_rate_hz = 1485000000;
+		else if (framerate_override == 4)
 			mode->clk_rate_hz = 1420000000;
 		else if (framerate_override == 3)
 			mode->clk_rate_hz = 1327200000;
@@ -1172,7 +1174,9 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	}
 #ifdef CONFIG_MACH_XIAOMI_LMI
 	if (mode->refresh_rate == 60) {
-		if (framerate_override == 4)
+	    if (framerate_override == 5)
+	        mode->refresh_rate = 81;
+		else if (framerate_override == 4)
 			mode->refresh_rate = 77;
 		else if (framerate_override == 3)
 			mode->refresh_rate = 72;
