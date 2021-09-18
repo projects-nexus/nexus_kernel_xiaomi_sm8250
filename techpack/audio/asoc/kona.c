@@ -967,8 +967,8 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.hs_ext_micbias = true,
 	.key_code[0] = KEY_MEDIA,
 #ifdef CONFIG_MACH_XIAOMI_SM8250
-	.key_code[1] = BTN_1,
-	.key_code[2] = BTN_2,
+	.key_code[1] = KEY_VOLUMEUP,
+	.key_code[2] = KEY_VOLUMEDOWN,
 	.key_code[3] = 0,
 #else
 	.key_code[1] = KEY_VOICECOMMAND,

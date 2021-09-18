@@ -327,8 +327,8 @@ static int tfa98xx_register_inputdev(struct tfa98xx *tfa98xx)
 
 	input->evbit[0] = BIT_MASK(EV_KEY);
 	input->keybit[BIT_WORD(BTN_0)] |= BIT_MASK(BTN_0);
-	input->keybit[BIT_WORD(BTN_1)] |= BIT_MASK(BTN_1);
-	input->keybit[BIT_WORD(BTN_2)] |= BIT_MASK(BTN_2);
+	input->keybit[BIT_WORD(KEY_VOLUMEUP)] |= BIT_MASK(KEY_VOLUMEUP);
+	input->keybit[BIT_WORD(KEY_VOLUMEDOWN)] |= BIT_MASK(KEY_VOLUMEDOWN);
 	input->keybit[BIT_WORD(BTN_3)] |= BIT_MASK(BTN_3);
 	input->keybit[BIT_WORD(BTN_4)] |= BIT_MASK(BTN_4);
 	input->keybit[BIT_WORD(BTN_5)] |= BIT_MASK(BTN_5);
