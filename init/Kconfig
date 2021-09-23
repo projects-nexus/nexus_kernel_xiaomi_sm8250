@@ -32,6 +32,14 @@ config CC_HAS_ASM_GOTO
 config TOOLS_SUPPORT_RELR
 	def_bool $(success,env "CC=$(CC)" "LD=$(LD)" "NM=$(NM)" "OBJCOPY=$(OBJCOPY)" $(srctree)/scripts/tools-support-relr.sh)
 
+config LLVM_POLLY
+	bool "Enable LLVM's polyhedral loop optimizer (Polly)"
+	help
+	  This option enables LLVM's polyhedral loop optimizer known as Polly.
+	  Polly is able to optimize various loops throughout the kernel for
+	  maximum cache locality. This requires an LLVM toolchain explicitly
+	  compiled with Polly support.
+
 config CONSTRUCTORS
 	bool
 	depends on !UML
