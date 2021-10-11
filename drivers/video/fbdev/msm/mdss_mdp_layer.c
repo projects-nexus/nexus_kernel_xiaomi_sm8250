@@ -1370,7 +1370,6 @@ static struct mdss_fence *__create_fence(struct msm_fb_data_type *mfd,
 	struct mdss_overlay_private *mdp5_data;
 	struct mdss_mdp_ctl *ctl;
 	struct mdss_fence *sync_fence = NULL;
-	char fence_name[32];
 
 	mdp5_data = mfd_to_mdp5_data(mfd);
 
@@ -1385,17 +1384,6 @@ static struct mdss_fence *__create_fence(struct msm_fb_data_type *mfd,
 		return ERR_PTR(-EPERM);
 	}
 
-	if (fence_type == MDSS_MDP_RETIRE_FENCE)
-		snprintf(fence_name, sizeof(fence_name), "fb%d_retire",
-			mfd->index);
-	else if (fence_type == MDSS_MDP_RELEASE_FENCE)
-		snprintf(fence_name, sizeof(fence_name), "fb%d_release",
-			mfd->index);
-	else if (fence_type == MDSS_MDP_CWB_RETIRE_FENCE)
-		snprintf(fence_name, sizeof(fence_name), "cwb%d_retire",
-			mfd->index);
-
-
 	if ((fence_type == MDSS_MDP_RETIRE_FENCE) &&
 		(mfd->panel.type == MIPI_CMD_PANEL)) {
 		if (sync_pt_data->timeline_retire) {
@@ -1403,27 +1391,27 @@ static struct mdss_fence *__create_fence(struct msm_fb_data_type *mfd,
 				mdp5_data->retire_cnt++;
 			sync_fence = mdss_fb_sync_get_fence(
 				sync_pt_data->timeline_retire,
-				fence_name, value);
+				"", value);
 		} else {
 			return ERR_PTR(-EPERM);
 		}
 	} else if (fence_type == MDSS_MDP_CWB_RETIRE_FENCE) {
 		sync_fence = mdss_fb_sync_get_fence(sync_pt_data->timeline,
-				fence_name, sync_pt_data->timeline_value + 1);
+				"", sync_pt_data->timeline_value + 1);
 	} else {
 		if (fence_type == MDSS_MDP_RETIRE_FENCE)
 			sync_fence = mdss_fb_sync_get_fence(
 						sync_pt_data->timeline_retire,
-						fence_name, value);
+						"", value);
 		else
 			sync_fence = mdss_fb_sync_get_fence(
 						sync_pt_data->timeline,
-						fence_name, value);
+						"", value);
 
 	}
 
 	if (IS_ERR_OR_NULL(sync_fence)) {
-		pr_err("%s: unable to retrieve release fence\n", fence_name);
+		pr_err("%s: unable to retrieve release fence\n", __func__);
 		goto end;
 	}
 
@@ -1431,7 +1419,7 @@ static struct mdss_fence *__create_fence(struct msm_fb_data_type *mfd,
 	*fence_fd = mdss_get_sync_fence_fd(sync_fence);
 	if (*fence_fd < 0) {
 		pr_err("%s: get_unused_fd_flags failed error:0x%x\n",
-			fence_name, *fence_fd);
+			__func__, *fence_fd);
 		mdss_put_sync_fence(sync_fence);
 		sync_fence = NULL;
 		goto end;
