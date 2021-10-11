@@ -16,11 +16,11 @@
 
 #ifndef _DP_IPA_H_
 #define _DP_IPA_H_
+#define IPA_TCL_DATA_RING_IDX	2
 
 #ifdef IPA_OFFLOAD
 
 #define DP_IPA_MAX_IFACE	3
-#define IPA_TCL_DATA_RING_IDX	2
 #define IPA_REO_DEST_RING_IDX	3
 #define IPA_RX_REFILL_BUF_RING_IDX	2
 
