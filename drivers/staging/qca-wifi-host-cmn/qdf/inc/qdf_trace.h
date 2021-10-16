@@ -1302,6 +1302,7 @@ struct category_name_info {
 	unsigned char category_name_str[QDF_MAX_NAME_SIZE];
 };
 
+#ifdef QDF_ENABLE_TRACING
 /**
  * qdf_trace_msg_cmn()- Converged logging API
  * @idx: Index of print control object assigned to the module
@@ -1324,6 +1325,16 @@ void qdf_trace_msg_cmn(unsigned int idx,
 			QDF_TRACE_LEVEL verbose,
 			const char *str_format,
 			va_list val);
+#else
+static inline
+void qdf_trace_msg_cmn(unsigned int idx,
+			QDF_MODULE_ID category,
+			QDF_TRACE_LEVEL verbose,
+			const char *str_format,
+			va_list val)
+{
+}
+#endif
 
 /**
  * struct qdf_print_ctrl: QDF Print Control structure
