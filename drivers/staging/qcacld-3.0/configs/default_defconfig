@@ -21,7 +21,7 @@ ifeq ($(CONFIG_CNSS_QCA6390), y)
 	endif
 	CONFIG_SCALE_INCLUDES := y
 	CONFIG_HASTINGS_BT_WAR := y
-	CONFIG_WDI3_IPA_OVER_GSI :=y
+	CONFIG_WDI3_IPA_OVER_GSI := y
 	CONFIG_DIRECT_BUF_RX_ENABLE := y
 	CONFIG_WMI_DBR_SUPPORT := y
 	CONFIG_MORE_TX_DESC := y
@@ -97,9 +97,6 @@ ifndef CONFIG_ROME_IF
 endif
 endif
 
-# Make WLAN as open-source driver by default
-WLAN_OPEN_SOURCE := y
-
 ifeq ($(CONFIG_ICNSS), y)
 	CONFIG_HELIUMPLUS := y
 	CONFIG_64BIT_PADDR := y
@@ -112,11 +109,8 @@ ifeq ($(CONFIG_ICNSS), y)
 endif
 
 DEVELOPER_DISABLE_BUILD_TIMESTAMP := y
-ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP), y)
-ifneq ($(WLAN_DISABLE_BUILD_TAG), y)
-CONFIG_BUILD_TAG := n
-endif
-endif
+
+WLAN_DISABLE_BUILD_TAG := y
 
 ifeq ($(CONFIG_ARCH_MDM9630), y)
 CONFIG_MOBILE_ROUTER := y
@@ -167,9 +161,6 @@ ifneq ($(CONFIG_MOBILE_ROUTER), y)
 CONFIG_QCOM_TDLS := y
 
 CONFIG_WLAN_SYSFS := y
-CONFIG_WLAN_POWER_DEBUG := y
-#Disable Beacon Reception Stats
-CONFIG_FEATURE_BECN_STATS := n
 endif
 
 #Disable the Export Symbol config
@@ -274,10 +265,8 @@ endif
 
 #Flag to enable Linux QCMBR feature as default feature
 ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_LINUX_QCMBR :=y
+	CONFIG_LINUX_QCMBR := y
 endif
-
-CONFIG_FEATURE_EPPING := n
 
 #Flag to enable offload packets feature
 CONFIG_WLAN_OFFLOAD_PACKETS := y
@@ -307,7 +296,6 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 
 	# Flag to enable NAPI
 	CONFIG_WLAN_NAPI := y
-	CONFIG_WLAN_NAPI_DEBUG := n
 
 	# Flag to enable FW based TX Flow control
 	ifeq ($(CONFIG_LITHIUM), y)
@@ -338,13 +326,6 @@ CONFIG_LFR_SUBNET_DETECTION := y
 
 # Flag to enable MCC to SCC switch feature
 CONFIG_MCC_TO_SCC_SWITCH := y
-
-ifeq ($(CONFIG_SLUB_DEBUG), y)
-	# Enable Obj Mgr Degug services if slub build
-	CONFIG_WLAN_OBJMGR_DEBUG:= y
-	CONFIG_MPC_UT_FRAMEWORK := y
-	CONFIG_LOCK_STATS_ON:= y
-endif
 
 ifeq (y,$(findstring y,$(CONFIG_QCA_WIFI_SDIO) $(CONFIG_HIF_USB)))
 CONFIG_HL_DP_SUPPORT := y
@@ -387,12 +368,6 @@ ifeq ($(CONFIG_64BIT_PADDR), y)
 CONFIG_HTT_PADDR64 := y
 endif
 
-ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
-CONFIG_OL_RX_INDICATION_RECORD := y
-CONFIG_TSOSEG_DEBUG := y
-CONFIG_HIF_LARGE_CE_RING_HISTORY := 8192
-endif
-
 endif #CONFIG_HELIUMPLUS
 
 ifeq ($(CONFIG_LITHIUM), y)
@@ -423,10 +398,6 @@ ifeq ($(CONFIG_CNSS_QCA6750), y)
 endif
 
 ifeq ($(CONFIG_LITHIUM), y)
-#
-# Disable VERBOSE debug INI mechanism
-#
-CONFIG_VERBOSE_DEBUG := n
 CONFIG_RX_DESC_SANITY_WAR := y
 ifeq ($(CONFIG_PCI_MSM), y)
 	CONFIG_FEATURE_HAL_DELAYED_REG_WRITE := y
@@ -465,75 +436,7 @@ ifeq ($(CONFIG_DISABLE_DP_STATS), y)
 endif
 endif
 
-# As per target team, build is done as follows:
-# Defconfig : build with default flags
-# Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
-#	      CONFIG_SLUB_DEBUG_ON=y + CONFIG_PAGE_POISONING=y
-# Perf      : Using appropriate msmXXXX-perf_defconfig
-#
-# Shipment builds (user variants) should not have any debug feature
-# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
-# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
-# there is no other way to identify defconfig builds, QCOMs internal
-# representation of perf builds (identified using the string 'perf'),
-# is used to identify if the build is a slub or defconfig one. This
-# way no critical debug feature will be enabled for perf and shipment
-# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
-# config.
-ifneq ($(TARGET_BUILD_VARIANT),user)
-	ifeq ($(CONFIG_LITHIUM), y)
-		CONFIG_FEATURE_PKTLOG := n
-	else
-		CONFIG_FEATURE_PKTLOG := y
-	endif
-	CONFIG_WLAN_DEBUG_CRASH_INJECT := y
-endif
-
-#Enable WLAN/Power debugfs feature only if debug_fs is enabled
-# ifeq ($(CONFIG_DEBUG_FS), y)
-       # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
-       # configuration.
-       # CONFIG_WLAN_DEBUGFS := y
-
-       # Flag to enable streamfs. Depends on CONFIG_DEBUG_FS and
-       # CONFIG_RELAY in kernel configuration.
-ifeq ($(CONFIG_RELAY), y)
-       CONFIG_WLAN_STREAMFS := y
-endif
-# endif
-
-# ifeq ($(CONFIG_WLAN_DEBUGFS), y)
-       CONFIG_WLAN_MWS_INFO_DEBUGFS := y
-       CONFIG_WLAN_FEATURE_MIB_STATS := y
-else
-       CONFIG_WLAN_MWS_INFO_DEBUGFS := n
-       CONFIG_WLAN_FEATURE_MIB_STATS := n
-# endif
-
 # Feature flags which are not (currently) configurable via Kconfig
-
-#Whether to build debug version
-BUILD_DEBUG_VERSION := n
-
-#Enable this flag to build driver in diag version
-BUILD_DIAG_VERSION := n
-
-ifeq ($(CONFIG_SLUB_DEBUG), y)
-	PANIC_ON_BUG := y
-	WLAN_WARN_ON_ASSERT := y
-else ifeq ($(CONFIG_PERF_DEBUG), y)
-	PANIC_ON_BUG := y
-	WLAN_WARN_ON_ASSERT := y
-else
-	PANIC_ON_BUG := n
-	WLAN_WARN_ON_ASSERT := n
-endif
-
-# Compile all log levels by default
-CONFIG_WLAN_LOG_FATAL := y
-CONFIG_WLAN_LOG_ERROR := n
-CONFIG_WLAN_LOG_WARN := n
-CONFIG_WLAN_LOG_INFO := n
 
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
@@ -688,15 +591,15 @@ CONFIG_QCA_WIFI_FTM := y
 ifeq ($(CONFIG_QCA_WIFI_FTM), y)
 
 ifeq ($(CONFIG_NL80211_TESTMODE), y)
-	QCA_WIFI_FTM_NL80211 :=y
+	QCA_WIFI_FTM_NL80211 := y
 else
-	QCA_WIFI_FTM_NL80211 :=n
+	QCA_WIFI_FTM_NL80211 := n
 endif
-	CONFIG_LINUX_QCMBR :=y
+	CONFIG_LINUX_QCMBR := y
 
 else
-	QCA_WIFI_FTM_NL80211 :=n
-	CONFIG_LINUX_QCMBR :=n
+	QCA_WIFI_FTM_NL80211 := n
+	CONFIG_LINUX_QCMBR := n
 endif
 
 
@@ -789,12 +692,6 @@ CONFIG_FEATURE_STATS_EXT := y
 CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY := n
 CONFIG_WLAN_DFS_STATIC_MEM_ALLOC := y
 
-#Flag to enable HTC credit history feature
-CONFIG_FEATURE_HTC_CREDIT_HISTORY := y
-
-#Flag to enable MTRACE feature
-CONFIG_TRACE_RECORD_FEATURE := n
-
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
 
@@ -811,7 +708,7 @@ CONFIG_FUNC_CALL_MAP := n
 CONFIG_WLAN_WBUFF := y
 
 #Flag to enable set and get disable channel list feature
-CONFIG_DISABLE_CHANNEL_LIST :=y
+CONFIG_DISABLE_CHANNEL_LIST := y
 
 #Flag to enable beacon receive feature
 CONFIG_WLAN_BCN_RECV_FEATURE := y
@@ -901,26 +798,11 @@ CONFIG_WMI_ROAM_SUPPORT := y
 CONFIG_WMI_CONCURRENCY_SUPPORT := y
 CONFIG_WMI_STA_SUPPORT := y
 
-CONFIG_DP_TRACE := n
-
 ifeq ($(CONFIG_HELIUMPLUS), y)
 ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
 CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
 endif
 CONFIG_RX_OL := y
-endif
-
-ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
-	CONFIG_DSC_DEBUG := y
-	CONFIG_DESC_TIMESTAMP_DEBUG_INFO := y
-	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
-	CONFIG_LEAK_DETECTION := y
-	CONFIG_MAX_LOGS_PER_SEC := 500
-	CONFIG_SCHED_HISTORY_SIZE := 256
-	CONFIG_TALLOC_DEBUG := y
-	CONFIG_UNIT_TEST := y
-	CONFIG_REGISTER_OP_DEBUG := y
-	CONFIG_ENABLE_QDF_PTR_HASH_DEBUG := y
 endif
 
 ifeq ($(CONFIG_UNIT_TEST), y)
@@ -964,20 +846,11 @@ CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
 endif
 
 ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
-	ifneq ($(CONFIG_SLUB_DEBUG), y)
-		CONFIG_DP_TRACE := n
-	endif
-
 	CONFIG_DIRECT_BUF_RX_ENABLE := n
 	CONFIG_WMI_DBR_SUPPORT := n
 endif
 
 CONFIG_WLAN_LOGGING_SOCK_SVC := n
-
-ifneq ($(TARGET_BUILD_VARIANT),user)
-CONFIG_DESC_DUP_DETECT_DEBUG := y
-CONFIG_DEBUG_RX_RING_BUFFER := n
-endif
 
 ifeq ($(CONFIG_CNSS), y)
 ifeq ($(CONFIG_CNSS_SDIO), y)
