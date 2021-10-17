@@ -8541,21 +8541,16 @@ M:	Kees Cook <keescook@chromium.org>
 S:	Maintained
 F:	drivers/misc/lkdtm/*
 
-LINUX KERNEL MEMORY CONSISTENCY MODEL (LKMM)
-M:	Alan Stern <stern@rowland.harvard.edu>
-M:	Andrea Parri <andrea.parri@amarulasolutions.com>
-M:	Will Deacon <will.deacon@arm.com>
-M:	Peter Zijlstra <peterz@infradead.org>
-M:	Boqun Feng <boqun.feng@gmail.com>
-M:	Nicholas Piggin <npiggin@gmail.com>
-M:	David Howells <dhowells@redhat.com>
-M:	Jade Alglave <j.alglave@ucl.ac.uk>
-M:	Luc Maranget <luc.maranget@inria.fr>
-M:	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-R:	Akira Yokosawa <akiyks@gmail.com>
-R:	Daniel Lustig <dlustig@nvidia.com>
-L:	linux-kernel@vger.kernel.org
-L:	linux-arch@vger.kernel.org
+LINUX RANDOM NUMBER GENERATOR (LRNG) DRIVER
+M:	Stephan Mueller <smueller@chronox.de>
+S:	Maintained
+W:	https://www.chronox.de/lrng.html
+F:	drivers/char/lrng/*
+F:	include/linux/lrng.h
+
+LINUX SECURITY MODULE (LSM) FRAMEWORK
+M:	Chris Wright <chrisw@sous-sol.org>
+L:	linux-security-module@vger.kernel.org
 S:	Supported
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/paulmck/linux-rcu.git
 F:	tools/memory-model/
