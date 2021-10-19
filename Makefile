@@ -714,11 +714,14 @@ ifdef CONFIG_LLVM_POLLY
 POLLY_FLAGS := -mllvm -polly \
 	     -mllvm -polly-run-dce \
 	     -mllvm -polly-run-inliner \
-	     -mllvm -polly-opt-fusion=max \
 	     -mllvm -polly-ast-use-context \
 	     -mllvm -polly-detect-keep-going \
 	     -mllvm -polly-vectorizer=stripmine \
 	     -mllvm -polly-invariant-load-hoisting
+
+ifneq ($(shell test $(CONFIG_CLANG_VERSION) -gt 130000; echo $$?),0)
+POLLY_FLAGS += -mllvm -polly-opt-fusion=max
+endif
 
 OPT_FLAGS	+= $(POLLY_FLAGS)
 KBUILD_LDFLAGS	+= $(POLLY_FLAGS)
