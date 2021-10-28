@@ -13,15 +13,15 @@
 	.text
 	.align		4
 
-aes_encrypt_block4x:
+SYM_FUNC_START_LOCAL(aes_encrypt_block4x)
 	encrypt_block4x	v0, v1, v2, v3, w22, x21, x8, w7
 	ret
-ENDPROC(aes_encrypt_block4x)
+SYM_FUNC_END(aes_encrypt_block4x)
 
-aes_decrypt_block4x:
+SYM_FUNC_START_LOCAL(aes_decrypt_block4x)
 	decrypt_block4x	v0, v1, v2, v3, w22, x21, x8, w7
 	ret
-ENDPROC(aes_decrypt_block4x)
+SYM_FUNC_END(aes_decrypt_block4x)
 
 	/*
 	 * aes_ecb_encrypt(u8 out[], u8 const in[], u8 const rk[], int rounds,
