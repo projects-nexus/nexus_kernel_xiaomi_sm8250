@@ -80,7 +80,7 @@
 
 	vzr		.req	v13
 
-ENTRY(crc_t10dif_pmull)
+SYM_FUNC_START(crc_t10dif_pmull)
 	frame_push	3, 128
 
 	mov		arg1_low32, w0
@@ -364,7 +364,7 @@ _less_than_16_left:
 	eor		v0.16b, v0.16b, v9.16b
 	tbl		v7.16b, {v7.16b}, v0.16b
 	b		_128_done
-ENDPROC(crc_t10dif_pmull)
+SYM_FUNC_END(crc_t10dif_pmull)
 
 // precomputed constants
 // these constants are precomputed from the poly:
