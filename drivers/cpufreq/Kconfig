@@ -252,6 +252,57 @@ config CPU_FREQ_GOV_SCHEDHORIZON
   
 	  If in doubt, say N.
 
+if CPU_FREQ_GOV_SCHEDHORIZON
+
+config SCHEDHORIZON_DEFAULT_EFFICIENT_FREQ_LP
+	int "Default efficient frequency for the lp cluster"
+	default 1708800
+	help
+	  This sets schedhorizon's default efficient frequency for the lp
+	  cluster. This frequency needs to be set according to the available
+	  frequencies at cpufreq-table-0 for the little cores.
+
+config SCHEDHORIZON_DEFAULT_EFFICIENT_FREQ_HP
+	int "Default efficient frequency for the hp cluster"
+	default 1766400
+	help
+	  This sets schedhorizon's default efficient frequency for the hp
+	  cluster. This frequency needs to be set according to the available
+	  frequencies at cpufreq-table-4 for the big cores.
+
+config SCHEDHORIZON_DEFAULT_EFFICIENT_FREQ_PR
+	int "Default efficient frequency for the pr cluster"
+	default 2073600
+	help
+	  This sets schedhorizon's default efficient frequency for the pr
+	  cluster. This frequency needs to be set according to the available
+	  frequencies at cpufreq-table-7 for the prime cores.
+
+config SCHEDHORIZON_DEFAULT_UP_DELAY_LP
+	int "Default multiplicand of the up delay for the lp cluster"
+	default 3
+	help
+	  This sets schedhorizon's default up delay for the lp cluster where
+	  the default value acts as a multiplicand which is to be multiplied
+	  by the number of nanosecond in one milisecond (NSEC_PER_MSEC).
+
+config SCHEDHORIZON_DEFAULT_UP_DELAY_HP
+	int "Default multiplicand of the up delay for the hp cluster"
+	default 3
+	help
+	  This sets schedhorizon's default up delay for the hp cluster where
+	  the default value acts as a multiplicand which is to be multiplied
+	  by the number of nanosecond in one milisecond (NSEC_PER_MSEC).
+
+config SCHEDHORIZON_DEFAULT_UP_DELAY_PR
+	int "Default multiplicand of the up delay for the pr cluster"
+	default 3
+	help
+	  This sets schedhorizon's default up delay for the pr cluster where
+	  the default value acts as a multiplicand which is to be multiplied
+	  by the number of nanosecond in one milisecond (NSEC_PER_MSEC).
+endif
+
 comment "CPU frequency scaling drivers"
 
 config CPUFREQ_DT
