@@ -621,16 +621,18 @@ int elevator_init_mq(struct request_queue *q)
 	WARN_ON_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags));
 
 	if (unlikely(q->elevator))
-		goto out;
-	if (IS_ENABLED(CONFIG_IOSCHED_BFQ)) {
+		goto out_unlock;
+
+	if (IS_ENABLED(CONFIG_BFQ_DEFAULT)) {
 		e = elevator_get(q, "bfq", false);
-		if (!e)
-			goto out;
+	} else if (IS_ENABLED(CONFIG_MQ_KYBER_DEFAULT)) {
+		e = elevator_get(q, "kyber", false);
 	} else {
 		e = elevator_get(q, "mq-deadline", false);
-		if (!e)
-			goto out;
 	}
+
+	if (!e)
+		goto out_unlock;
 	err = blk_mq_init_sched(q, e);
 	if (err)
 		elevator_put(e);
