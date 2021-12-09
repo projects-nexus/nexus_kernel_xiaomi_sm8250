@@ -4583,11 +4583,8 @@ static ssize_t select_pdo_store(struct device *dev,
 		goto out;
 
 	/* use xiaomi pps control state machine */
-	if (pd->non_qcom_pps_ctr && pd->spec_rev == USBPD_REV_30) {
-		usbpd_info(&pd->dev,
-			"PPS is controlled by ourself, return not support\n");
+	if (pd->non_qcom_pps_ctr && pd->spec_rev == USBPD_REV_30)
 		goto out;
-	}
 #endif
 
 	/* Only allowed if we are already in explicit sink contract */
