@@ -387,6 +387,7 @@ static void kyber_exit_sched(struct elevator_queue *e)
 	int i;
 
 	blk_stat_remove_callback(q, kqd->cb);
+	blk_stat_disable_accounting(kqd->q);
 
 	for (i = 0; i < KYBER_NUM_DOMAINS; i++)
 		sbitmap_queue_free(&kqd->domain_tokens[i]);
