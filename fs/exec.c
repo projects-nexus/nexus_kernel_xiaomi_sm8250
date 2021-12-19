@@ -77,7 +77,7 @@ int suid_dumpable = 0;
 static LIST_HEAD(formats);
 static DEFINE_RWLOCK(binfmt_lock);
 
-#define HWCOMPOSER_BIN_PREFIX "/vendor/bin/hw/android.hardware.graphics.composer"
+#define HWCOMPOSER_BIN_PREFIX "/vendor/bin/hw/vendor.qti.hardware.display.composer-service"
 #define ZYGOTE32_BIN "/system/bin/app_process32"
 #define ZYGOTE64_BIN "/system/bin/app_process64"
 #define UDFPS_BIN_PREFIX "/vendor/bin/hw/android.hardware.biometrics.fingerprint@2.3-service.xiaomi_kona"
@@ -1851,13 +1851,13 @@ static int __do_execve_file(int fd, struct filename *filename,
 		else if (unlikely(!strncmp(filename->name,
 					   HWCOMPOSER_BIN_PREFIX,
 					   strlen(HWCOMPOSER_BIN_PREFIX)))) {
-			current->flags |= PF_PERF_CRITICAL;
+			current->pc_flags |= PC_PRIME_CRITICAL;
 			set_cpus_allowed_ptr(current, cpu_perf_mask);
 		}
 		else if (unlikely(!strncmp(filename->name,
 					   UDFPS_BIN_PREFIX,
 					   strlen(UDFPS_BIN_PREFIX)))) {
-		        current->flags |= PF_PERF_CRITICAL;
+		        current->pc_flags |= PC_PRIME_CRITICAL;
 		        set_cpus_allowed_ptr(current, cpu_perf_mask);
 		}
 	}
