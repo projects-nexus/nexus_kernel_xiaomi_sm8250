@@ -3929,17 +3929,17 @@ static inline u32 netif_msg_init(int debug_value, int default_msg_enable_bits)
 #ifdef CONFIG_PREEMPT_RT_FULL
 static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
 {
-	txq->xmit_lock_owner = current;
+	WRITE_ONCE(txq->xmit_lock_owner, current);
 }
 
 static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
 {
-	txq->xmit_lock_owner = NULL;
+	WRITE_ONCE(txq->xmit_lock_owner, NULL);
 }
 
 static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
 {
-	if (txq->xmit_lock_owner != NULL)
+	if (READ_ONCE(txq->xmit_lock_owner) != NULL)
 		return true;
 	return false;
 }
@@ -3948,17 +3948,19 @@ static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
 
 static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
 {
-	txq->xmit_lock_owner = cpu;
+	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
+	WRITE_ONCE(txq->xmit_lock_owner, cpu);
 }
 
 static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
 {
-	txq->xmit_lock_owner = -1;
+	/* Pairs with READ_ONCE() in __dev_queue_xmit() */
+	WRITE_ONCE(txq->xmit_lock_owner, -1);
 }
 
 static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
 {
-	if (txq->xmit_lock_owner != -1)
+	if (READ_ONCE(txq->xmit_lock_owner) != -1)
 		return true;
 	return false;
 }
