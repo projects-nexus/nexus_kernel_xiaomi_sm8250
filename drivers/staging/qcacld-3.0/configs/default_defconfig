@@ -489,7 +489,7 @@ endif
 ifeq ($(CONFIG_DEBUG_FS), y)
        # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
        # configuration.
-       CONFIG_WLAN_DEBUGFS := y
+       CONFIG_WLAN_DEBUGFS := n
 
        # Flag to enable streamfs. Depends on CONFIG_DEBUG_FS and
        # CONFIG_RELAY in kernel configuration.
