@@ -36,6 +36,8 @@ enum {
 	BINDER_DEBUG_BUFFER_ALLOC           = 1U << 2,
 	BINDER_DEBUG_BUFFER_ALLOC_ASYNC     = 1U << 3,
 };
+
+#ifdef DEBUG
 static uint32_t binder_alloc_debug_mask = BINDER_DEBUG_USER_ERROR;
 
 module_param_named(debug_mask, binder_alloc_debug_mask,
@@ -48,9 +50,7 @@ module_param_named(debug_mask, binder_alloc_debug_mask,
 			pr_info_ratelimited(x); \
 	} while (0)
 #else
-static inline void binder_alloc_debug(uint32_t mask, const char *fmt, ...)
-{
-}
+#define binder_alloc_debug(mask, x...) {}
 #endif
 
 static struct binder_buffer *binder_buffer_next(struct binder_buffer *buffer)
