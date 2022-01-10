@@ -136,7 +136,7 @@ int freeze_processes(void)
 		atomic_inc(&system_freezing_cnt);
 
 	pm_wakeup_clear(true);
-	pr_info("Freezing user space processes ... ");
+	pr_debug("Freezing user space processes ... ");
 	pm_freezing = true;
 	error = try_to_freeze_tasks(true);
 	if (!error) {
@@ -174,7 +174,7 @@ int freeze_kernel_threads(void)
 {
 	int error;
 
-	pr_info("Freezing remaining freezable tasks ... ");
+	pr_debug("Freezing remaining freezable tasks ... ");
 
 	pm_nosig_freezing = true;
 	error = try_to_freeze_tasks(false);
@@ -204,7 +204,7 @@ void thaw_processes(void)
 	oom_killer_enable();
 #endif
 
-	pr_info("Restarting tasks ... ");
+	pr_debug("Restarting tasks ... ");
 
 	__usermodehelper_set_disable_depth(UMH_FREEZING);
 	thaw_workqueues();
