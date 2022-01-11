@@ -3487,7 +3487,7 @@ update_tg_cfs_runnable(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cf
 	long delta, running_sum, runnable_sum = gcfs_rq->prop_runnable_sum;
 	unsigned long runnable_load_avg, load_avg;
 	u64 runnable_load_sum, load_sum = 0;
-	u32 divider;
+	u32 new_sum, divider;
 
 	if (!runnable_sum)
 		return;
@@ -3546,14 +3546,22 @@ update_tg_cfs_runnable(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cf
 
 	runnable_load_sum = (s64)se_runnable(se) * runnable_sum;
 	runnable_load_avg = div_s64(runnable_load_sum, LOAD_AVG_MAX);
-	delta = runnable_load_avg - se->avg.runnable_load_avg;
 
-	se->avg.runnable_load_sum = runnable_sum;
+        delta_avg = runnable_load_avg - se->avg.runnable_load_avg;
+	if (!delta_avg)
+		return;
+
 	se->avg.runnable_load_avg = runnable_load_avg;
+	new_sum = se->avg.runnable_load_avg * divider;
+	delta_sum = (long)new_sum - (long)se->avg.runnable_load_sum;
+	se->avg.runnable_load_sum = new_sum;
 
 	if (se->on_rq) {
-		add_positive(&cfs_rq->avg.runnable_load_avg, delta);
-		cfs_rq->avg.runnable_load_sum = cfs_rq->avg.runnable_load_avg * divider;
+		add_positive(&cfs_rq->avg.runnable_load_avg, delta_avg);
+		add_positive(&cfs_rq->avg.runnable_load_sum, delta_sum);
+		/* See update_cfs_rq_load_avg() */
+		cfs_rq->avg.runnable_load_sum = max_t(u32, cfs_rq->avg.runnable_load_sum,
+					      cfs_rq->avg.runnable_load_avg * PELT_MIN_DIVIDER);
 	}
 }
 
@@ -3766,12 +3774,6 @@ static void attach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *s
  */
 static void detach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *se)
 {
-	/*
-	 * cfs_rq->avg.period_contrib can be used for both cfs_rq and se.
-	 * See ___update_load_avg() for details.
-	 */
-	u32 divider = get_pelt_divider(&cfs_rq->avg);
-
 	dequeue_load_avg(cfs_rq, se);
 	sub_positive(&cfs_rq->avg.util_avg, se->avg.util_avg);
 	sub_positive(&cfs_rq->avg.util_sum, se->avg.util_sum);
