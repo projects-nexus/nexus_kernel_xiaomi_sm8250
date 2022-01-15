@@ -1262,7 +1262,7 @@ static void add_desc_to_perf_list(struct irq_desc *desc, unsigned int perf_flag)
 
 static void affine_one_perf_thread(struct irqaction *action)
 {
-	const struct cpumask *mask;
+	const struct cpumask *mask = NULL;
 
 	if (!action->thread)
 		return;
@@ -1287,7 +1287,7 @@ static void unaffine_one_perf_thread(struct irqaction *action)
 
 static void affine_one_perf_irq(struct irq_desc *desc, unsigned int perf_flag)
 {
-	const struct cpumask *mask;
+	const struct cpumask *mask = NULL;
 	int *mask_index;
 	int cpu;
 
