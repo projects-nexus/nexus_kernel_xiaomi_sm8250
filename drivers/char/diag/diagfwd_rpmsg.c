@@ -647,7 +647,7 @@ static int diag_rpmsg_notify_cb(struct rpmsg_device *rpdev, void *data, int len,
 
 static void diag_rpmsg_notify_rx_work_fn(struct work_struct *work)
 {
-	struct diag_rpmsg_info *rpmsg_info;
+	struct diag_rpmsg_info *rpmsg_info = NULL;
 	struct rx_buff_list *rx_item;
 	struct diagfwd_info *fwd_info;
 	void *buf = NULL;
