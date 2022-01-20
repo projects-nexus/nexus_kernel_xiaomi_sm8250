@@ -3237,7 +3237,7 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 		break;
 #endif
 	default:
-		pr_err("batt power supply prop %d not supported\n", psp);
+		pr_debug("batt power supply prop %d not supported\n", psp);
 		return -EINVAL;
 	}
 
