@@ -328,43 +328,6 @@ int wait_for_random_bytes(void)
 EXPORT_SYMBOL(wait_for_random_bytes);
 
 /*
- * get_random_bytes_arch() - This function will use the architecture-specific
- * hardware random number generator if it is available.
- *
- * The arch-specific hw RNG will almost certainly be faster than what we can
- * do in software, but it is impossible to verify that it is implemented
- * securely (as opposed, to, say, the AES encryption of a sequence number using
- * a key known by the NSA).  So it's useful if we need the speed, but only if
- * we're willing to trust the hardware manufacturer not to have put in a back
- * door.
- *
- * @buf: buffer allocated by caller to store the random data in
- * @nbytes: length of outbuf
- *
- * Return: number of bytes filled in.
- */
-void get_random_bytes_arch(void *buf, int nbytes)
-{
-	u8 *p = buf;
-
-	while (nbytes) {
-		unsigned long v;
-		int chunk = min_t(int, nbytes, sizeof(unsigned long));
-
-		if (!arch_get_random_long(&v))
-			break;
-
-		memcpy(p, &v, chunk);
-		p += chunk;
-		nbytes -= chunk;
-	}
-
-	if (nbytes)
-		lrng_drng_get_atomic((u8 *)p, (u32)nbytes);
-}
-EXPORT_SYMBOL(get_random_bytes_arch);
-
-/*
  * Returns whether or not the LRNG has been seeded.
  *
  * Returns: true if the urandom pool has been seeded.
