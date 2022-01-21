@@ -28,7 +28,11 @@ ccflags-y := -fno-common -fno-builtin -fno-stack-protector -ffixed-x18
 ccflags-y += -DDISABLE_BRANCH_PROFILING
 
 
-CFLAGS_REMOVE_vgettimeofday.o = $(CC_FLAGS_FTRACE) -Os $(CC_FLAGS_SCS) $(CC_FLAGS_LTO) $(GCC_PLUGINS_CFLAGS)
+# -Wmissing-prototypes and -Wmissing-declarations are removed from
+# the CFLAGS of vgettimeofday.c to make possible to build the
+# kernel with CONFIG_WERROR enabled.
+CFLAGS_REMOVE_vgettimeofday.o = $(CC_FLAGS_FTRACE) -Os $(CC_FLAGS_SCS) $(CC_FLAGS_LTO) $(GCC_PLUGINS_CFLAGS) \
+				-Wmissing-prototypes -Wmissing-declarations
 KASAN_SANITIZE			:= n
 UBSAN_SANITIZE			:= n
 OBJECT_FILES_NON_STANDARD	:= y
