@@ -330,7 +330,7 @@ static ssize_t onewire_gpio_ow_gpio_store(struct device *dev,
 		ONE_WIRE_OUT_HIGH;
 		ONE_WIRE_OUT_LOW;
 
-		udelay(1000);
+		mdelay(1);
 		ONE_WIRE_OUT_HIGH;
 		udelay(1);
 		ONE_WIRE_OUT_LOW;
@@ -352,7 +352,7 @@ static ssize_t onewire_gpio_ow_gpio_store(struct device *dev,
 		ONE_WIRE_OUT_LOW;
 		udelay(1);
 
-		udelay(1000);
+		mdelay(1);
 		ONE_WIRE_OUT_HIGH;
 		udelay(5);
 		ONE_WIRE_OUT_LOW;
