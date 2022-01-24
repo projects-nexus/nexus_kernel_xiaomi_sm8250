@@ -29,6 +29,15 @@ function push() {
         -F "parse_mode=html" \
         -F caption="Build took $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s). | For <b>Poco F3 (alioth)</b> | <b>${KBUILD_COMPILER_STRING}</b>"
 }
+function push2() {
+    cd AnyKernel2
+    ZIP=$(echo *.zip)
+    curl -F document=@$ZIP "https://api.telegram.org/bot$token/sendDocument" \
+        -F chat_id="$chat_id" \
+        -F "disable_web_page_preview=true" \
+        -F "parse_mode=html" \
+        -F caption="Build took $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s). | For <b>Poco F3 (alioth)</b> | <b>${KBUILD_COMPILER_STRING}</b>"
+}
 # Fin Error
 function finerr() {
     curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
@@ -82,6 +91,9 @@ sticker
 sendinfo
 compile
 zippingaosp
+END=$(date +"%s")
+DIFF=$(($END - $START))
+push2
 zippingmiui
 END=$(date +"%s")
 DIFF=$(($END - $START))
