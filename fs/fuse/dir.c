@@ -706,6 +706,9 @@ static int fuse_unlink(struct inode *dir, struct dentry *entry)
 	struct fuse_conn *fc = get_fuse_conn(dir);
 	FUSE_ARGS(args);
 
+	if (fuse_is_bad(dir))
+		return -EIO;
+	
 	args.opcode = FUSE_UNLINK;
 	args.nodeid = get_node_id(dir);
 	args.in_numargs = 1;
@@ -742,6 +745,9 @@ static int fuse_rmdir(struct inode *dir, struct dentry *entry)
 	struct fuse_conn *fc = get_fuse_conn(dir);
 	FUSE_ARGS(args);
 
+	if (fuse_is_bad(dir))
+		return -EIO;
+	
 	args.opcode = FUSE_RMDIR;
 	args.nodeid = get_node_id(dir);
 	args.in_numargs = 1;
@@ -1226,6 +1232,9 @@ static int fuse_readlink_page(struct inode *inode, struct page *page)
 	};
 	char *link;
 	ssize_t res;
+
+	if (fuse_is_bad(inode))
+		return -EIO;
 
 	ap.args.opcode = FUSE_READLINK;
 	ap.args.nodeid = get_node_id(inode);
