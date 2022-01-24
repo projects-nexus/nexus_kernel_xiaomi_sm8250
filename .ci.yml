@@ -1,0 +1,16 @@
+--- 
+clone: 
+  depth: 1
+kind: pipeline
+name : xKernel Compiler
+version: rev1.5_template
+steps:
+ - name: xKernel Compilation
+   image: panchajanya1999/archlinux:latest
+   environment:
+     token:
+       from_secret: token
+     chat_id:
+       from_secret: chat_id
+   commands:
+     - bash .circleci/build.sh && bash .circleci/build2.sh && bash .circleci/build3.sh

@@ -1,0 +1,18 @@
+version: 2.1
+jobs:
+  compile:
+   docker:
+      - image: z4nyx/docker:latest
+   steps:
+      - run:
+          command: |
+           git config --global user.name "NotZeetaa"
+           git config --global user.email "rodrigo2005contente@gmail.com"
+           git config --global color.ui false
+           git clone --depth=1 https://github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} -b ${CIRCLE_BRANCH} .
+           bash .circleci/build.sh
+workflows:
+  version: 2.1
+  cooking:
+    jobs:
+      - compile
