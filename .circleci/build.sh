@@ -38,6 +38,7 @@ function push2() {
         -F "disable_web_page_preview=true" \
         -F "parse_mode=html" \
         -F caption="Build took $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s). | For <b>Poco F2 Pro (lmi)</b> | <b>${KBUILD_COMPILER_STRING}</b>"
+    cd ..
 }
 # Fin Er
 # Fin Error
