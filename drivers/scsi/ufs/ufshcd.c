@@ -8727,15 +8727,12 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 {
 	int err;
 	size_t buff_len;
-	u8 model_index;
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 	u8 *desc_buf;
-	u32 d_lu_wb_buf_alloc;
 #else
 	u8 *desc_buf, wb_buf[4];
 	u32 lun, res;
 #endif
-
 	buff_len = max_t(size_t, hba->desc_size.dev_desc,
 			 QUERY_DESC_MAX_SIZE + 1);
 	desc_buf = kmalloc(buff_len, GFP_KERNEL);
