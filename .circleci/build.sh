@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 echo "Cloning dependencies"
-git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
+git clone --depth=1 https://gitlab.com/Panchajanya1999/azure-clang clang
 git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel
 echo "Done"
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
