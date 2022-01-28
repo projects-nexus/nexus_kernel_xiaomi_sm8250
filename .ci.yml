@@ -6,11 +6,16 @@ name : xKernel Compiler
 version: rev1.5_template
 steps:
  - name: xKernel Compilation
-   image: panchajanya1999/archlinux:latest
+   image: ubuntu:jammy-20211029
    environment:
      token:
        from_secret: token
      chat_id:
        from_secret: chat_id
    commands:
+     - cp -af sources.list /etc/apt/
+     - cp -af 99own /etc/apt/apt.conf.d/
+     - apt update && apt upgrade -y
+     - ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && date
+     - apt install -f -y git bison flex libxml2 libssl-dev bc zip ccache p7zip default-jre python3 python3-pip wget curl
      - bash .circleci/build.sh && bash .circleci/build2.sh && bash .circleci/build3.sh
