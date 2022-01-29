@@ -75,7 +75,7 @@ function zippingaosp() {
 function zippingmiui() {
     cd AnyKernel3 || exit 1
     rm -rf *.zip
-    rm -rf dtb
+    rm -rf dtbo.img
     zip -r9 neXus-BETA-kernel-MIUI-apollo-${TANGGAL}.zip *
     cd ..
 }
