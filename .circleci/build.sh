@@ -55,9 +55,10 @@ function compile() {
     make O=out ARCH=arm64 vendor/lmi_defconfig
     make -j$(nproc --all) O=out \
                           ARCH=arm64 \
-			  CC=clang \
+			  LLVM=1 \
+			  LLVM_IAS=1 \
 			  CROSS_COMPILE=aarch64-linux-gnu- \
-			  CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+			  CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
 
     if ! [ -a "$IMAGE" ]; then
         finerr
