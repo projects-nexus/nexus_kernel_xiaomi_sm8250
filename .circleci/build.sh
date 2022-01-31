@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 echo "Cloning dependencies"
-git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
+git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git -b gcc-new gcc64
+git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git -b gcc-new gcc32
 git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel
 echo "Done"
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
 TANGGAL=$(date +"%F-%S")
 START=$(date +"%s")
 KERNEL_DIR=$(pwd)
-PATH="${PWD}/clang/bin:$PATH"
-export KBUILD_COMPILER_STRING="$(${KERNEL_DIR}/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+PATH=$KERNEL_DIR/gcc64/bin/:$KERNEL_DIR/gcc32/bin/:/usr/bin:$PATH
+export KBUILD_COMPILER_STRING=$("$KERNEL_DIR/gcc64"/bin/aarch64-elf-gcc --version | head -n 1)
 export ARCH=arm64
 export KBUILD_BUILD_HOST=droneci
 export KBUILD_BUILD_USER="NotZeetaa"
@@ -54,11 +55,15 @@ function finerr() {
 function compile() {
     make O=out ARCH=arm64 vendor/lmi_defconfig
     make -j$(nproc --all) O=out \
-                          ARCH=arm64 \
-			  LLVM=1 \
-			  LLVM_IAS=1 \
-			  CROSS_COMPILE=aarch64-linux-gnu- \
-			  CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
+           ARCH=arm64 \
+		   CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size
 
     if ! [ -a "$IMAGE" ]; then
         finerr
