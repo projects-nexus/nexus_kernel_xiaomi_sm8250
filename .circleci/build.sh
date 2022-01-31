@@ -219,7 +219,7 @@ function zipping() {
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        rm -rf dtbo && rm -rf *.zip
+        rm -rf dtbo.img && rm -rf *.zip
         zip -r9 ${FINAL_ZIP2} *
         MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
         push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
