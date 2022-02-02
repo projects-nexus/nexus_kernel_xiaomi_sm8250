@@ -43,7 +43,7 @@ FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=proton
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -58,7 +58,7 @@ function cloneTC() {
 	elif [ $COMPILER = "proton" ];
 	then
 	post_msg " Cloning Proton Clang ToolChain "
-	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
+	git clone --depth=1  https://github.com/greenforce-project/clang-llvm clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "eva" ];
