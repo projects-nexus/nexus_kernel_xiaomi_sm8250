@@ -43,7 +43,7 @@ FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=atomx
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -52,7 +52,7 @@ function cloneTC() {
 	if [ $COMPILER = "atomx" ];
 	then
 	post_msg " Cloning Atom-X Clang ToolChain "
-	git clone --depth=1 https://gitlab.com/ElectroPerf/atom-x-clang.git clang
+	git clone --depth=1 https://gitlab.com/ElectroPerf/atom-x-clang clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "proton" ];
