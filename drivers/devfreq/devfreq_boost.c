@@ -8,13 +8,11 @@
 #include <linux/devfreq_boost.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
-#include <linux/msm_drm_notify.h>
 #include <linux/slab.h>
 #include <uapi/linux/sched/types.h>
 #include "governor.h"
 
 enum {
-	SCREEN_OFF,
 	INPUT_BOOST,
 	MAX_BOOST
 };
@@ -31,7 +29,6 @@ struct boost_dev {
 
 struct df_boost_drv {
 	struct boost_dev devices[DEVFREQ_MAX];
-	struct notifier_block msm_drm_notif;
 };
 
 static void devfreq_input_unboost(struct work_struct *work);
@@ -56,7 +53,7 @@ static struct df_boost_drv df_boost_drv_g __read_mostly = {
 
 static void __devfreq_boost_kick(struct boost_dev *b)
 {
-	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
+	if (!READ_ONCE(b->df))
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
@@ -80,7 +77,7 @@ static void __devfreq_boost_kick_max(struct boost_dev *b,
 {
 	unsigned long boost_jiffies, curr_expires, new_expires;
 
-	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
+	if (!READ_ONCE(b->df))
 		return;
 
 	boost_jiffies = msecs_to_jiffies(duration_ms);
@@ -143,7 +140,7 @@ static void devfreq_update_boosts(struct boost_dev *b, unsigned long state)
 	struct devfreq *df = b->df;
 
 	mutex_lock(&df->lock);
-	if (state & BIT(SCREEN_OFF)) {
+	if (state) {
 		df->min_freq = df->profile->freq_table[0];
 		df->max_boost = false;
 	} else {
@@ -184,33 +181,6 @@ static int devfreq_boost_thread(void *data)
 	}
 
 	return 0;
-}
-
-static int msm_drm_notifier_cb(struct notifier_block *nb,
-			       unsigned long action, void *data)
-{
-	struct df_boost_drv *d = container_of(nb, typeof(*d), msm_drm_notif);
-	int i, *blank = ((struct msm_drm_notifier *)data)->data;
-
-	/* Parse DRM blank events as soon as they occur */
-	if (action != MSM_DRM_EARLY_EVENT_BLANK)
-		return NOTIFY_OK;
-
-	/* Boost when the screen turns on and unboost when it turns off */
-	for (i = 0; i < DEVFREQ_MAX; i++) {
-		struct boost_dev *b = &d->devices[i];
-
-		if (*blank == MSM_DRM_BLANK_UNBLANK) {
-			clear_bit(SCREEN_OFF, &b->state);
-			__devfreq_boost_kick_max(b,
-				CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS);
-		} else {
-			set_bit(SCREEN_OFF, &b->state);
-			wake_up(&b->boost_waitq);
-		}
-	}
-
-	return NOTIFY_OK;
 }
 
 static void devfreq_boost_input_event(struct input_handle *handle,
@@ -322,18 +292,8 @@ static int __init devfreq_boost_init(void)
 		goto stop_kthreads;
 	}
 
-	d->msm_drm_notif.notifier_call = msm_drm_notifier_cb;
-	d->msm_drm_notif.priority = INT_MAX;
-	ret = msm_drm_register_client(&d->msm_drm_notif);
-	if (ret) {
-		pr_err("Failed to register msm_drm notifier, err: %d\n", ret);
-		goto unregister_handler;
-	}
-
 	return 0;
 
-unregister_handler:
-	input_unregister_handler(&devfreq_boost_input_handler);
 stop_kthreads:
 	while (i--)
 		kthread_stop(thread[i]);
