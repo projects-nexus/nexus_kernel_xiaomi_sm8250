@@ -788,23 +788,25 @@ __bfq_entity_update_weight_prio(struct bfq_service_tree *old_st,
 		new_weight = entity->orig_weight *
 			     (bfqq ? bfqq->wr_coeff : 1);
 		/*
-		 * If the weight of the entity changes, and the entity is a
-		 * queue, remove the entity from its old weight counter (if
-		 * there is a counter associated with the entity).
+		 * If the weight of the entity changes, remove the entity
+		 * from its old weight counter (if there is a counter
+		 * associated with the entity), and add it to the counter
+		 * associated with its new weight.
 		 */
-		if (prev_weight != new_weight && bfqq) {
-			root = &bfqd->queue_weights_tree;
-			__bfq_weights_tree_remove(bfqd, bfqq, root);
+		if (prev_weight != new_weight) {
+			root = bfqq ? &bfqd->queue_weights_tree :
+				      &bfqd->group_weights_tree;
+			__bfq_weights_tree_remove(bfqd, entity, root);
 		}
 		entity->weight = new_weight;
 		/*
-		 * Add the entity, if it is not a weight-raised queue,
-		 * to the counter associated with its new weight.
+		 * Add the entity to its weights tree only if it is
+		 * not associated with a weight-raised queue.
 		 */
-		if (prev_weight != new_weight && bfqq && bfqq->wr_coeff == 1) {
+		if (prev_weight != new_weight &&
+		    (bfqq ? bfqq->wr_coeff == 1 : 1))
 			/* If we get here, root has been initialized. */
-			bfq_weights_tree_add(bfqd, bfqq, root);
-		}
+			bfq_weights_tree_add(bfqd, entity, root);
 
 		new_st->wsum += entity->weight;
 
@@ -1010,12 +1012,9 @@ static void __bfq_activate_entity(struct bfq_entity *entity,
 	if (!bfq_entity_to_bfqq(entity)) { /* bfq_group */
 		struct bfq_group *bfqg =
 			container_of(entity, struct bfq_group, entity);
-		struct bfq_data *bfqd = bfqg->bfqd;
 
-		if (!entity->in_groups_with_pending_reqs) {
-			entity->in_groups_with_pending_reqs = true;
-			bfqd->num_groups_with_pending_reqs++;
-		}
+		bfq_weights_tree_add(bfqg->bfqd, entity,
+				     &bfqd->group_weights_tree);
 	}
 #endif
 
@@ -1600,8 +1599,7 @@ struct bfq_queue *bfq_get_next_queue(struct bfq_data *bfqd)
 	return bfqq;
 }
 
-/* returns true if the in-service queue gets freed */
-bool __bfq_bfqd_reset_in_service(struct bfq_data *bfqd)
+void __bfq_bfqd_reset_in_service(struct bfq_data *bfqd)
 {
 	struct bfq_queue *in_serv_bfqq = bfqd->in_service_queue;
 	struct bfq_entity *in_serv_entity = &in_serv_bfqq->entity;
@@ -1625,20 +1623,8 @@ bool __bfq_bfqd_reset_in_service(struct bfq_data *bfqd)
 	 * service tree either, then release the service reference to
 	 * the queue it represents (taken with bfq_get_entity).
 	 */
-	if (!in_serv_entity->on_st) {
-		/*
-		 * If no process is referencing in_serv_bfqq any
-		 * longer, then the service reference may be the only
-		 * reference to the queue. If this is the case, then
-		 * bfqq gets freed here.
-		 */
-		int ref = in_serv_bfqq->ref;
+	if (!in_serv_entity->on_st)
 		bfq_put_queue(in_serv_bfqq);
-		if (ref == 1)
-			return true;
-	}
-
-	return false;
 }
 
 void bfq_deactivate_bfqq(struct bfq_data *bfqd, struct bfq_queue *bfqq,
@@ -1681,15 +1667,15 @@ void bfq_del_bfqq_busy(struct bfq_data *bfqd, struct bfq_queue *bfqq,
 
 	bfqd->busy_queues--;
 
+	if (!bfqq->dispatched)
+		bfq_weights_tree_remove(bfqd, bfqq);
+
 	if (bfqq->wr_coeff > 1)
 		bfqd->wr_busy_queues--;
 
 	bfqg_stats_update_dequeue(bfqq_group(bfqq));
 
 	bfq_deactivate_bfqq(bfqd, bfqq, true, expiration);
-
-	if (!bfqq->dispatched)
-		bfq_weights_tree_remove(bfqd, bfqq);
 }
 
 /*
@@ -1706,7 +1692,7 @@ void bfq_add_bfqq_busy(struct bfq_data *bfqd, struct bfq_queue *bfqq)
 
 	if (!bfqq->dispatched)
 		if (bfqq->wr_coeff == 1)
-			bfq_weights_tree_add(bfqd, bfqq,
+			bfq_weights_tree_add(bfqd, &bfqq->entity,
 					     &bfqd->queue_weights_tree);
 
 	if (bfqq->wr_coeff > 1)
