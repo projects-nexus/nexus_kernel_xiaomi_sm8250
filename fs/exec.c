@@ -82,6 +82,7 @@ static DEFINE_RWLOCK(binfmt_lock);
 #define ZYGOTE32_BIN	"/system/bin/app_process32"
 #define ZYGOTE64_BIN	"/system/bin/app_process64"
 #define UDFPS_BIN_PREFIX "/vendor/bin/hw/android.hardware.biometrics.fingerprint@2.3-service.xiaomi_kona"
+#define FOD_BIN_PREFIX "/vendor/bin/hw/android.hardware.biometrics.fingerprint@2.1-service.xiaomi_kona"
 static atomic_t zygote32_pid;
 static atomic_t zygote64_pid;
 
@@ -1865,6 +1866,12 @@ static int __do_execve_file(int fd, struct filename *filename,
 					   UDFPS_BIN_PREFIX,
 					   strlen(UDFPS_BIN_PREFIX)))) {
 		        current->flags |= PC_PRIME_AFFINE;
+		        set_cpus_allowed_ptr(current, cpu_prime_mask);
+		}
+		else if (unlikely(!strncmp(filename->name,
+					   FOD_BIN_PREFIX,
+					   strlen(FOD_BIN_PREFIX)))) {
+		        current->pc_flags |= PC_PRIME_AFFINE;
 		        set_cpus_allowed_ptr(current, cpu_prime_mask);
 		}
 	}
