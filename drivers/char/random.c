@@ -84,19 +84,10 @@ static enum {
 static DECLARE_WAIT_QUEUE_HEAD(crng_init_wait);
 static struct fasync_struct *fasync;
 
-/* Control how we warn userspace. */
-static struct ratelimit_state urandom_warning =
-	RATELIMIT_STATE_INIT_FLAGS("urandom_warning", HZ, 3, RATELIMIT_MSG_ON_RELEASE);
-static int ratelimit_disable __read_mostly =
-	IS_ENABLED(CONFIG_WARN_ALL_UNSEEDED_RANDOM);
-module_param_named(ratelimit_disable, ratelimit_disable, int, 0644);
-MODULE_PARM_DESC(ratelimit_disable, "Disable random ratelimit suppression");
-
 /*
  * Returns whether or not the input pool has been seeded and thus guaranteed
- * to supply cryptographically secure random numbers. This applies to: the
- * /dev/urandom device, the get_random_bytes function, and the get_random_{u32,
- * ,u64,int,long} family of functions.
+ * to supply cryptographically secure random numbers. This applies to
+ * get_random_bytes() and get_random_{u32,u64,int,long}().
  *
  * Returns: true if the input pool has been seeded.
  *          false if the input pool has not been seeded.
@@ -112,10 +103,10 @@ static void try_to_generate_entropy(void);
 
 /*
  * Wait for the input pool to be seeded and thus guaranteed to supply
- * cryptographically secure random numbers. This applies to: the /dev/urandom
- * device, the get_random_bytes function, and the get_random_{u32,u64,int,long}
- * family of functions. Using any of these functions without first calling
- * this function forfeits the guarantee of security.
+ * cryptographically secure random numbers. This applies to
+ * get_random_bytes() and get_random_{u32,u64,int,long}(). Using any
+ * of these functions without first calling this function means that
+ * the returned numbers might not be cryptographically secure.
  *
  * Returns: 0 if the input pool has been seeded.
  *          -ERESTARTSYS if the function was interrupted by a signal.
@@ -641,9 +632,6 @@ static void __cold _credit_init_bits(size_t bits)
 		wake_up_interruptible(&crng_init_wait);
 		kill_fasync(&fasync, SIGIO, POLL_IN);
 		pr_notice("crng init done\n");
-		if (urandom_warning.missed)
-			pr_notice("%d urandom warning(s) missed due to ratelimiting\n",
-				  urandom_warning.missed);
 	} else if (orig < POOL_EARLY_BITS && new >= POOL_EARLY_BITS) {
 		spin_lock_irqsave(&base_crng.lock, flags);
 		/* Check if crng_init is CRNG_EMPTY, to avoid race with crng_reseed(). */
@@ -1125,20 +1113,16 @@ static void __cold try_to_generate_entropy(void)
  * getrandom(2) is the primary modern interface into the RNG and should
  * be used in preference to anything else.
  *
- * Reading from /dev/random has the same functionality as calling
- * getrandom(2) with flags=0. In earlier versions, however, it had
- * vastly different semantics and should therefore be avoided, to
- * prevent backwards compatibility issues.
- *
- * Reading from /dev/urandom has the same functionality as calling
- * getrandom(2) with flags=GRND_INSECURE. Because it does not block
- * waiting for the RNG to be ready, it should not be used.
+ * Reading from /dev/random and /dev/urandom both have the same effect
+ * as calling getrandom(2) with flags=0. (In earlier versions, however,
+ * they each had different semantics.)
  *
  * Writing to either /dev/random or /dev/urandom adds entropy to
  * the input pool but does not credit it.
  *
- * Polling on /dev/random indicates when the RNG is initialized, on
- * the read side, and when it wants new entropy, on the write side.
+ * Polling on /dev/random or /dev/urandom indicates when the RNG
+ * is initialized, on the read side, and when it wants new entropy,
+ * on the write side.
  *
  * Both /dev/random and /dev/urandom have the same set of ioctls for
  * adding entropy, getting the entropy count, zeroing the count, and
@@ -1213,23 +1197,6 @@ static ssize_t write_pool_user(struct iov_iter *iter)
 static ssize_t random_write_iter(struct kiocb *kiocb, struct iov_iter *iter)
 {
 	return write_pool_user(iter);
-}
-
-static ssize_t urandom_read_iter(struct kiocb *kiocb, struct iov_iter *iter)
-{
-	static int maxwarn = 10;
-
-	if (!crng_ready()) {
-		if (!ratelimit_disable && maxwarn <= 0)
-			++urandom_warning.missed;
-		else if (ratelimit_disable || __ratelimit(&urandom_warning)) {
-			--maxwarn;
-			pr_notice("%s: uninitialized urandom read (%zu bytes read)\n",
-				  current->comm, iov_iter_count(iter));
-		}
-	}
-
-	return get_random_bytes_user(iter);
 }
 
 static ssize_t random_read_iter(struct kiocb *kiocb, struct iov_iter *iter)
@@ -1320,17 +1287,6 @@ const struct file_operations random_fops = {
 	.read_iter = random_read_iter,
 	.write_iter = random_write_iter,
 	.poll = random_poll,
-	.unlocked_ioctl = random_ioctl,
-	.compat_ioctl = compat_ptr_ioctl,
-	.fasync = random_fasync,
-	.llseek = noop_llseek,
-	.splice_read = generic_file_splice_read,
-	.splice_write = iter_file_splice_write,
-};
-
-const struct file_operations urandom_fops = {
-	.read_iter = urandom_read_iter,
-	.write_iter = random_write_iter,
 	.unlocked_ioctl = random_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.fasync = random_fasync,
