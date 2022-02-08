@@ -5569,7 +5569,7 @@ static int __init kgsl_core_init(void)
 
 	if (IS_ERR_VALUE(kgsl_run_one_worker_perf(&kgsl_driver.worker,
 			&kgsl_driver.worker_thread,
-			"kgsl_worker_thread", true)) ||
+			"kgsl_worker_thread")) ||
 		IS_ERR_VALUE(kgsl_run_one_worker(&kgsl_driver.low_prio_worker,
 			&kgsl_driver.low_prio_worker_thread,
 			"kgsl_low_prio_worker_thread", false)))
