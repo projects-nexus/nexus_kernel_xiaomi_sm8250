@@ -25,6 +25,8 @@ ifdef CONFIG_FUNCTION_TRACER
 CFLAGS_REMOVE_string.o = -pg
 endif
 
+ccflags-y += -O3
+
 CFLAGS_string.o := $(call cc-option, -fno-stack-protector)
 endif
 

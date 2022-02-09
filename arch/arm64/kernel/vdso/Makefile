@@ -43,6 +43,8 @@ ifneq ($(c-gettimeofday-y),)
   CFLAGS_vgettimeofday.o += -include $(c-gettimeofday-y)
 endif
 
+ccflags-y += -O3
+
 # Clang versions less than 8 do not support -mcmodel=tiny
 ifeq ($(CONFIG_CC_IS_CLANG), y)
   ifeq ($(shell test $(CONFIG_CLANG_VERSION) -lt 80000; echo $$?),0)
