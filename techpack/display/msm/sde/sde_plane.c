@@ -2840,6 +2840,7 @@ static void _sde_plane_map_prop_to_dirty_bits(void)
 	plane_prop_array[PLANE_PROP_V_DECIMATE] =
 	plane_prop_array[PLANE_PROP_SRC_CONFIG] =
 	plane_prop_array[PLANE_PROP_ZPOS] =
+	plane_prop_array[PLANE_PROP_FOD] =
 	plane_prop_array[PLANE_PROP_EXCL_RECT_V1] =
 		SDE_PLANE_DIRTY_RECTS;
 
@@ -3590,6 +3591,9 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 
 	msm_property_install_range(&psde->property_info, "zpos",
 		0x0, 0, zpos_max, zpos_def, PLANE_PROP_ZPOS);
+
+	msm_property_install_range(&psde->property_info, "fod",
+		0x0, 0, INT_MAX, 0, PLANE_PROP_FOD);
 
 	msm_property_install_range(&psde->property_info, "alpha",
 		0x0, 0, 255, 255, PLANE_PROP_ALPHA);
