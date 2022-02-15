@@ -6,16 +6,13 @@ name : xKernel Compiler
 version: rev1.5_template
 steps:
  - name: xKernel Compilation
-   image: ubuntu:jammy-20211029
+   image: archlinux:base-devel
    environment:
      token:
        from_secret: token
      chat_id:
        from_secret: chat_id
    commands:
-     - cp -af sources.list /etc/apt/
-     - cp -af 99own /etc/apt/apt.conf.d/
-     - apt update && apt upgrade -y
-     - ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && date
-     - apt install -f -y git bison flex libxml2 libssl-dev bc zip ccache p7zip default-jre python3 python3-pip wget curl
+     - curl -LO "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" && bsdtar -C / -xvf "glibc-linux4-2.33-4-x86_64.pkg.tar.zst"
+     - pacman -Sy && pacman -S git bc inetutils python2 zip jdk-openjdk --noconfirm
      - bash .circleci/build.sh && bash .circleci/build2.sh && bash .circleci/build3.sh
