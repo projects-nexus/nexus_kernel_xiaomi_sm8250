@@ -146,3 +146,13 @@ kernel/configs/android-*.cfg
 #Ignoring Android.bp link file
 #
 Android.bp
+
+# Ignore out foler and build.sh
+out/
+build.sh
+aosp-clang/
+clang/
+error.log
+gcc/
+gcc32/
+AnyKernel3/
