@@ -124,7 +124,6 @@ struct dsi_backlight_config {
 	u32 bl_doze_lpm;
 	u32 bl_doze_hbm;
 	bool bl_inverted_dbv;
-	u32 real_bl_level;
 
 	int en_gpio;
 	/* PWM params */
