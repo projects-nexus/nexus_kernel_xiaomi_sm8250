@@ -3,6 +3,8 @@
  * Copyright (c) 2011,2013-2014,2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/irq_work.h>
+
 struct rq_data {
 	unsigned long def_timer_jiffies;
 	unsigned long def_timer_last_jiffy;
@@ -10,6 +12,7 @@ struct rq_data {
 	struct attribute_group *attr_group;
 	struct kobject *kobj;
 	struct work_struct def_timer_work;
+	struct irq_work def_timer_irq_work;
 	int init;
 };
 
