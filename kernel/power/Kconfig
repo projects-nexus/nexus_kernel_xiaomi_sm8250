@@ -313,3 +313,8 @@ config ENERGY_MODEL
 	  The exact usage of the energy model is subsystem-dependent.
 
 	  If in doubt, say N.
+
+config DEDUCE_WAKEUP_REASONS
+	bool
+	default n
+	depends on SUSPEND && !PREEMPT_RT_FULL
