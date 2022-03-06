@@ -150,6 +150,7 @@ Android.bp
 # Ignore out foler and build.sh
 out/
 build.sh
+build2.sh
 aosp-clang/
 clang/
 error.log
