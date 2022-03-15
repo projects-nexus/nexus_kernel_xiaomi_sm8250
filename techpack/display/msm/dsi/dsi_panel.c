@@ -2795,6 +2795,7 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		panel->bl_config.bl_dcs_subtype = 0;
 	} else {
 		panel->bl_config.bl_dcs_subtype = val;
+	}
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-brightness-init-level",
 		&val);
