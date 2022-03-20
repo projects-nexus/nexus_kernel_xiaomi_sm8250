@@ -233,7 +233,6 @@ struct smb5 {
 static struct smb_charger *__smbchg;
 
 static int __debug_mask;
-
 static ssize_t pd_disabled_show(struct device *dev, struct device_attribute
 				*attr, char *buf)
 {
