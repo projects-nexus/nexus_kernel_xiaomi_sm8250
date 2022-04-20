@@ -104,8 +104,6 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 				struct drm_display_mode *drm_mode)
 {
-	bool video_mode = (dsi_mode->panel_mode == DSI_OP_VIDEO_MODE);
-
 	memset(drm_mode, 0, sizeof(*drm_mode));
 
 	drm_mode->hdisplay = dsi_mode->timing.h_active;
@@ -154,10 +152,7 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->flags |= DRM_MODE_FLAG_CMD_MODE_PANEL;
 
 	/* set mode name */
-	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%dx%d%s",
-			drm_mode->hdisplay, drm_mode->vdisplay,
-			drm_mode->vrefresh, drm_mode->clock,
-			video_mode ? "vid" : "cmd");
+	*drm_mode->name = '\0';
 }
 
 static int dsi_bridge_attach(struct drm_bridge *bridge)
