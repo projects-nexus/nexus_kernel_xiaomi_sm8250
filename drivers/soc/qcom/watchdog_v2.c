@@ -762,7 +762,11 @@ static irqreturn_t wdog_bark_handler(int irq, void *dev_id)
 	if (wdog_dd->do_ipi_ping)
 		dump_cpu_alive_mask(wdog_dd);
 
+#ifdef CONFIG_PREEMPT_RT_FULL
+	panic("Watchdog bite - performing kernel panic!");
+#else
 	msm_trigger_wdog_bite();
+#endif
 	return IRQ_HANDLED;
 }
 
@@ -882,8 +886,9 @@ static void init_watchdog_data(struct msm_watchdog_data *wdog_dd)
 		}
 	} else {
 		ret = devm_request_irq(wdog_dd->dev, wdog_dd->bark_irq,
-				wdog_bark_handler, IRQF_TRIGGER_RISING,
-						"apps_wdog_bark", wdog_dd);
+				       wdog_bark_handler, IRQF_TRIGGER_RISING |
+				       IRQF_NO_THREAD, "apps_wdog_bark",
+				       wdog_dd);
 		if (ret) {
 			dev_err(wdog_dd->dev, "failed to request bark irq\n");
 			return;
