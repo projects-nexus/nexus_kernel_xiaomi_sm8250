@@ -2419,14 +2419,14 @@ static int fastrpc_internal_invoke(struct fastrpc_file *fl, uint32_t mode,
 	VERIFY(err, cid >= ADSP_DOMAIN_ID && cid < NUM_CHANNELS);
 	if (err) {
 		err = -ECHRNG;
-		goto bail;
+		return err;
 	}
 	VERIFY(err, fl->sctx != NULL);
 	if (err) {
 		pr_err("adsprpc: ERROR: %s: user application %s domain is not set\n",
 			__func__, current->comm);
 		err = -EBADR;
-		goto bail;
+		return err;
 	}
 	if (fl->profile) {
 		perf_counter = getperfcounter(fl, PERF_COUNT);
