@@ -10,36 +10,17 @@
 
 #include <linux/types.h>
 #include <linux/percpu.h>
-#include <linux/siphash.h>
+#include <linux/random.h>
 
-u32 prandom_u32(void);
-void prandom_bytes(void *buf, size_t nbytes);
-void prandom_seed(u32 seed);
-void prandom_reseed_late(void);
+static inline u32 prandom_u32(void)
+{
+	return get_random_u32();
+}
 
-#if BITS_PER_LONG == 64
-/*
- * The core SipHash round function.  Each line can be executed in
- * parallel given enough CPU resources.
- */
-#define PRND_SIPROUND(v0, v1, v2, v3) SIPHASH_PERMUTATION(v0, v1, v2, v3)
-
-#define PRND_K0 (SIPHASH_CONST_0 ^ SIPHASH_CONST_2)
-#define PRND_K1 (SIPHASH_CONST_1 ^ SIPHASH_CONST_3)
-
-#elif BITS_PER_LONG == 32
-/*
- * On 32-bit machines, we use HSipHash, a reduced-width version of SipHash.
- * This is weaker, but 32-bit machines are not used for high-traffic
- * applications, so there is less output for an attacker to analyze.
- */
-#define PRND_SIPROUND(v0, v1, v2, v3) HSIPHASH_PERMUTATION(v0, v1, v2, v3)
-#define PRND_K0 (HSIPHASH_CONST_0 ^ HSIPHASH_CONST_2)
-#define PRND_K1 (HSIPHASH_CONST_1 ^ HSIPHASH_CONST_3)
-
-#else
-#error Unsupported BITS_PER_LONG
-#endif
+static inline void prandom_bytes(void *buf, size_t nbytes)
+{
+	return get_random_bytes(buf, nbytes);
+}
 
 struct rnd_state {
 	__u32 s1, s2, s3, s4;
