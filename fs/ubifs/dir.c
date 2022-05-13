@@ -1680,7 +1680,7 @@ static const struct dentry_operations ubifs_encrypted_dentry_ops = {
 static void ubifs_set_d_ops(struct inode *dir, struct dentry *dentry)
 {
 #ifdef CONFIG_FS_ENCRYPTION
-	if (dentry->d_flags & DCACHE_ENCRYPTED_NAME) {
+	if (dentry->d_flags & DCACHE_NOKEY_NAME) {
 		d_set_d_op(dentry, &ubifs_encrypted_dentry_ops);
 		return;
 	}
