@@ -425,12 +425,9 @@ static void _get_random_bytes(void *buf, size_t len)
 /*
  * This function is the exported kernel interface.  It returns some
  * number of good random numbers, suitable for key generation, seeding
- * TCP sequence numbers, etc.  It does not rely on the hardware random
- * number generator.  For random bytes direct from the hardware RNG
- * (when available), use get_random_bytes_arch(). In order to ensure
- * that the randomness provided by this function is okay, the function
- * wait_for_random_bytes() should be called and return 0 at least once
- * at any point prior.
+ * TCP sequence numbers, etc. In order to ensure that the randomness
+ * by this function is okay, the function wait_for_random_bytes()
+ * should be called and return 0 at least once at any point prior.
  */
 void get_random_bytes(void *buf, int len)
 {
@@ -567,34 +564,6 @@ int __cold random_prepare_cpu(unsigned int cpu)
 	return 0;
 }
 #endif
-
-/*
- * This function will use the architecture-specific hardware random
- * number generator if it is available. It is not recommended for
- * use. Use get_random_bytes() instead. It returns the number of
- * bytes filled in.
- */
-size_t __must_check get_random_bytes_arch(void *buf, size_t len)
-{
-	size_t left = len;
-	u8 *p = buf;
-
-	while (left) {
-		unsigned long v;
-		size_t block_len = min_t(size_t, left, sizeof(unsigned long));
-
-		if (!arch_get_random_long(&v))
-			break;
-
-		memcpy(p, &v, block_len);
-		p += block_len;
-		left -= block_len;
-	}
-
-	return len - left;
-}
-EXPORT_SYMBOL(get_random_bytes_arch);
-
 
 /**********************************************************************
  *
@@ -785,6 +754,7 @@ static void __cold _credit_init_bits(size_t bits)
  *
  **********************************************************************/
 
+static bool used_arch_random;
 static bool trust_cpu __initdata = IS_ENABLED(CONFIG_RANDOM_TRUST_CPU);
 static bool trust_bootloader __initdata = IS_ENABLED(CONFIG_RANDOM_TRUST_BOOTLOADER);
 static int __init parse_trust_cpu(char *arg)
@@ -835,8 +805,20 @@ int __init random_init(const char *command_line)
 		crng_reseed();
 	else if (trust_cpu)
 		_credit_init_bits(arch_bits);
+	used_arch_random = arch_bytes * 8 >= POOL_READY_BITS;
 
 	return 0;
+}
+
+/*
+ * Returns whether arch randomness has been mixed into the initial
+ * state of the RNG, regardless of whether or not that randomness
+ * was credited. Knowing this is only good for a very limited set
+ * of uses, such as early init printk pointer obfuscation.
+ */
+bool rng_has_arch_random(void)
+{
+	return used_arch_random;
 }
 
 /*
