@@ -29,7 +29,6 @@ static inline void add_latent_entropy(void)
 }
 
 void get_random_bytes(void *buf, int len);
-size_t __must_check get_random_bytes_arch(void *buf, size_t len);
 u32 get_random_u32(void);
 u64 get_random_u64(void);
 static inline unsigned int get_random_int(void)
@@ -66,6 +65,7 @@ static inline unsigned long get_random_canary(void)
 
 int __init random_init(const char *command_line);
 bool rng_is_initialized(void);
+bool rng_has_arch_random(void);
 int wait_for_random_bytes(void);
 int register_random_ready_notifier(struct notifier_block *nb);
 int unregister_random_ready_notifier(struct notifier_block *nb);
