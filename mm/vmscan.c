@@ -4005,6 +4005,7 @@ static void lru_gen_age_node(struct pglist_data *pgdat, struct scan_control *sc)
 	 * younger than min_ttl. However, another possibility is all memcgs are
 	 * either below min or empty.
 	 */
+	pr_err("mglru: min_ttl unsatisfied, calling OOM killer\n");
 #ifdef CONFIG_ANDROID_SIMPLE_LMK
 	simple_lmk_trigger();
 #else
