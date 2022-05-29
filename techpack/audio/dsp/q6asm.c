@@ -583,7 +583,7 @@ static int q6asm_session_alloc(struct audio_client *ac)
 			return n;
 		}
 	}
-	pr_err("%s: session not available\n", __func__);
+	pr_debug("%s: session not available\n", __func__);
 	return -ENOMEM;
 }
 
@@ -1439,7 +1439,7 @@ struct audio_client *q6asm_get_audio_client(int session_id)
 	}
 
 	if (!(session[session_id].ac)) {
-		pr_err("%s: session not active: %d\n", __func__, session_id);
+		pr_debug("%s: session not active: %d\n", __func__, session_id);
 		goto err;
 	}
 	return session[session_id].ac;

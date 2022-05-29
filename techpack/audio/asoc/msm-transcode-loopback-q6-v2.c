@@ -1036,7 +1036,7 @@ static int msm_transcode_set_volume(struct snd_compr_stream *cstream,
 
 	pr_debug("%s: master_gain %d\n", __func__, master_gain);
 	if (!cstream || !cstream->runtime) {
-		pr_err("%s: session not active\n", __func__);
+		pr_debug("%s: session not active\n", __func__);
 		return -EINVAL;
 	}
 	rtd = cstream->private_data;
