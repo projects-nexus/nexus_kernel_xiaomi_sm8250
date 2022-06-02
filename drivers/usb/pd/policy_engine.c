@@ -3788,7 +3788,7 @@ static void handle_disconnect(struct usbpd *pd)
 		pd->vconn_enabled = false;
 	}
 
-	usbpd_info(&pd->dev, "USB Type-C disconnect\n");
+	dev_dbg_once(&pd->dev, "USB Type-C disconnect\n");
 
 	if (pd->pd_phy_opened) {
 		pd_phy_close();
@@ -4074,7 +4074,7 @@ static int usbpd_process_typec_mode(struct usbpd *pd,
 	case POWER_SUPPLY_TYPEC_SOURCE_DEFAULT:
 	case POWER_SUPPLY_TYPEC_SOURCE_MEDIUM:
 	case POWER_SUPPLY_TYPEC_SOURCE_HIGH:
-		usbpd_info(&pd->dev, "Type-C Source (%s) connected\n",
+		dev_dbg_once(&pd->dev, "Type-C Source (%s) connected\n",
 				src_current(typec_mode));
 
 #ifdef CONFIG_MACH_XIAOMI_SM8250
@@ -4115,7 +4115,7 @@ static int usbpd_process_typec_mode(struct usbpd *pd,
 	/* Source states */
 	case POWER_SUPPLY_TYPEC_SINK_POWERED_CABLE:
 	case POWER_SUPPLY_TYPEC_SINK:
-		usbpd_info(&pd->dev, "Type-C Sink%s connected\n",
+		dev_dbg_once(&pd->dev, "Type-C Sink%s connected\n",
 				typec_mode == POWER_SUPPLY_TYPEC_SINK ?
 					"" : " (powered)");
 
@@ -4126,10 +4126,10 @@ static int usbpd_process_typec_mode(struct usbpd *pd,
 		break;
 
 	case POWER_SUPPLY_TYPEC_SINK_DEBUG_ACCESSORY:
-		usbpd_info(&pd->dev, "Type-C Debug Accessory connected\n");
+		dev_dbg_once(&pd->dev, "Type-C Debug Accessory connected\n");
 		break;
 	case POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER:
-		usbpd_info(&pd->dev, "Type-C Analog Audio Adapter connected\n");
+		dev_dbg_once(&pd->dev, "Type-C Analog Audio Adapter connected\n");
 		break;
 	default:
 		usbpd_warn(&pd->dev, "Unsupported typec mode:%d\n",
