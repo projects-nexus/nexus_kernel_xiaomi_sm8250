@@ -706,7 +706,6 @@ static void __cold _credit_init_bits(size_t bits)
  *
  **********************************************************************/
 
-static bool used_arch_random;
 static bool trust_cpu __initdata = IS_ENABLED(CONFIG_RANDOM_TRUST_CPU);
 static bool trust_bootloader __initdata = IS_ENABLED(CONFIG_RANDOM_TRUST_BOOTLOADER);
 static int __init parse_trust_cpu(char *arg)
@@ -757,20 +756,8 @@ int __init random_init(const char *command_line)
 		crng_reseed();
 	else if (trust_cpu)
 		_credit_init_bits(arch_bits);
-	used_arch_random = arch_bytes * 8 >= POOL_READY_BITS;
 
 	return 0;
-}
-
-/*
- * Returns whether arch randomness has been mixed into the initial
- * state of the RNG, regardless of whether or not that randomness
- * was credited. Knowing this is only good for a very limited set
- * of uses, such as early init printk pointer obfuscation.
- */
-bool rng_has_arch_random(void)
-{
-	return used_arch_random;
 }
 
 /*
