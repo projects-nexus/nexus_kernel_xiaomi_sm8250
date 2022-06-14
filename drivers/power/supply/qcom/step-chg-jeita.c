@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt) "QCOM-STEPCHG: %s: " fmt, __func__
@@ -19,6 +19,7 @@
 #define STEP_BMS_CHG_VOTER	"STEP_BMS_CHG_VOTER"
 #endif
 #define JEITA_VOTER		"JEITA_VOTER"
+#define JEITA_FCC_SCALE_VOTER	"JEITA_FCC_SCALE_VOTER"
 
 #define is_between(left, right, value) \
 		(((left) >= (right) && (left) >= (value) \
@@ -73,6 +74,7 @@ struct step_chg_info {
 #ifdef CONFIG_MACH_XIAOMI_SM8250
 	bool			six_pin_battery;
 #endif
+	bool			jeita_fcc_scaling;
 	int			jeita_fcc_index;
 	int			jeita_fv_index;
 #ifdef CONFIG_MACH_XIAOMI_SM8250
