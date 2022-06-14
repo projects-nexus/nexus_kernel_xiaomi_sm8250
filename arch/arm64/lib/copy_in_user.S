@@ -32,11 +32,11 @@
  *	x0 - bytes not copied
  */
 	.macro ldrb1 ptr, regB, val
-	uao_user_alternative 9997f, ldrb, ldtrb, \ptr, \regB, \val
+	uao_user_alternative 9998f, ldrb, ldtrb, \ptr, \regB, \val
 	.endm
 
 	.macro strb1 ptr, regB, val
-	uao_user_alternative 9997f, strb, sttrb, \ptr, \regB, \val
+	uao_user_alternative 9998f, strb, sttrb, \ptr, \regB, \val
 	.endm
 
 	.macro ldrh1 ptr, regB, val
