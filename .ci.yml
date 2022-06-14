@@ -1,0 +1,19 @@
+--- 
+clone: 
+  depth: 1
+kind: pipeline
+name : xKernel Compiler
+version: rev1.5_template
+steps:
+ - name: xKernel Compilation
+   image: panchajanya1999/archlinux:latest
+   environment:
+     token:
+       from_secret: token
+     chat_id:
+       from_secret: chat_id
+   commands:
+     - curl -fsSL "https://pkgbuild.com/~morganamilo/pacman-static/x86_64/bin/pacman-static" -o pacman-static && chmod +x pacman-static && mv pacman-static /usr/bin/
+     - pacman-static -Syu --needed --noconfirm dpkg
+     - wget http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libtinfo5_6.0+20160213-1ubuntu1_amd64.deb -O libtinfo5.deb && dpkg-deb -R libtinfo5.deb libtinfo && cp libtinfo/lib/x86_64-linux-gnu/libtinfo.so.5.9 /usr/lib/libtinfo.so.5
+     - bash build.sh && bash build2.sh
