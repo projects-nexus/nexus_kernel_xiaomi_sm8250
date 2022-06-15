@@ -14,10 +14,6 @@
 #include <linux/pagevec.h>
 #include <linux/swap.h>
 
-#if defined(CONFIG_UFSTW)
-#include <linux/ufstw.h>
-#endif
-
 #include "f2fs.h"
 #include "node.h"
 #include "segment.h"
@@ -1583,10 +1579,7 @@ int f2fs_write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 		f2fs_warn(sbi, "Start checkpoint disabled!");
 	}
 	if (cpc->reason != CP_RESIZE)
-		mutex_lock(&sbi->cp_mutex);
-#if defined(CONFIG_UFSTW)
-	bdev_set_turbo_write(sbi->sb->s_bdev);
-#endif
+		down_write(&sbi->cp_global_sem);
 
 	if (!is_sbi_flag_set(sbi, SBI_IS_DIRTY) &&
 		((cpc->reason & CP_FASTBOOT) || (cpc->reason & CP_SYNC) ||
@@ -1655,9 +1648,6 @@ stop:
 	f2fs_update_time(sbi, CP_TIME);
 	trace_f2fs_write_checkpoint(sbi->sb, cpc->reason, "finish checkpoint");
 out:
-#if defined(CONFIG_UFSTW)
-	bdev_clear_turbo_write(sbi->sb->s_bdev);
-#endif
 	if (cpc->reason != CP_RESIZE)
 		up_write(&sbi->cp_global_sem);
 	return err;
