@@ -100,6 +100,8 @@
 					39 01 00 00 00 00 02 53 20
 					05 01 00 00 00 00 02 29 00];
 				qcom,mdss-dsi-nolp-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-doze-hbm-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-doze-lbm-command-state = "dsi_lp_mode";
 			};
 			timing@1{
 				qcom,mdss-dsi-panel-width = <1080>;
@@ -171,7 +173,7 @@
 	/* trig-flags: falling-0x0002 rasing-0x0001 */
 	mi,esd-err-irq-gpio = <&tlmm 51 0x2002>;
 
-	mi,mdss-panel-on-dimming-delay = <120>;
+	mi,mdss-panel-on-dimming-delay = <20>;
 	mi,disp-fod-off-dimming-delay = <85>;
 	mi,mdss-panel-prepare-before-fod-hbm-on;
 
@@ -200,6 +202,7 @@
 	mi,mdss-dsi-update-gamma-6th-index = <14>;
 
 
+	mi,mdss-dsi-dimlayer-brightness-alpha-lut-item-count = <21>;
 	qcom,disp-fod-dim-lut =
 	/* brightness  alpha */
 		<0          0xFF
@@ -226,6 +229,21 @@
 
 	qcom,mdss-dsi-display-timings {
 		timing@0{
+
+                        qcom,mdss-dsi-doze-hbm-command = [
+                                05 01 00 00 10 00 02 28 00
+                                39 00 00 00 00 00 03 F0 5A 5A
+                                39 00 00 00 00 00 02 D4 8B
+                                39 01 00 00 00 00 02 53 22
+                                39 01 00 00 10 00 03 F0 A5 A5
+                                05 01 00 00 00 00 02 29 00];
+                        qcom,mdss-dsi-doze-lbm-command = [
+                                05 01 00 00 10 00 02 28 00
+                                39 00 00 00 00 00 03 F0 5A 5A
+                                39 00 00 00 00 00 02 D4 8B
+                                39 01 00 00 00 00 02 53 23
+                                39 01 00 00 10 00 03 F0 A5 A5
+                                05 01 00 00 00 00 02 29 00];
 			mi,mdss-dsi-doze-hbm-command = [
 				05 01 00 00 10 00 02 28 00
 				39 00 00 00 00 00 03 F0 5A 5A
