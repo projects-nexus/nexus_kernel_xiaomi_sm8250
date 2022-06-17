@@ -645,7 +645,7 @@ int elevator_init_mq(struct request_queue *q)
 #elif defined(CONFIG_MQ_KYBER_DEFAULT)
 	e = elevator_get(q, "kyber", false);
 #else
-	e = elevator_get(q, "mq-deadline", false);
+	e = elevator_get(q, "ssg", false);
 #endif
 
 	if (!e)
