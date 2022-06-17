@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2014, 2016, 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016, 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _GOVERNOR_CACHE_HWMON_H
@@ -17,8 +17,8 @@ enum request_group {
 };
 
 struct mrps_stats {
-	unsigned long mrps[MAX_NUM_GROUPS];
-	unsigned int busy_percent;
+	unsigned long	mrps[MAX_NUM_GROUPS];
+	unsigned int	busy_percent;
 };
 
 /**
@@ -35,17 +35,18 @@ struct mrps_stats {
  *			when in use.
  */
 struct cache_hwmon {
-	int (*start_hwmon)(struct cache_hwmon *hw, struct mrps_stats *mrps);
-	void (*stop_hwmon)(struct cache_hwmon *hw);
-	unsigned long (*meas_mrps_and_set_irq)(struct cache_hwmon *hw,
+	int			(*start_hwmon)(struct cache_hwmon *hw,
+					struct mrps_stats *mrps);
+	void			(*stop_hwmon)(struct cache_hwmon *hw);
+	unsigned long		(*meas_mrps_and_set_irq)(struct cache_hwmon *hw,
 					unsigned int tol, unsigned int us,
 					struct mrps_stats *mrps);
-	struct device *dev;
-	struct device_node *of_node;
-	struct devfreq *df;
+	struct device		*dev;
+	struct device_node	*of_node;
+	struct devfreq		*df;
 };
 
-#ifdef CONFIG_DEVFREQ_GOV_QCOM_CACHE_HWMON
+#if IS_ENABLED(CONFIG_DEVFREQ_GOV_QCOM_CACHE_HWMON)
 int register_cache_hwmon(struct device *dev, struct cache_hwmon *hwmon);
 int update_cache_hwmon(struct cache_hwmon *hwmon);
 #else

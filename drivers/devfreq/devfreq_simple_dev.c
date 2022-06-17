@@ -25,11 +25,11 @@
 #define MBYTE (1UL << 20)
 
 struct dev_data {
-	struct clk *clk;
-	struct devfreq *df;
-	struct devfreq_dev_profile profile;
-	bool freq_in_khz;
-	unsigned int width;
+	struct clk			*clk;
+	struct devfreq			*df;
+	struct devfreq_dev_profile	profile;
+	bool				freq_in_khz;
+	unsigned int			width;
 };
 
 static void find_freq(struct devfreq_dev_profile *p, unsigned long *freq,
@@ -140,7 +140,7 @@ static int parse_freq_table(struct device *dev, struct dev_data *d)
 		return -ENOMEM;
 
 	ret = of_property_read_u32_array(dev->of_node, PROP_TBL, data, len);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	j = 0;
@@ -182,7 +182,7 @@ static int devfreq_clock_probe(struct platform_device *pdev)
 		return PTR_ERR(d->clk);
 
 	ret = parse_freq_table(dev, d);
-	if (ret)
+	if (ret < 0)
 		return ret;
 
 	p = &d->profile;
@@ -190,7 +190,7 @@ static int devfreq_clock_probe(struct platform_device *pdev)
 	if (d->freq_in_khz) {
 		p->get_cur_freq = dev_get_cur_freq;
 		ret = dev_get_cur_freq(dev, &p->initial_freq);
-		if (ret)
+		if (ret < 0)
 			return ret;
 	}
 	p->polling_ms = 50;
@@ -202,7 +202,7 @@ static int devfreq_clock_probe(struct platform_device *pdev)
 
 	if (of_property_read_bool(dev->of_node, "qcom,prepare-clk")) {
 		ret = clk_prepare(d->clk);
-		if (ret)
+		if (ret < 0)
 			return ret;
 	}
 
