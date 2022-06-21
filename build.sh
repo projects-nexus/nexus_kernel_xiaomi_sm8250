@@ -47,7 +47,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=nexus
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -63,6 +63,12 @@ function cloneTC() {
 	then
 	post_msg " Cloning Proton Clang ToolChain "
 	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	
+	elif [ $COMPILER = "nexus" ];
+	then
+	post_msg " Cloning Nexus Clang ToolChain "
+	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 
 	elif [ $COMPILER = "neutron" ];
