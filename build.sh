@@ -8,16 +8,19 @@
 # Specify Kernel Directory
 KERNEL_DIR="$(pwd)"
 
-##----------------------------------------------------------##
-# Device Name and Model
-MODEL=Poco F2 Pro
-DEVICE=Lmi
+DEVICE=$1
 
-# Kernel Version Code
-VERSION=BETA
-
-# Kernel Defconfig
+if [ "${DEVICE}" = "lmi" ]; then
+DEVICE2=lmi
 DEFCONFIG=vendor/lmi_defconfig
+MODEL=Poco F2 Pro
+VERSION=BETA
+elif [ "${DEVICE}" = "alioth" ]; then
+DEVICE2=alioth
+DEFCONFIG=vendor/alioth_defconfig
+MODEL=Poco F3
+VERSION=BETA
+fi
 
 # Files
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
@@ -39,7 +42,9 @@ TANGGAL=$(date +"%F%S")
 # Specify Final Zip Name
 ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
-FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
+if [ "${DEVICE}" = "lmi" ]; then
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
+fi
 
 ##----------------------------------------------------------##
 # Specify Linker
@@ -118,8 +123,11 @@ function cloneTC() {
 	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	fi
         # Clone AnyKernel
-        git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
-
+        if [ "${DEVICE}" = "lmi" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
+        else
+          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git -b alioth AnyKernel3
+        fi
 	}
 	
 ##------------------------------------------------------##
@@ -188,7 +196,7 @@ function push() {
 function compile() {
 START=$(date +"%s")
 	# Push Notification
-	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE2]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
 	
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
@@ -251,12 +259,17 @@ function zipping() {
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        rm -rf dtbo.img && rm -rf *.zip
-        zip -r9 ${FINAL_ZIP2} *
-        MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
-        push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        cd ..
-        rm -rf AnyKernel3
+        if [ "${DEVICE}" = "alioth" ]; then
+          cd ..
+          rm -rf AnyKernel3
+        else
+          rm -rf dtbo.img && rm -rf *.zip
+          zip -r9 ${FINAL_ZIP2} *
+          MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
+          push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+          cd ..
+          rm -rf AnyKernel3
+        fi
         }
     
 ##----------------------------------------------------------##
