@@ -52,7 +52,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=nexus
+COMPILER=aosp
 
 ##----------------------------------------------------------##
 # Clone ToolChain
