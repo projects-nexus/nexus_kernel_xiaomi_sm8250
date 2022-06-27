@@ -508,8 +508,8 @@ static int LZ4_decompress_safe_withSmallPrefix(const char *source, char *dest,
 }
 
 static int LZ4_decompress_safe_forceExtDict(const char *source, char *dest,
-				     int compressedSize, int maxOutputSize,
-				     const void *dictStart, size_t dictSize)
+					    int compressedSize, int maxOutputSize,
+					    const void *dictStart, size_t dictSize)
 {
 	return LZ4_decompress_generic(source, dest,
 				      compressedSize, maxOutputSize,
