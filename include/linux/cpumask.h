@@ -201,12 +201,12 @@ static inline unsigned int cpumask_local_spread(unsigned int i, int node)
 	return 0;
 }
 
-static inline int cpumask_any_and_distribute(const struct cpumask *src1p,
+static inline unsigned int cpumask_any_and_distribute(const struct cpumask *src1p,
 					     const struct cpumask *src2p) {
 	return cpumask_next_and(-1, src1p, src2p);
 }
 
-static inline int cpumask_any_distribute(const struct cpumask *srcp)
+static inline unsigned int cpumask_any_distribute(const struct cpumask *srcp)
 {
 	return cpumask_first(srcp);
 }
@@ -277,7 +277,7 @@ static inline unsigned int cpumask_next_zero(int n, const struct cpumask *srcp)
 	return nr > nr_cpumask_bits ? nr_cpumask_bits : nr;
 }
 
-static inline int cpumask_next_and(int n, const struct cpumask *srcp,
+static inline unsigned int cpumask_next_and(int n, const struct cpumask *srcp,
 				   const struct cpumask *andp)
 {
 	unsigned int nr, shift;
@@ -296,7 +296,7 @@ static inline int cpumask_next_and(int n, const struct cpumask *srcp,
 	return nr > nr_cpumask_bits ? nr_cpumask_bits : nr;
 }
 
-static inline int cpumask_any_but(const struct cpumask *mask, unsigned int cpu)
+static inline unsigned int cpumask_any_but(const struct cpumask *mask, unsigned int cpu)
 {
 	unsigned long bits = *cpumask_bits(mask);
 	unsigned int nr;
@@ -353,9 +353,9 @@ int cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
 #endif /* NR_CPUS <= BITS_PER_LONG */
 
 unsigned int cpumask_local_spread(unsigned int i, int node);
-int cpumask_any_and_distribute(const struct cpumask *src1p,
+unsigned int cpumask_any_and_distribute(const struct cpumask *src1p,
 			       const struct cpumask *src2p);
-int cpumask_any_distribute(const struct cpumask *srcp);
+unsigned int cpumask_any_distribute(const struct cpumask *srcp);
 
 /**
  * for_each_cpu - iterate over every cpu in a mask
@@ -381,7 +381,7 @@ int cpumask_any_distribute(const struct cpumask *srcp);
 		(cpu) = cpumask_next_zero((cpu), (mask)),	\
 		(cpu) < nr_cpu_ids;)
 
-extern int cpumask_next_wrap(int n, const struct cpumask *mask, int start, bool wrap);
+unsigned int cpumask_next_wrap(int n, const struct cpumask *mask, int start, bool wrap);
 
 /**
  * for_each_cpu_wrap - iterate over every cpu in a mask, starting at a specified location
