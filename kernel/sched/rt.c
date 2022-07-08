@@ -1880,6 +1880,8 @@ static struct task_struct *pick_highest_pushable_task(struct rq *rq, int cpu)
 
 static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
 
+extern const_debug unsigned int sysctl_sched_cstate_aware;
+
 static int rt_energy_aware_wake_cpu(struct task_struct *task)
 {
 	struct sched_domain *sd;
