@@ -2216,7 +2216,7 @@ static int smb1398_div2_cp_master_probe(struct smb1398_chip *chip)
 
 	rc = smb1398_div2_cp_parse_dt(chip);
 	if (rc < 0) {
-		dev_err(chip->dev, "Couldn't parse devicetree, rc=%d\n", rc);
+		dev_dbg(chip->dev, "Couldn't parse devicetree, rc=%d\n", rc);
 		return rc;
 	}
 
