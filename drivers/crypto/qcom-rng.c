@@ -188,7 +188,8 @@ static int qcom_rng_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_err(&pdev->dev, "Register crypto rng failed: %d\n", ret);
 		qcom_rng_dev = NULL;
-	}
+	} else
+		pr_info("qcom-rng: Probed successfully\n");
 
 	return ret;
 }
