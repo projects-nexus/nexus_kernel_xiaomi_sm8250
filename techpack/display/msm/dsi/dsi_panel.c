@@ -885,15 +885,15 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 			panel->resend_ea = true;
 		}
 #endif
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
-					panel->name, rc);
-	} else {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
-					panel->name, rc);
+                rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
+                if (rc)
+                        DSI_ERR("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
+                                        panel->name, rc);
+        } else {
+                rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
+                if (rc)
+                        DSI_ERR("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
+                                        panel->name, rc);
 #ifdef CONFIG_EXPOSURE_ADJUSTMENT
 		if (panel->resend_ea) {
 			ea_panel_mode_ctrl(panel, 1);
@@ -2872,7 +2872,7 @@ static int dsi_panel_parse_fod_dim_lut(struct dsi_panel *panel,
 
 	len = utils->count_u32_elems(utils->data, "mi,mdss-dsi-dimlayer-brightness-alpha-lut");
 	if (len <= 0 || len % BRIGHTNESS_ALPHA_PAIR_LEN) {
-		pr_err("[%s] invalid number of elements, rc=%d\n",
+		DSI_ERR("[%s] invalid number of elements, rc=%d\n",
 				panel->name, rc);
 		rc = -EINVAL;
 		goto count_fail;
@@ -2880,7 +2880,7 @@ static int dsi_panel_parse_fod_dim_lut(struct dsi_panel *panel,
 
 	array = kcalloc(len, sizeof(u32), GFP_KERNEL);
 	if (!array) {
-		pr_err("[%s] failed to allocate memory, rc=%d\n",
+		DSI_ERR("[%s] failed to allocate memory, rc=%d\n",
 				panel->name, rc);
 		rc = -ENOMEM;
 		goto alloc_array_fail;
@@ -2889,7 +2889,7 @@ static int dsi_panel_parse_fod_dim_lut(struct dsi_panel *panel,
 	rc = utils->read_u32_array(utils->data,
 			"mi,mdss-dsi-dimlayer-brightness-alpha-lut", array, len);
 	if (rc) {
-		pr_err("[%s] failed to allocate memory, rc=%d\n",
+		DSI_ERR("[%s] failed to allocate memory, rc=%d\n",
 				panel->name, rc);
 		goto read_fail;
 	}
@@ -3020,7 +3020,7 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 	rc = dsi_panel_parse_fod_dim_lut(panel, utils);
 	if (rc)
-		pr_err("[%s failed to parse fod dim lut\n", panel->name);
+		DSI_ERR("[%s failed to parse fod dim lut\n", panel->name);
 
 	if (panel->bl_config.type == DSI_BACKLIGHT_PWM) {
 		rc = dsi_panel_parse_bl_pwm_config(panel);
