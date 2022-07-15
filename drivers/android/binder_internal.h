@@ -68,9 +68,7 @@ struct binderfs_info {
 	kgid_t root_gid;
 	struct binderfs_mount_opts mount_opts;
 	int device_count;
-#ifdef CONFIG_ANDROID_BINDER_LOGS
 	struct dentry *proc_log_dir;
-#endif
 };
 
 extern const struct file_operations binder_fops;
@@ -107,7 +105,6 @@ static inline int __init init_binderfs(void)
 }
 #endif
 
-#ifdef CONFIG_ANDROID_BINDER_LOGS
 int binder_stats_show(struct seq_file *m, void *unused);
 DEFINE_SHOW_ATTRIBUTE(binder_stats);
 
@@ -146,5 +143,4 @@ struct binder_transaction_log {
 
 extern struct binder_transaction_log binder_transaction_log;
 extern struct binder_transaction_log binder_transaction_log_failed;
-#endif
 #endif /* _LINUX_BINDER_INTERNAL_H */
