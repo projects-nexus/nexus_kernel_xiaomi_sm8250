@@ -52,7 +52,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=neutron
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -60,19 +60,16 @@ function cloneTC() {
 	
 	if [ $COMPILER = "atomx" ];
 	then
-	post_msg " Cloning Atom-X Clang ToolChain "
 	git clone --depth=1 https://gitlab.com/ElectroPerf/atom-x-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "proton" ];
 	then
-	post_msg " Cloning Proton Clang ToolChain "
 	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "nexus" ];
 	then
-	post_msg " Cloning Nexus Clang ToolChain "
 	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 
@@ -83,13 +80,11 @@ function cloneTC() {
 	
 	elif [ $COMPILER = "prelude" ];
 	then
-	post_msg " Cloning Prelude Clang ToolChain"
 	git clone --depth=1 https://gitlab.com/jjpprrrr/prelude-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "eva" ];
 	then
-	post_msg " Cloning Eva GCC ToolChain "
 	git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git -b gcc-new gcc64
 	git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git -b gcc-new gcc32
 	PATH=$KERNEL_DIR/gcc64/bin/:$KERNEL_DIR/gcc32/bin/:/usr/bin:$PATH
@@ -104,7 +99,6 @@ function cloneTC() {
 	else
 	export CLANG_VERSION="clang-r450784e"
 	echo "* It's not cloned, cloning it..."
-	post_msg " Cloning Aosp Clang ToolChain "
         mkdir clangB
         cd clangB || exit
 	wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz
