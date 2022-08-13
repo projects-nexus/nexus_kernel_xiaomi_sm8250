@@ -80,3 +80,4 @@ obj-$(CONFIG_MOTOR_DRV8846)		+= drv8846.o
 obj-$(CONFIG_HALL_AKM09970)		+= akm09970.o
 obj-y                           += qrc/
 obj-y				+= lyb_taskmmu.o
+obj-$(CONFIG_KINECTICS_XR_NORDIC) += kxrctrl/
