@@ -52,7 +52,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=neutron
+COMPILER=aosp
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -97,7 +97,7 @@ function cloneTC() {
 	  echo "  Already Cloned Aosp Clang"
 	  echo "××××××××××××××××××××××××××××"
 	else
-	export CLANG_VERSION="clang-r450784e"
+	export CLANG_VERSION="clang-r458507"
 	echo "* It's not cloned, cloning it..."
         mkdir clangB
         cd clangB || exit
