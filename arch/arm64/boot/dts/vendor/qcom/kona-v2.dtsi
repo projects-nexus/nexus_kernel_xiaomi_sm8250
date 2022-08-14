@@ -6,20 +6,44 @@
 	qcom,msm-id = <356 0x20000>;
 };
 
+&CPU0 {
+	capacity-dmips-mhz = <448>;
+	dynamic-power-coefficient = <49>;
+};
+
+&CPU1 {
+	capacity-dmips-mhz = <448>;
+	dynamic-power-coefficient = <49>;
+};
+
+&CPU2 {
+	capacity-dmips-mhz = <448>;
+	dynamic-power-coefficient = <49>;
+};
+
+&CPU3 {
+	capacity-dmips-mhz = <448>;
+	dynamic-power-coefficient = <49>;
+};
+
 &CPU4 {
-	dynamic-power-coefficient = <533>;
+	capacity-dmips-mhz = <1024>;
+	dynamic-power-coefficient = <91>;
 };
 
 &CPU5 {
-	dynamic-power-coefficient = <533>;
+	capacity-dmips-mhz = <1024>;
+	dynamic-power-coefficient = <91>;
 };
 
 &CPU6 {
-	dynamic-power-coefficient = <533>;
+	capacity-dmips-mhz = <1024>;
+	dynamic-power-coefficient = <91>;
 };
 
 &CPU7 {
-	dynamic-power-coefficient = <642>;
+	capacity-dmips-mhz = <1023>;
+	dynamic-power-coefficient = <134>;
 };
 
 &clock_camcc {
