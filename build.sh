@@ -11,7 +11,7 @@ KERNEL_DIR="$(pwd)"
 DEVICE=$1
 
 if [ "${DEVICE}" = "lmi" ]; then
-DEVICE2=lmi
+DEVICE2=lmi-FW12
 DEFCONFIG=vendor/lmi_defconfig
 MODEL=Poco F2 Pro
 VERSION=BETA
@@ -20,6 +20,14 @@ DEVICE2=alioth
 DEFCONFIG=vendor/alioth_defconfig
 MODEL=Poco F3
 VERSION=BETA
+elif [ "${DEVICE}" = "fw13" ]; then
+DEVICE2=lmi-FW13
+DEFCONFIG=vendor/lmi_defconfig
+MODEL=Poco F2 Pro
+VERSION=BETA
+git revert --no-edit 18090075cbb9b906caa5f017ac707b2dfb11ab17
+git revert --no-edit 56721a8716b3ec6d5a9a1d33b81b099c6b391cb7
+git revert --no-edit 57949f59a6b4fc3d8867142876251c875a91d6ec
 fi
 
 # Files
@@ -41,9 +49,13 @@ TANGGAL=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
-if [ "${DEVICE}" = "lmi" ]; then
-  FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
+if [ "${DEVICE}" = "fw13" ]; then
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-KERNEL-MIUI-${TANGGAL}.zip
+elif [ "${DEVICE}" = "lmi" ]; then
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
+else
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
 fi
 
 ##----------------------------------------------------------##
@@ -117,10 +129,10 @@ function cloneTC() {
 	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	fi
         # Clone AnyKernel
-        if [ "${DEVICE}" = "lmi" ]; then
-          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
-        else
+        if [ "${DEVICE}" = "alioth" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git -b alioth AnyKernel3
+        else
+          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
         fi
 	}
 	
@@ -252,16 +264,22 @@ function zipping() {
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
-        push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        if [ "${DEVICE}" = "alioth" ]; then
-          cd ..
-          rm -rf AnyKernel3
-        else
+		if [ "${DEVICE}" = "fw13" ]; then
+          push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		elif [ "${DEVICE}" = "lmi" ]; then
+		  push "$FINAL_ZIP" "FW 12. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		else
+		  push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		fi
+        if [ "${DEVICE}" = "fw13" ]; then
           rm -rf dtbo.img && rm -rf *.zip
           zip -r9 ${FINAL_ZIP2} *
           MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
-          push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+          push "$FINAL_ZIP2" "MIUI 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL (lmi)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
           cd ..
+          rm -rf AnyKernel3
+		else 
+		  cd ..
           rm -rf AnyKernel3
         fi
         }
