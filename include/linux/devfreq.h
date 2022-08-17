@@ -131,9 +131,6 @@ struct devfreq_dev_profile {
  * @scaling_min_freq:	Limit minimum frequency requested by OPP interface
  * @scaling_max_freq:	Limit maximum frequency requested by OPP interface
  * @stop_polling:	 devfreq polling status of a device.
- * @suspend_freq:	 frequency of a device set during suspend phase.
- * @resume_freq:	 frequency of a device set in resume phase.
- * @suspend_count:	 suspend requests counter for a device.
  * @total_trans:	Number of devfreq transitions
  * @trans_table:	Statistics of devfreq transitions
  * @time_in_state:	Statistics of devfreq states
@@ -152,9 +149,7 @@ struct devfreq {
 	struct list_head node;
 
 	struct mutex lock;
-#ifdef CONFIG_QCOM_DEVFREQ_ICC
 	struct mutex event_lock;
-#endif
 	struct device dev;
 	struct devfreq_dev_profile *profile;
 	const struct devfreq_governor *governor;
@@ -175,10 +170,6 @@ struct devfreq {
 	bool max_boost;
 	bool stop_polling;
 
-	unsigned long suspend_freq;
-	unsigned long resume_freq;
-	atomic_t suspend_count;
-
 	/* information for device frequency transition */
 	unsigned int total_trans;
 	unsigned int *trans_table;
@@ -186,37 +177,13 @@ struct devfreq {
 	unsigned long last_stat_updated;
 
 	struct srcu_notifier_head transition_notifier_list;
+	bool dev_suspended;
 };
 
 struct devfreq_freqs {
 	unsigned long old;
 	unsigned long new;
 };
-
-static inline void event_mutex_init(struct devfreq *devfreq)
-{
-#ifdef CONFIG_QCOM_DEVFREQ_ICC
-	mutex_init(&devfreq->event_lock);
-#endif
-}
-static inline void event_mutex_destroy(struct devfreq *devfreq)
-{
-#ifdef CONFIG_QCOM_DEVFREQ_ICC
-	mutex_destroy(&devfreq->event_lock);
-#endif
-}
-static inline void event_mutex_lock(struct devfreq *devfreq)
-{
-#ifdef CONFIG_QCOM_DEVFREQ_ICC
-	mutex_lock(&devfreq->event_lock);
-#endif
-}
-static inline void event_mutex_unlock(struct devfreq *devfreq)
-{
-#ifdef CONFIG_QCOM_DEVFREQ_ICC
-	mutex_unlock(&devfreq->event_lock);
-#endif
-}
 
 #if defined(CONFIG_PM_DEVFREQ)
 extern struct devfreq *devfreq_add_device(struct device *dev,
@@ -234,9 +201,6 @@ extern void devm_devfreq_remove_device(struct device *dev,
 /* Supposed to be called by PM callbacks */
 extern int devfreq_suspend_device(struct devfreq *devfreq);
 extern int devfreq_resume_device(struct devfreq *devfreq);
-
-extern void devfreq_suspend(void);
-extern void devfreq_resume(void);
 
 /* Helper functions for devfreq user device driver with OPP. */
 extern struct dev_pm_opp *devfreq_recommended_opp(struct device *dev,
@@ -359,9 +323,6 @@ static inline int devfreq_resume_device(struct devfreq *devfreq)
 {
 	return 0;
 }
-
-static inline void devfreq_suspend(void) {}
-static inline void devfreq_resume(void) {}
 
 static inline struct dev_pm_opp *devfreq_recommended_opp(struct device *dev,
 					   unsigned long *freq, u32 flags)

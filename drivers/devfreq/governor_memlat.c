@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt) "mem_lat: " fmt
@@ -27,18 +27,18 @@
 #include <trace/events/power.h>
 
 struct memlat_node {
-	unsigned int		ratio_ceil;
-	unsigned int		stall_floor;
-	unsigned int		wb_pct_thres;
-	unsigned int		wb_filter_ratio;
-	bool			mon_started;
-	bool			already_zero;
-	struct list_head	list;
-	void			*orig_data;
-	struct memlat_hwmon	*hw;
-	struct devfreq_governor	*gov;
-	struct attribute_group	*attr_grp;
-	unsigned long		resume_freq;
+	unsigned int ratio_ceil;
+	unsigned int stall_floor;
+	unsigned int wb_pct_thres;
+	unsigned int wb_filter_ratio;
+	bool mon_started;
+	bool already_zero;
+	struct list_head list;
+	void *orig_data;
+	struct memlat_hwmon *hw;
+	struct devfreq_governor *gov;
+	struct attribute_group *attr_grp;
+	unsigned long resume_freq;
 };
 
 static LIST_HEAD(memlat_list);
@@ -49,7 +49,7 @@ static int compute_use_cnt;
 static DEFINE_MUTEX(state_lock);
 
 #define show_attr(name) \
-static ssize_t name##_show(struct device *dev,				\
+static ssize_t show_##name(struct device *dev,				\
 			struct device_attribute *attr, char *buf)	\
 {									\
 	struct devfreq *df = to_devfreq(dev);				\
@@ -58,7 +58,7 @@ static ssize_t name##_show(struct device *dev,				\
 }
 
 #define store_attr(name, _min, _max) \
-static ssize_t name##_store(struct device *dev,				\
+static ssize_t store_##name(struct device *dev,				\
 			struct device_attribute *attr, const char *buf,	\
 			size_t count)					\
 {									\
@@ -67,13 +67,18 @@ static ssize_t name##_store(struct device *dev,				\
 	int ret;							\
 	unsigned int val;						\
 	ret = kstrtouint(buf, 10, &val);				\
-	if (ret < 0)							\
+	if (ret)							\
 		return ret;						\
 	val = max(val, _min);						\
 	val = min(val, _max);						\
 	hw->name = val;							\
 	return count;							\
 }
+
+#define gov_attr(__attr, min, max)	\
+show_attr(__attr)			\
+store_attr(__attr, min, max)		\
+static DEVICE_ATTR(__attr, 0644, show_##__attr, store_##__attr)
 
 static ssize_t freq_map_show(struct device *dev, struct device_attribute *attr,
 			char *buf)
@@ -144,7 +149,7 @@ static int start_monitor(struct devfreq *df)
 
 	ret = hw->start_hwmon(hw);
 
-	if (ret < 0) {
+	if (ret) {
 		dev_err(dev, "Unable to start HW monitor! (%d)\n", ret);
 		return ret;
 	}
@@ -189,11 +194,11 @@ static int gov_start(struct devfreq *df)
 	df->data = node;
 
 	ret = start_monitor(df);
-	if (ret < 0)
+	if (ret)
 		goto err_start;
 
 	ret = sysfs_create_group(&df->dev.kobj, node->attr_grp);
-	if (ret < 0)
+	if (ret)
 		goto err_sysfs;
 
 	return 0;
@@ -210,12 +215,10 @@ err_start:
 static int gov_suspend(struct devfreq *df)
 {
 	struct memlat_node *node = df->data;
-	struct memlat_hwmon *hw = node->hw;
 	unsigned long prev_freq = df->previous_freq;
 
 	node->mon_started = false;
-	if (!hw->should_ignore_df_monitor)
-		devfreq_monitor_suspend(df);
+	devfreq_monitor_suspend(df);
 
 	mutex_lock(&df->lock);
 	update_devfreq(df);
@@ -229,7 +232,6 @@ static int gov_suspend(struct devfreq *df)
 static int gov_resume(struct devfreq *df)
 {
 	struct memlat_node *node = df->data;
-	struct memlat_hwmon *hw = node->hw;
 
 	mutex_lock(&df->lock);
 	update_devfreq(df);
@@ -237,8 +239,7 @@ static int gov_resume(struct devfreq *df)
 
 	node->resume_freq = 0;
 
-	if (!hw->should_ignore_df_monitor)
-		devfreq_monitor_resume(df);
+	devfreq_monitor_resume(df);
 	node->mon_started = true;
 
 	return 0;
@@ -324,25 +325,17 @@ static int devfreq_memlat_get_freq(struct devfreq *df,
 	return 0;
 }
 
-show_attr(ratio_ceil);
-store_attr(ratio_ceil, 1U, 50000U);
-static DEVICE_ATTR_RW(ratio_ceil);
-show_attr(stall_floor);
-store_attr(stall_floor, 0U, 100U);
-static DEVICE_ATTR_RW(stall_floor);
-show_attr(wb_pct_thres);
-store_attr(wb_pct_thres, 0U, 100U);
-static DEVICE_ATTR_RW(wb_pct_thres);
-show_attr(wb_filter_ratio);
-store_attr(wb_filter_ratio, 0U, 50000U);
-static DEVICE_ATTR_RW(wb_filter_ratio);
+gov_attr(ratio_ceil, 1U, 20000U);
+gov_attr(stall_floor, 0U, 100U);
+gov_attr(wb_pct_thres, 0U, 100U);
+gov_attr(wb_filter_ratio, 0U, 50000U);
 
 static struct attribute *memlat_dev_attr[] = {
 	&dev_attr_ratio_ceil.attr,
 	&dev_attr_stall_floor.attr,
-	&dev_attr_freq_map.attr,
 	&dev_attr_wb_pct_thres.attr,
 	&dev_attr_wb_filter_ratio.attr,
+	&dev_attr_freq_map.attr,
 	NULL,
 };
 
@@ -379,7 +372,7 @@ static int devfreq_memlat_ev_handler(struct devfreq *df,
 		df->profile->polling_ms = sample_ms;
 
 		ret = gov_start(df);
-		if (ret < 0)
+		if (ret)
 			return ret;
 
 		dev_dbg(df->dev.parent,
@@ -394,7 +387,7 @@ static int devfreq_memlat_ev_handler(struct devfreq *df,
 
 	case DEVFREQ_GOV_SUSPEND:
 		ret = gov_suspend(df);
-		if (ret < 0) {
+		if (ret) {
 			dev_err(df->dev.parent,
 				"Unable to suspend memlat governor (%d)\n",
 				ret);
@@ -406,7 +399,7 @@ static int devfreq_memlat_ev_handler(struct devfreq *df,
 
 	case DEVFREQ_GOV_RESUME:
 		ret = gov_resume(df);
-		if (ret < 0) {
+		if (ret) {
 			dev_err(df->dev.parent,
 				"Unable to resume memlat governor (%d)\n",
 				ret);
@@ -454,6 +447,9 @@ static struct core_dev_map *init_core_dev_map(struct device *dev,
 	struct core_dev_map *tbl;
 	int ret;
 
+	if (!of_node)
+		of_node = dev->of_node;
+
 	if (!of_find_property(of_node, prop_name, &len))
 		return NULL;
 	len /= sizeof(data);
@@ -470,13 +466,13 @@ static struct core_dev_map *init_core_dev_map(struct device *dev,
 	for (i = 0, j = 0; i < nf; i++, j += 2) {
 		ret = of_property_read_u32_index(of_node, prop_name, j,
 				&data);
-		if (ret < 0)
+		if (ret)
 			return NULL;
 		tbl[i].core_mhz = data / 1000;
 
 		ret = of_property_read_u32_index(of_node, prop_name, j + 1,
 				&data);
-		if (ret < 0)
+		if (ret)
 			return NULL;
 		tbl[i].target_freq = data;
 		pr_debug("Entry%d CPU:%u, Dev:%u\n", i, tbl[i].core_mhz,
@@ -491,7 +487,7 @@ static struct memlat_node *register_common(struct device *dev,
 					   struct memlat_hwmon *hw)
 {
 	struct memlat_node *node;
-	struct device_node *of_node = dev->of_node;
+	struct device_node *of_child;
 
 	if (!hw->dev && !hw->of_node)
 		return ERR_PTR(-EINVAL);
@@ -505,14 +501,14 @@ static struct memlat_node *register_common(struct device *dev,
 	node->wb_filter_ratio = 25000;
 	node->hw = hw;
 
-	if (hw->get_child_of_node)
-		of_node = hw->get_child_of_node(dev);
-
-	if (of_parse_phandle(of_node, "qcom,core-dev-table", 0))
-		of_node = of_parse_phandle(of_node, "qcom,core-dev-table", 0);
-
-	hw->freq_map = init_core_dev_map(dev, of_node, "qcom,core-dev-table");
-
+	if (hw->get_child_of_node) {
+		of_child = hw->get_child_of_node(dev);
+		hw->freq_map = init_core_dev_map(dev, of_child,
+					"qcom,core-dev-table");
+	} else {
+		hw->freq_map = init_core_dev_map(dev, NULL,
+					"qcom,core-dev-table");
+	}
 	if (!hw->freq_map) {
 		dev_err(dev, "Couldn't find the core-dev freq table!\n");
 		return ERR_PTR(-EINVAL);
@@ -548,13 +544,12 @@ int register_compute(struct device *dev, struct memlat_hwmon *hw)
 
 out:
 	if (!ret)
-		dev_dbg(dev, "Compute governor registered.\n");
+		dev_info(dev, "Compute governor registered.\n");
 	else
 		dev_err(dev, "Compute governor registration failed!\n");
 
 	return ret;
 }
-EXPORT_SYMBOL(register_compute);
 
 int register_memlat(struct device *dev, struct memlat_hwmon *hw)
 {
@@ -579,13 +574,12 @@ int register_memlat(struct device *dev, struct memlat_hwmon *hw)
 
 out:
 	if (!ret)
-		dev_dbg(dev, "Memory Latency governor registered.\n");
+		dev_info(dev, "Memory Latency governor registered.\n");
 	else
 		dev_err(dev, "Memory Latency governor registration failed!\n");
 
 	return ret;
 }
-EXPORT_SYMBOL(register_memlat);
 
 MODULE_DESCRIPTION("HW monitor based dev DDR bandwidth voting driver");
 MODULE_LICENSE("GPL v2");

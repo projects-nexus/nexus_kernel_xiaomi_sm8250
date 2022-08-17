@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2015, 2017-2018, 2019, 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2015, 2017-2018, 2019, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt) "devfreq-simple-dev: " fmt
@@ -22,14 +22,11 @@
 #include <linux/clk.h>
 #include <trace/events/power.h>
 
-#define MBYTE (1UL << 20)
-
 struct dev_data {
-	struct clk			*clk;
-	struct devfreq			*df;
-	struct devfreq_dev_profile	profile;
-	bool				freq_in_khz;
-	unsigned int			width;
+	struct clk *clk;
+	struct devfreq *df;
+	struct devfreq_dev_profile profile;
+	bool freq_in_khz;
 };
 
 static void find_freq(struct devfreq_dev_profile *p, unsigned long *freq,
@@ -54,35 +51,14 @@ static void find_freq(struct devfreq_dev_profile *p, unsigned long *freq,
 		*freq = atleast;
 }
 
-static u64 mbps_to_hz(u32 in, uint width)
-{
-	u64 result;
-	u32 quot = in / width;
-	u32 rem = in % width;
-
-	result = quot * MBYTE + div_u64(rem * MBYTE, width);
-	return result;
-}
-
 static int dev_target(struct device *dev, unsigned long *freq, u32 flags)
 {
 	struct dev_data *d = dev_get_drvdata(dev);
-	struct dev_pm_opp *opp;
 	unsigned long rfreq;
-	u64 new_freq;
 
-	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (!IS_ERR(opp))
-		dev_pm_opp_put(opp);
+	find_freq(&d->profile, freq, flags);
 
-	if (!d->freq_in_khz) {
-		new_freq = mbps_to_hz(*freq, d->width);
-	} else {
-		find_freq(&d->profile, freq, flags);
-		new_freq = *freq;
-	}
-
-	rfreq = clk_round_rate(d->clk, d->freq_in_khz ? new_freq * 1000 : new_freq);
+	rfreq = clk_round_rate(d->clk, d->freq_in_khz ? *freq * 1000 : *freq);
 	if (IS_ERR_VALUE(rfreq)) {
 		dev_err(dev, "devfreq: Cannot find matching frequency for %lu\n",
 			*freq);
@@ -113,21 +89,11 @@ static int parse_freq_table(struct device *dev, struct dev_data *d)
 	unsigned long f;
 
 	if (!of_find_property(dev->of_node, PROP_TBL, &len)) {
-		ret = dev_pm_opp_of_add_table(dev);
-		if (ret < 0)
-			dev_err(dev, "Couldn't parse OPP table:%d\n", ret);
 		if (dev_pm_opp_get_opp_count(dev) <= 0)
 			return -EPROBE_DEFER;
-		d->freq_in_khz = false;
-
-		ret = of_property_read_u32(dev->of_node, "qcom,bus-width",
-						&d->width);
-		if (ret < 0 || !d->width) {
-			dev_err(dev, "Missing or invalid bus-width: %d\n", ret);
-			return -EINVAL;
-		}
 		return 0;
 	}
+
 	d->freq_in_khz = true;
 	len /= sizeof(*data);
 	data = devm_kzalloc(dev, len * sizeof(*data), GFP_KERNEL);
@@ -140,7 +106,7 @@ static int parse_freq_table(struct device *dev, struct dev_data *d)
 		return -ENOMEM;
 
 	ret = of_property_read_u32_array(dev->of_node, PROP_TBL, data, len);
-	if (ret < 0)
+	if (ret)
 		return ret;
 
 	j = 0;
@@ -182,17 +148,16 @@ static int devfreq_clock_probe(struct platform_device *pdev)
 		return PTR_ERR(d->clk);
 
 	ret = parse_freq_table(dev, d);
-	if (ret < 0)
+	if (ret)
 		return ret;
 
 	p = &d->profile;
 	p->target = dev_target;
-	if (d->freq_in_khz) {
-		p->get_cur_freq = dev_get_cur_freq;
-		ret = dev_get_cur_freq(dev, &p->initial_freq);
-		if (ret < 0)
-			return ret;
-	}
+	p->get_cur_freq = dev_get_cur_freq;
+	ret = dev_get_cur_freq(dev, &p->initial_freq);
+	if (ret)
+		return ret;
+
 	p->polling_ms = 50;
 	if (!of_property_read_u32(dev->of_node, "polling-ms", &poll))
 		p->polling_ms = poll;
@@ -202,7 +167,7 @@ static int devfreq_clock_probe(struct platform_device *pdev)
 
 	if (of_property_read_bool(dev->of_node, "qcom,prepare-clk")) {
 		ret = clk_prepare(d->clk);
-		if (ret < 0)
+		if (ret)
 			return ret;
 	}
 
