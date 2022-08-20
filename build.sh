@@ -15,6 +15,7 @@ DEVICE2=lmi-FW12
 DEFCONFIG=vendor/lmi_defconfig
 MODEL=Poco F2 Pro
 VERSION=BETA
+curl https://github.com/projects-nexus/nexus_kernel_xiaomi_sm8250/commit/d982f028426863ebcc1c0c247bd855434b4e9826.patch | git am
 elif [ "${DEVICE}" = "alioth" ]; then
 DEVICE2=alioth
 DEFCONFIG=vendor/alioth_defconfig
@@ -25,9 +26,6 @@ DEVICE2=lmi-FW13
 DEFCONFIG=vendor/lmi_defconfig
 MODEL=Poco F2 Pro
 VERSION=BETA
-git revert --no-edit 18090075cbb9b906caa5f017ac707b2dfb11ab17
-git revert --no-edit 56721a8716b3ec6d5a9a1d33b81b099c6b391cb7
-git revert --no-edit 57949f59a6b4fc3d8867142876251c875a91d6ec
 fi
 
 # Files
