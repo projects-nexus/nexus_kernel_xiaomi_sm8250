@@ -358,6 +358,8 @@
 	mi,mdss-panel-delay-after-fod-hbm-off;
 	mi,mdss-panel-delay-after-fod-hbm-on;
 
+	mi,mdss-dsi-pan-enable-smart-fps;
+	mi,mdss-dsi-smart-fps-max_framerate = <120>;
 	mi,mdss-dsi-panel-hbm-brightness = <1>;
 	qcom,disp-fod-dim-lut =
 	/* brightness  alpha */
