@@ -69,3 +69,27 @@ steps:
      - pacman-static -Syu --needed --noconfirm dpkg git
      - wget http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libtinfo5_6.0+20160213-1ubuntu1_amd64.deb -O libtinfo5.deb && dpkg-deb -R libtinfo5.deb libtinfo && cp libtinfo/lib/x86_64-linux-gnu/libtinfo.so.5.9 /usr/lib/libtinfo.so.5
      - bash build.sh fw13
+
+--- 
+clone: 
+  depth: 1
+kind: pipeline
+name : Nexus Apollo
+version: apollo
+steps:
+ - name: Nexus Apollo
+   image: panchajanya1999/archlinux:latest
+   environment:
+     token:
+       from_secret: token
+     chat_id:
+       from_secret: chat_id
+   commands:
+     - echo "LC_ALL=en_US.UTF-8" | sudo tee -a /etc/environment
+     - echo "en_US.UTF-8 UTF-8" | sudo tee -a /etc/locale.gen
+     - echo "LANG=en_US.UTF-8" | sudo tee -a /etc/locale.conf
+     - sudo locale-gen en_US.UTF-8
+     - curl -fsSL "https://pkgbuild.com/~morganamilo/pacman-static/x86_64/bin/pacman-static" -o pacman-static && chmod +x pacman-static && mv pacman-static /usr/bin/
+     - pacman-static -Syu --needed --noconfirm dpkg
+     - wget http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libtinfo5_6.0+20160213-1ubuntu1_amd64.deb -O libtinfo5.deb && dpkg-deb -R libtinfo5.deb libtinfo && cp libtinfo/lib/x86_64-linux-gnu/libtinfo.so.5.9 /usr/lib/libtinfo.so.5
+     - bash build.sh apollo

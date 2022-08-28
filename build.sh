@@ -26,6 +26,11 @@ DEVICE2=lmi-FW13
 DEFCONFIG=vendor/lmi_defconfig
 MODEL=Poco F2 Pro
 VERSION=BETA
+elif [ "${DEVICE}" = "apollo" ]; then
+DEVICE2=apollo
+DEFCONFIG=vendor/apollo_defconfig
+MODEL=Mi 10T Pro
+VERSION=BETA
 fi
 
 # Files
@@ -131,9 +136,11 @@ function cloneTC() {
         # Clone AnyKernel
         if [ "${DEVICE}" = "alioth" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git -b alioth AnyKernel3
+        elif [ "${DEVICE}" = "apollo" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git -b apollo AnyKernel3
         else
-          git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
-        fi
+		  git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
+		fi
 	}
 	
 ##------------------------------------------------------##
