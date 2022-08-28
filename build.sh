@@ -62,7 +62,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=clang16
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -119,12 +119,14 @@ function cloneTC() {
 	fi
 	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	
-	elif [ $COMPILER = "sdclang" ];
+	elif [ $COMPILER = "clang16" ];
 	then
-        git clone --depth=1 https://github.com/ZyCromerZ/SDClang clangB
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
-	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
+        mkdir clang
+        cd clang
+        wget https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-20220824-release/Clang-16.0.0-20220824.tar.gz
+	    tar -xf Clang-16.0.0-20220824.tar.gz
+	    cd ..
+	    PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	fi
         # Clone AnyKernel
         if [ "${DEVICE}" = "alioth" ]; then
