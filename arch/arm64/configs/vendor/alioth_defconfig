@@ -2564,7 +2564,7 @@ CONFIG_MSM_RDBG=y
 # CONFIG_RB5_FAN_CONTROLLER is not set
 # CONFIG_RB5_GPIOS_ENABLE is not set
 CONFIG_RANDOM_DEFAULT_IMPL=y
-CONFIG_LRNG=y
+# CONFIG_LRNG is not set
 
 #
 # Linux Random Number Generator Configuration
