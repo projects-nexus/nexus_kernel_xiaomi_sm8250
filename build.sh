@@ -67,7 +67,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=clang16
+COMPILER=zyc
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -124,12 +124,14 @@ function cloneTC() {
 	fi
 	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	
-	elif [ $COMPILER = "clang16" ];
+	elif [ $COMPILER = "zyc" ];
 	then
         mkdir clang
         cd clang
-        wget https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-20220824-release/Clang-16.0.0-20220824.tar.gz
-	    tar -xf Clang-16.0.0-20220824.tar.gz
+		wget -cO - https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt > version.txt
+		V="$(cat version.txt)"
+        wget https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-$V-release/Clang-16.0.0-$V.tar.gz
+	    tar -xf Clang-16.0.0-$V.tar.gz
 	    cd ..
 	    PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	fi
