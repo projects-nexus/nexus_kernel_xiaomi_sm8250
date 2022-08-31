@@ -302,6 +302,11 @@ struct dsi_ctrl {
 	bool modeupdated;
 	bool split_link_supported;
 	bool cmd_mode;
+	bool enable_cmd_dma_stats;
+	u32 cmd_trigger_line;
+	u32 cmd_trigger_frame;
+	u32 cmd_success_line;
+	u32 cmd_success_frame;
 };
 
 /**

@@ -87,6 +87,7 @@ struct dsi_phy_per_lane_cfgs {
 	u8 lane_v3[DSI_PHY_TIMING_V3_SIZE];
 	u8 lane_v4[DSI_PHY_TIMING_V4_SIZE];
 	u32 count_per_lane;
+	unsigned long phy_voltage;
 };
 
 /**
@@ -115,6 +116,9 @@ struct dsi_phy_cfg {
 	enum dsi_phy_type phy_type;
 	unsigned long bit_clk_rate_hz;
 	u32 data_lanes;
+	unsigned long clk_strength;
+	bool cphy_strength;
+	unsigned long phy_voltage;
 };
 
 struct dsi_phy_hw;

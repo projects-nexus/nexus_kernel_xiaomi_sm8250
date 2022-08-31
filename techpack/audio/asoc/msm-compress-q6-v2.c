@@ -440,6 +440,7 @@ static int msm_compr_set_volume(struct snd_compr_stream *cstream,
 		gain_list[0] = volume_l;
 		gain_list[1] = volume_r;
 		gain_list[2] = volume_l;
+		use_default = true;
 		if (use_default)
 			num_channels = 3;
 		rc = q6asm_set_multich_gain(prtd->audio_client, num_channels,

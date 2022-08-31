@@ -1327,7 +1327,7 @@ source "drivers/input/touchscreen/st/Kconfig"
 config TOUCHSCREEN_SYNAPTICS_DSX
 	bool "Synaptics DSX Touchscreen Driver"
 	depends on I2C
-	default y
+	default n
 	help
 	  Say Y here if you have a Synaptics Touchscreen.
 
@@ -1350,10 +1350,47 @@ config TOUCHSCREEN_SYNAPTICS_TCM
 	  To compile this driver as a module, choose M here: the
 	  module will be called synaptics_tcm.
 
+config SECURE_TOUCH
+	bool "Secure Touch support for Xiaomi Touchscreen"
+	help
+          Say Y here
+	  -Goodix touch driver is connected
+	  -To enable secure touch for Goodix touch driver
+
+	  If unsure, say N.
+
+config INPUT_PRESS_NDT
+	bool "ndt"
+	depends on I2C
+	help
+	  Say Y here if you have a press ic ndt.
+
 source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
 
 source "drivers/input/touchscreen/focaltech_touch/Kconfig"
 
 source "drivers/input/touchscreen/nt36xxx/Kconfig"
+
+source "drivers/input/touchscreen/goodix_driver_gt9886/Kconfig"
+
+source "drivers/input/touchscreen/nt36672c/Kconfig"
+
+source "drivers/input/touchscreen/nt36523/Kconfig"
+
+source "drivers/input/touchscreen/nt36532/Kconfig"
+
+source "drivers/input/touchscreen/fts_521/Kconfig"
+
+source "drivers/input/touchscreen/fts_spi/Kconfig"
+
+source "drivers/input/touchscreen/focaltech_spi/Kconfig"
+
+source "drivers/input/touchscreen/xiaomi/Kconfig"
+
+source "drivers/input/touchscreen/focaltech_3658u/Kconfig"
+
+source "drivers/input/touchscreen/goodix_9916/Kconfig"
+
+source "drivers/input/touchscreen/hxchipset/Kconfig"
 
 endif

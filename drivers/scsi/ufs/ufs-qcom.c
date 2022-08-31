@@ -18,6 +18,7 @@
 #include <linux/phy/phy.h>
 #include <linux/phy/phy-qcom-ufs.h>
 #include <linux/clk/qcom.h>
+#include <linux/bitfield.h>
 
 #ifdef CONFIG_QCOM_BUS_SCALING
 #include <linux/msm-bus.h>
@@ -1488,6 +1489,40 @@ static void ufs_qcom_advertise_quirks(struct ufs_hba *hba)
 	 * to be other issues that will need to be addressed too.
 	 */
 	//hba->quirks |= UFSHCD_QUIRK_BROKEN_CRYPTO;
+}
+
+/*
+ * Disable to enter in h8 if state = HIBERN8_EXITED
+ * 1.exit h8 mode
+ * 2.disable low power mode
+ *
+ */
+void ufs_enter_h8_disable(struct Scsi_Host *shost)
+{
+	struct ufs_hba *hba;
+	struct ufs_qcom_host *host;
+
+	if (shost == NULL)
+		return;
+
+	hba = shost_priv(shost);
+	host = ufshcd_get_variant(hba);
+
+	printk(KERN_ERR "Long Press :Disable UFS enter in h8 state=%d and hba->caps =%x!", hba->hibern8_on_idle.state, hba->caps);
+
+	if (hba->hibern8_on_idle.state != HIBERN8_EXITED) {
+		return;
+	}
+
+	hba->caps &= ~UFSHCD_CAP_CLK_GATING;
+	hba->caps &= ~UFSHCD_CAP_HIBERN8_WITH_CLK_GATING;
+	hba->caps &= ~UFSHCD_CAP_CLK_SCALING;
+	hba->caps &= ~UFSHCD_CAP_POWER_COLLAPSE_DURING_HIBERN8;
+
+	hba->ahit = FIELD_PREP(UFSHCI_AHIBERN8_TIMER_MASK, 0);
+	__raw_writel(__cpu_to_le32(hba->ahit), hba->mmio_base + REG_AUTO_HIBERNATE_IDLE_TIMER);
+	hba->quirks |= UFSHCD_QUIRK_BROKEN_AUTO_HIBERN8;
+	hba->hibern8_on_idle.state = HIBERN8_EXITED;
 }
 
 static void ufs_qcom_set_caps(struct ufs_hba *hba)
