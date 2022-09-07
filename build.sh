@@ -128,7 +128,7 @@ function cloneTC() {
 	then
         mkdir clang
         cd clang
-		wget -cO - https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt > version.txt
+		wget -cO --quiet - https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt > version.txt
 		V="$(cat version.txt)"
         wget https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-$V-release/Clang-16.0.0-$V.tar.gz
 	    tar -xf Clang-16.0.0-$V.tar.gz
