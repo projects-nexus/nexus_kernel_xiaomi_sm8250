@@ -67,7 +67,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=zyc
+COMPILER=zyc14
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -91,6 +91,11 @@ function cloneTC() {
 	elif [ $COMPILER = "neutron" ];
     then
     git clone --depth=1 https://gitlab.com/dakkshesh07/neutron-clang.git clang
+    PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
+	elif [ $COMPILER = "zyc14" ];
+    then
+    git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14 clang
     PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "prelude" ];
