@@ -1270,6 +1270,15 @@ static ssize_t fuse_dev_do_read(struct fuse_dev *fud, struct file *file,
 		goto restart;
 	}
 	spin_lock(&fpq->lock);
+	/*
+	 *  Must not put request on fpq->io queue after having been shut down by
+	 *  fuse_abort_conn()
+	 */
+	if (!fpq->connected) {
+		req->out.h.error = err = -ECONNABORTED;
+		goto out_end;
+
+	}
 	list_add(&req->list, &fpq->io);
 	spin_unlock(&fpq->lock);
 	cs->req = req;
@@ -1867,7 +1876,7 @@ static ssize_t fuse_dev_do_write(struct fuse_dev *fud,
 
 	err = -EINVAL;
 	if (oh.error <= -512 || oh.error > 0)
-		goto copy_finish;
+		goto err_finish;
 
 	spin_lock(&fpq->lock);
 	req = NULL;
