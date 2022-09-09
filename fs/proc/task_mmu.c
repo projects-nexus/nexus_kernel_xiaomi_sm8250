@@ -918,10 +918,16 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
 			page = device_private_entry_to_page(swpent);
 	} else if (unlikely(IS_ENABLED(CONFIG_SHMEM) && mss->check_shmem_swap
 							&& pte_none(*pte))) {
-		page = xa_load(&vma->vm_file->f_mapping->i_pages,
+		page = find_get_entry(vma->vm_file->f_mapping,
 						linear_page_index(vma, addr));
+		if (!page)
+			return;
+
 		if (radix_tree_exceptional_entry(page))
 			mss->swap += PAGE_SIZE;
+		else
+			put_page(page);
+
 		return;
 	}
 
