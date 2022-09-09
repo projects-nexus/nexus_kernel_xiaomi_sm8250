@@ -7507,9 +7507,10 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 			ipa_drv_res->ipa_wdi2
 			? "True" : "False");
 
-	ipa_drv_res->ipa_wan_skb_page =
-			of_property_read_bool(pdev->dev.of_node,
-			"qcom,wan-use-skb-page");
+	// ipa_drv_res->ipa_wan_skb_page =
+	// 		of_property_read_bool(pdev->dev.of_node,
+	// 		"qcom,wan-use-skb-page");
+	ipa_drv_res->ipa_wan_skb_page = false;
 	IPADBG(": Use skb page = %s\n",
 			ipa_drv_res->ipa_wan_skb_page
 			? "True" : "False");
