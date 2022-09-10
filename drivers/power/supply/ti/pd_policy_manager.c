@@ -1183,7 +1183,6 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 					pdpm->cp.vbat_volt);
 			usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_EXIT);
 		} else if (!pd_get_bms_digest_verified(pdpm)) {
-			pr_info("bms digest is not verified, waiting...\n");
 		} else if (thermal_level >= pdpm->therm_level_threshold || pdpm->is_temp_out_fc2_range) {
 			pr_info("thermal level is too high, waiting...\n");
 		} else if (effective_fcc_val < START_DRIECT_CHARGE_FCC_MIN_THR) {
