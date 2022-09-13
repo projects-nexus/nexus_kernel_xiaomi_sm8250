@@ -835,7 +835,7 @@ static FORCE_INLINE int LZ4_compress_generic(
 		dictIssue, acceleration);
 }
 
-int LZ4_compress_fast_extState(void *state, const char *source, char *dest,
+static int LZ4_compress_fast_extState(void *state, const char *source, char *dest,
 			       int inputSize, int maxOutputSize,
 			       int acceleration)
 {
