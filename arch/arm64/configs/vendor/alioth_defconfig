@@ -2570,7 +2570,7 @@ CONFIG_MSM_RDBG=y
 # CONFIG_RB5_FAN_CONTROLLER is not set
 # CONFIG_RB5_GPIOS_ENABLE is not set
 CONFIG_RANDOM_DEFAULT_IMPL=y
-# CONFIG_LRNG is not set
+CONFIG_LRNG=y
 
 #
 # Linux Random Number Generator Configuration
@@ -2607,9 +2607,8 @@ CONFIG_LRNG_APT_CUTOFF=325
 #
 # CPU Entropy Source
 #
-CONFIG_LRNG_CPU=y
+# CONFIG_LRNG_CPU is not set
 CONFIG_LRNG_CPU_FULL_ENT_MULTIPLIER=1
-CONFIG_LRNG_CPU_ENTROPY_RATE=8
 
 #
 # Scheduler Entropy Source
