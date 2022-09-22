@@ -2598,7 +2598,7 @@ CONFIG_LRNG_APT_CUTOFF=325
 #
 # Interrupt Entropy Source
 #
-
+# CONFIG_LRNG_IRQ is not set
 #
 # Jitter RNG Entropy Source
 #
