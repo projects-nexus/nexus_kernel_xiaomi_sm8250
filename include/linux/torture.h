@@ -50,12 +50,11 @@
 	do { if (verbose) pr_alert("%s" TORTURE_FLAG "!!! %s\n", torture_type, s); } while (0)
 
 /* Definitions for online/offline exerciser. */
-typedef void torture_ofl_func(void);
 bool torture_offline(int cpu, long *n_onl_attempts, long *n_onl_successes,
 		     unsigned long *sum_offl, int *min_onl, int *max_onl);
 bool torture_online(int cpu, long *n_onl_attempts, long *n_onl_successes,
 		    unsigned long *sum_onl, int *min_onl, int *max_onl);
-int torture_onoff_init(long ooholdoff, long oointerval, torture_ofl_func *f);
+int torture_onoff_init(long ooholdoff, long oointerval);
 void torture_onoff_stats(void);
 bool torture_onoff_failures(void);
 
@@ -68,11 +67,6 @@ struct torture_random_state {
 #define DEFINE_TORTURE_RANDOM_PERCPU(name) \
 	DEFINE_PER_CPU(struct torture_random_state, name)
 unsigned long torture_random(struct torture_random_state *trsp);
-static inline void torture_random_init(struct torture_random_state *trsp)
-{
-	trsp->trs_state = 0;
-	trsp->trs_count = 0;
-}
 
 /* Task shuffler, which causes CPUs to occasionally go idle. */
 void torture_shuffle_task_register(struct task_struct *tp);
@@ -83,8 +77,8 @@ void torture_shutdown_absorb(const char *title);
 int torture_shutdown_init(int ssecs, void (*cleanup)(void));
 
 /* Task stuttering, which forces load/no-load transitions. */
-bool stutter_wait(const char *title);
-int torture_stutter_init(int s, int sgap);
+void stutter_wait(const char *title);
+int torture_stutter_init(int s);
 
 /* Initialization and cleanup. */
 bool torture_init_begin(char *ttype, int v);

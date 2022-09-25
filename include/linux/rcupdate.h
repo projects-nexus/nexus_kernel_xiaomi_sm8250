@@ -46,19 +46,25 @@
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
 #define ULONG_CMP_LT(a, b)	(ULONG_MAX / 2 < (a) - (b))
 #define ulong2long(a)		(*(long *)(&(a)))
-#define USHORT_CMP_GE(a, b)	(USHRT_MAX / 2 >= (unsigned short)((a) - (b)))
-#define USHORT_CMP_LT(a, b)	(USHRT_MAX / 2 < (unsigned short)((a) - (b)))
 
 /* Exported common interfaces */
+
+#ifdef CONFIG_PREEMPT_RCU
 void call_rcu(struct rcu_head *head, rcu_callback_t func);
+#else /* #ifdef CONFIG_PREEMPT_RCU */
+#define	call_rcu	call_rcu_sched
+#endif /* #else #ifdef CONFIG_PREEMPT_RCU */
+
+void call_rcu_bh(struct rcu_head *head, rcu_callback_t func);
+void call_rcu_sched(struct rcu_head *head, rcu_callback_t func);
+void synchronize_sched(void);
 void rcu_barrier_tasks(void);
-void rcu_barrier_tasks_rude(void);
-void synchronize_rcu(void);
 
 #ifdef CONFIG_PREEMPT_RCU
 
 void __rcu_read_lock(void);
 void __rcu_read_unlock(void);
+void synchronize_rcu(void);
 
 /*
  * Defined as a macro as it is a very low level header included from
@@ -70,12 +76,6 @@ void __rcu_read_unlock(void);
 
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
-#ifdef CONFIG_TINY_RCU
-#define rcu_read_unlock_strict() do { } while (0)
-#else
-void rcu_read_unlock_strict(void);
-#endif
-
 static inline void __rcu_read_lock(void)
 {
 	preempt_disable();
@@ -84,7 +84,11 @@ static inline void __rcu_read_lock(void)
 static inline void __rcu_read_unlock(void)
 {
 	preempt_enable();
-	rcu_read_unlock_strict();
+}
+
+static inline void synchronize_rcu(void)
+{
+	synchronize_sched();
 }
 
 static inline int rcu_preempt_depth(void)
@@ -97,15 +101,11 @@ static inline int rcu_preempt_depth(void)
 /* Internal to kernel */
 void rcu_init(void);
 extern int rcu_scheduler_active __read_mostly;
-void rcu_sched_clock_irq(int user);
+void rcu_sched_qs(void);
+void rcu_bh_qs(void);
+void rcu_check_callbacks(int user);
 void rcu_report_dead(unsigned int cpu);
 void rcutree_migrate_callbacks(int cpu);
-
-#ifdef CONFIG_TASKS_RCU_GENERIC
-void rcu_init_tasks_generic(void);
-#else
-static inline void rcu_init_tasks_generic(void) { }
-#endif
 
 #ifdef CONFIG_RCU_STALL_COMMON
 void rcu_sysrq_start(void);
@@ -125,10 +125,8 @@ static inline void rcu_user_exit(void) { }
 
 #ifdef CONFIG_RCU_NOCB_CPU
 void rcu_init_nohz(void);
-void rcu_nocb_flush_deferred_wakeup(void);
 #else /* #ifdef CONFIG_RCU_NOCB_CPU */
 static inline void rcu_init_nohz(void) { }
-static inline void rcu_nocb_flush_deferred_wakeup(void) { }
 #endif /* #else #ifdef CONFIG_RCU_NOCB_CPU */
 
 /**
@@ -161,57 +159,29 @@ static inline void rcu_nocb_flush_deferred_wakeup(void) { }
  * Note a quasi-voluntary context switch for RCU-tasks's benefit.
  * This is a macro rather than an inline function to avoid #include hell.
  */
-#ifdef CONFIG_TASKS_RCU_GENERIC
-
-# ifdef CONFIG_TASKS_RCU
-# define rcu_tasks_classic_qs(t, preempt)				\
-	do {								\
-		if (!(preempt) && READ_ONCE((t)->rcu_tasks_holdout))	\
-			WRITE_ONCE((t)->rcu_tasks_holdout, false);	\
+#ifdef CONFIG_TASKS_RCU
+#define rcu_tasks_qs(t) \
+	do { \
+		if (READ_ONCE((t)->rcu_tasks_holdout)) \
+			WRITE_ONCE((t)->rcu_tasks_holdout, false); \
+	} while (0)
+#define rcu_note_voluntary_context_switch(t) \
+	do { \
+		rcu_all_qs(); \
+		rcu_tasks_qs(t); \
 	} while (0)
 void call_rcu_tasks(struct rcu_head *head, rcu_callback_t func);
 void synchronize_rcu_tasks(void);
-# else
-# define rcu_tasks_classic_qs(t, preempt) do { } while (0)
-# define call_rcu_tasks call_rcu
-# define synchronize_rcu_tasks synchronize_rcu
-# endif
-
-# ifdef CONFIG_TASKS_TRACE_RCU
-# define rcu_tasks_trace_qs(t)						\
-	do {								\
-		if (!likely(READ_ONCE((t)->trc_reader_checked)) &&	\
-		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {	\
-			smp_store_release(&(t)->trc_reader_checked, true); \
-			smp_mb(); /* Readers partitioned by store. */	\
-		}							\
-	} while (0)
-# else
-# define rcu_tasks_trace_qs(t) do { } while (0)
-# endif
-
-#define rcu_tasks_qs(t, preempt)					\
-do {									\
-	rcu_tasks_classic_qs((t), (preempt));				\
-	rcu_tasks_trace_qs((t));					\
-} while (0)
-
-# ifdef CONFIG_TASKS_RUDE_RCU
-void call_rcu_tasks_rude(struct rcu_head *head, rcu_callback_t func);
-void synchronize_rcu_tasks_rude(void);
-# endif
-
-#define rcu_note_voluntary_context_switch(t) rcu_tasks_qs(t, false)
 void exit_tasks_rcu_start(void);
 void exit_tasks_rcu_finish(void);
-#else /* #ifdef CONFIG_TASKS_RCU_GENERIC */
-#define rcu_tasks_qs(t, preempt) do { } while (0)
-#define rcu_note_voluntary_context_switch(t) do { } while (0)
+#else /* #ifdef CONFIG_TASKS_RCU */
+#define rcu_tasks_qs(t)	do { } while (0)
+#define rcu_note_voluntary_context_switch(t)		rcu_all_qs()
 #define call_rcu_tasks call_rcu_sched
-#define synchronize_rcu_tasks synchronize_rcu
+#define synchronize_rcu_tasks synchronize_sched
 static inline void exit_tasks_rcu_start(void) { }
 static inline void exit_tasks_rcu_finish(void) { }
-#endif /* #else #ifdef CONFIG_TASKS_RCU_GENERIC */
+#endif /* #else #ifdef CONFIG_TASKS_RCU */
 
 /**
  * cond_resched_tasks_rcu_qs - Report potential quiescent states to RCU
@@ -222,7 +192,7 @@ static inline void exit_tasks_rcu_finish(void) { }
  */
 #define cond_resched_tasks_rcu_qs() \
 do { \
-	rcu_tasks_qs(current, false); \
+	rcu_tasks_qs(current); \
 	cond_resched(); \
 } while (0)
 
@@ -231,7 +201,7 @@ do { \
  * TREE_RCU and rcu_barrier_() primitives in TINY_RCU.
  */
 
-#if defined(CONFIG_TREE_RCU)
+#if defined(CONFIG_TREE_RCU) || defined(CONFIG_PREEMPT_RCU)
 #include <linux/rcutree.h>
 #elif defined(CONFIG_TINY_RCU)
 #include <linux/rcutiny.h>
@@ -285,7 +255,6 @@ int debug_lockdep_rcu_enabled(void);
 int rcu_read_lock_held(void);
 int rcu_read_lock_bh_held(void);
 int rcu_read_lock_sched_held(void);
-int rcu_read_lock_any_held(void);
 
 #else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
@@ -306,12 +275,6 @@ static inline int rcu_read_lock_sched_held(void)
 {
 	return !preemptible();
 }
-
-static inline int rcu_read_lock_any_held(void)
-{
-	return !preemptible();
-}
-
 #endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
 #ifdef CONFIG_PROVE_RCU
@@ -324,7 +287,7 @@ static inline int rcu_read_lock_any_held(void)
 #define RCU_LOCKDEP_WARN(c, s)						\
 	do {								\
 		static bool __section(.data.unlikely) __warned;		\
-		if ((c) && debug_lockdep_rcu_enabled() && !__warned) {	\
+		if (debug_lockdep_rcu_enabled() && !__warned && (c)) {	\
 			__warned = true;				\
 			lockdep_rcu_suspicious(__FILE__, __LINE__, s);	\
 		}							\
@@ -361,7 +324,8 @@ static inline void rcu_preempt_sleep_check(void) { }
  * and rcu_assign_pointer().  Some of these could be folded into their
  * callers, but they are left separate in order to ease introduction of
  * multiple flavors of pointers to match the multiple flavors of RCU
- * (e.g., __rcu_sched, and __srcu), should this make sense in the future.
+ * (e.g., __rcu_bh, * __rcu_sched, and __srcu), should this make sense in
+ * the future.
  */
 
 #ifdef __CHECKER__
@@ -647,7 +611,7 @@ static inline void rcu_preempt_sleep_check(void) { }
  * read-side critical section that would block in a !PREEMPT kernel.
  * But if you want the full story, read on!
  *
- * In non-preemptible RCU implementations (pure TREE_RCU and TINY_RCU),
+ * In non-preemptible RCU implementations (TREE_RCU and TINY_RCU),
  * it is illegal to block while in an RCU read-side critical section.
  * In preemptible RCU implementations (PREEMPT_RCU) in CONFIG_PREEMPT
  * kernel builds, RCU read-side critical sections may be preempted,
@@ -720,10 +684,14 @@ static inline void rcu_read_unlock(void)
 /**
  * rcu_read_lock_bh() - mark the beginning of an RCU-bh critical section
  *
- * This is equivalent of rcu_read_lock(), but also disables softirqs.
- * Note that synchronize_rcu() and friends may be used for the update
- * side, although synchronize_rcu_bh() is available as a wrapper in the
- * short term.  Longer term, the _bh update-side API will be eliminated.
+ * This is equivalent of rcu_read_lock(), but to be used when updates
+ * are being done using call_rcu_bh() or synchronize_rcu_bh(). Since
+ * both call_rcu_bh() and synchronize_rcu_bh() consider completion of a
+ * softirq handler to be a quiescent state, a process in RCU read-side
+ * critical section must be protected by disabling softirqs. Read-side
+ * critical sections in interrupt context can use just rcu_read_lock(),
+ * though this should at least be commented to avoid confusing people
+ * reading the code.
  *
  * Note that rcu_read_lock_bh() and the matching rcu_read_unlock_bh()
  * must occur in the same context, for example, it is illegal to invoke
@@ -859,23 +827,23 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
 
 /*
  * Does the specified offset indicate that the corresponding rcu_head
- * structure can be handled by kvfree_rcu()?
+ * structure can be handled by kfree_rcu()?
  */
-#define __is_kvfree_rcu_offset(offset) ((offset) < 4096)
+#define __is_kfree_rcu_offset(offset) ((offset) < 4096)
 
 /*
  * Helper macro for kfree_rcu() to prevent argument-expansion eyestrain.
  */
-#define __kvfree_rcu(head, offset) \
+#define __kfree_rcu(head, offset) \
 	do { \
-		BUILD_BUG_ON(!__is_kvfree_rcu_offset(offset)); \
-		kvfree_call_rcu(head, (rcu_callback_t)(unsigned long)(offset)); \
+		BUILD_BUG_ON(!__is_kfree_rcu_offset(offset)); \
+		kfree_call_rcu(head, (rcu_callback_t)(unsigned long)(offset)); \
 	} while (0)
 
 /**
  * kfree_rcu() - kfree an object after a grace period.
  * @ptr:	pointer to kfree
- * @rhf:	the name of the struct rcu_head within the type of @ptr.
+ * @rcu_head:	the name of the struct rcu_head within the type of @ptr.
  *
  * Many rcu callbacks functions just call kfree() on the base structure.
  * These functions are trivial, but their size adds up, and furthermore
@@ -888,7 +856,7 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * Because the functions are not allowed in the low-order 4096 bytes of
  * kernel virtual memory, offsets up to 4095 bytes can be accommodated.
  * If the offset is larger than 4095 bytes, a compile-time error will
- * be generated in __kvfree_rcu(). If this error is triggered, you can
+ * be generated in __kfree_rcu().  If this error is triggered, you can
  * either fall back to use of call_rcu() or rearrange the structure to
  * position the rcu_head structure into the first 4096 bytes.
  *
@@ -898,13 +866,9 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  * The BUILD_BUG_ON check must not involve any function calls, hence the
  * checks are done in macros here.
  */
-#define kfree_rcu(ptr, rhf)						\
-do {									\
-	typeof (ptr) ___p = (ptr);					\
-									\
-	if (___p)							\
-		__kvfree_rcu(&((___p)->rhf), offsetof(typeof(*(ptr)), rhf)); \
-} while (0)
+#define kfree_rcu(ptr, rcu_head)					\
+	__kfree_rcu(&((ptr)->rcu_head), offsetof(typeof(*(ptr)), rcu_head))
+
 
 /*
  * Place this after a lock-acquisition primitive to guarantee that
@@ -918,100 +882,5 @@ do {									\
 #define smp_mb__after_unlock_lock()	do { } while (0)
 #endif /* #else #ifdef CONFIG_ARCH_WEAK_RELEASE_ACQUIRE */
 
-
-/* Has the specified rcu_head structure been handed to call_rcu()? */
-
-/*
- * rcu_head_init - Initialize rcu_head for rcu_head_after_call_rcu()
- * @rhp: The rcu_head structure to initialize.
- *
- * If you intend to invoke rcu_head_after_call_rcu() to test whether a
- * given rcu_head structure has already been passed to call_rcu(), then
- * you must also invoke this rcu_head_init() function on it just after
- * allocating that structure.  Calls to this function must not race with
- * calls to call_rcu(), rcu_head_after_call_rcu(), or callback invocation.
- */
-static inline void rcu_head_init(struct rcu_head *rhp)
-{
-	rhp->func = (rcu_callback_t)~0L;
-}
-
-/*
- * rcu_head_after_call_rcu - Has this rcu_head been passed to call_rcu()?
- * @rhp: The rcu_head structure to test.
- * @func: The function passed to call_rcu() along with @rhp.
- *
- * Returns @true if the @rhp has been passed to call_rcu() with @func,
- * and @false otherwise.  Emits a warning in any other case, including
- * the case where @rhp has already been invoked after a grace period.
- * Calls to this function must not race with callback invocation.  One way
- * to avoid such races is to enclose the call to rcu_head_after_call_rcu()
- * in an RCU read-side critical section that includes a read-side fetch
- * of the pointer to the structure containing @rhp.
- */
-static inline bool
-rcu_head_after_call_rcu(struct rcu_head *rhp, rcu_callback_t f)
-{
-	if (READ_ONCE(rhp->func) == f)
-		return true;
-	WARN_ON_ONCE(READ_ONCE(rhp->func) != (rcu_callback_t)~0L);
-	return false;
-}
-
-/* Transitional pre-consolidation compatibility definitions. */
-
-static inline void synchronize_rcu_bh(void)
-{
-	synchronize_rcu();
-}
-
-static inline void synchronize_rcu_bh_expedited(void)
-{
-	synchronize_rcu_expedited();
-}
-
-static inline void call_rcu_bh(struct rcu_head *head, rcu_callback_t func)
-{
-	call_rcu(head, func);
-}
-
-static inline void rcu_barrier_bh(void)
-{
-	rcu_barrier();
-}
-
-static inline void synchronize_sched(void)
-{
-	synchronize_rcu();
-}
-
-static inline void synchronize_sched_expedited(void)
-{
-	synchronize_rcu_expedited();
-}
-
-static inline void call_rcu_sched(struct rcu_head *head, rcu_callback_t func)
-{
-	call_rcu(head, func);
-}
-
-static inline void rcu_barrier_sched(void)
-{
-	rcu_barrier();
-}
-
-static inline unsigned long get_state_synchronize_sched(void)
-{
-	return get_state_synchronize_rcu();
-}
-
-static inline void cond_synchronize_sched(unsigned long oldstate)
-{
-	cond_synchronize_rcu(oldstate);
-}
-
-/* kernel/ksysfs.c definitions */
-extern int rcu_expedited;
-extern int rcu_normal;
 
 #endif /* __LINUX_RCUPDATE_H */
