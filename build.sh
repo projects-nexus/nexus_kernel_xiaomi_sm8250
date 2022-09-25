@@ -36,7 +36,8 @@ fi
 # Files
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
-DTB=$(pwd)/out/arch/arm64/boot/dts/vendor/qcom/kona-v2.1.dtb
+OUT_DIR=out/
+dts_source=arch/arm64/boot/dts/vendor/qcom
 
 # Verbose Build
 VERBOSE=0
@@ -264,6 +265,8 @@ START=$(date +"%s")
 	       exit 1
 	   else
 	       post_msg " Kernel Compilation Finished. Started Zipping "
+		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
+		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
 	}
 
@@ -272,7 +275,7 @@ function zipping() {
 	# Copy Files To AnyKernel3 Zip
 	mv $IMAGE AnyKernel3
     mv $DTBO AnyKernel3
-    mv $DTB AnyKernel3/dtb
+    mv $DTB AnyKernel3
 
 	# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
