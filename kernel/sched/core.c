@@ -5845,10 +5845,8 @@ bool is_sched_lib_based_app(pid_t pid)
 	struct task_struct *p;
 	struct mm_struct *mm;
 
-#ifndef CONFIG_CPUINFO_CACHED_FREQ_TASKS
 	if (strnlen(sched_lib_name, LIB_PATH_LENGTH) == 0)
 		return false;
-#endif
 
 	tmp_lib_name = kmalloc(LIB_PATH_LENGTH, GFP_KERNEL);
 	if (!tmp_lib_name)
@@ -5880,12 +5878,6 @@ bool is_sched_lib_based_app(pid_t pid)
 				goto release_sem;
 
 			strlcpy(tmp_lib_name, sched_lib_name, LIB_PATH_LENGTH);
-#ifdef CONFIG_CPUINFO_CACHED_FREQ_TASKS
-			if (strnlen(sched_lib_name, LIB_PATH_LENGTH) != 0)
-				strlcat(tmp_lib_name, ",", LIB_PATH_LENGTH);
-
-			strlcat(tmp_lib_name, CONFIG_CPUINFO_CACHED_FREQ_TASKS, LIB_PATH_LENGTH);
-#endif
 			lib_list = tmp_lib_name;
 			while ((libname = strsep(&lib_list, ","))) {
 				libname = skip_spaces(libname);
