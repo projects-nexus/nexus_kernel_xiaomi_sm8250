@@ -68,7 +68,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=dora
+COMPILER=nex14
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -87,6 +87,11 @@ function cloneTC() {
 	elif [ $COMPILER = "nexus" ];
 	then
 	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
+	elif [ $COMPILER = "nex14" ];
+	then
+	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 
 	elif [ $COMPILER = "neutron" ];
