@@ -68,7 +68,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=nexus
+COMPILER=dora
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -102,6 +102,11 @@ function cloneTC() {
 	elif [ $COMPILER = "prelude" ];
 	then
 	git clone --depth=1 https://gitlab.com/jjpprrrr/prelude-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	
+	elif [ $COMPILER = "dora" ];
+	then
+	git clone --depth=1 https://gitlab.com/zlatanr/dora-clang-1.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "eva" ];
