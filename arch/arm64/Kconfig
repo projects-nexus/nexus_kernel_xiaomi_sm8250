@@ -1679,3 +1679,10 @@ source "arch/arm64/kvm/Kconfig"
 if CRYPTO
 source "arch/arm64/crypto/Kconfig"
 endif
+
+config HWCONF_MANAGER
+	bool "Hardware configuration and monitor information"
+	default y
+	help
+	  It provides all kinds of components configuration information and
+	  monitor values.
