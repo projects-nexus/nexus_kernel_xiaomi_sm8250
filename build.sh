@@ -68,7 +68,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=zyc
 
 ##----------------------------------------------------------##
 # Clone ToolChain
