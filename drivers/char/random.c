@@ -235,7 +235,7 @@ struct crng {
 
 static DEFINE_PER_CPU(struct crng, crngs) = {
 	.generation = ULONG_MAX,
-	.lock.lock = __SPIN_LOCK_UNLOCKED(crngs.lock.lock),
+	.lock =  INIT_LOCAL_LOCK(crngs.lock),
 };
 
 /* Used by crng_reseed() and crng_make_state() to extract a new seed from the input pool. */
@@ -514,7 +514,7 @@ struct batch_ ##type {								\
 };										\
 										\
 static DEFINE_PER_CPU(struct batch_ ##type, batched_entropy_ ##type) = {	\
-	.lock.lock = __SPIN_LOCK_UNLOCKED(batched_entropy_ ##type.lock.lock),	\
+	.lock = INIT_LOCAL_LOCK(batched_entropy_ ##type.lock),			\
 	.position = UINT_MAX							\
 };										\
 										\
