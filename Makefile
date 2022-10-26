@@ -706,7 +706,6 @@ KBUILD_AFLAGS   += -O3
 ifdef CONFIG_POLLY_CLANG
 POLLY_FLAGS	+= -mllvm -polly \
 		   -mllvm -polly-ast-use-context \
-		   -mllvm -polly-detect-keep-going \
 		   -mllvm -polly-invariant-load-hoisting \
 		   -mllvm -polly-loopfusion-greedy=1 \
 		   -mllvm -polly-postopts=1 \
