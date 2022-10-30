@@ -1580,7 +1580,7 @@ config KRYO_PMU_WORKAROUND
 
 config BOOT_INFO
 	bool "Boot information from bootloader"
-	default y
+	default n
 	help
 	  On embedded linux device, we try to collect more information from
 	  bootloader to kernel. eg. powerup reason.
