@@ -8,21 +8,47 @@
 # Specify Kernel Directory
 KERNEL_DIR="$(pwd)"
 
-##----------------------------------------------------------##
-# Device Name and Model
-MODEL=Poco F2 Pro
-DEVICE=Lmi
+BUILD=$1
 
-# Kernel Version Code
-VERSION=BETA
+if [ "$BUILD" = "local" ]; then
+echo "Type ur chat id:"
+read chat
+chat_id=$chat
+echo "Type ur bot token:"
+read token
+token=$token
+fi
 
-# Kernel Defconfig
+DEVICE=$2
+
+if [ "${DEVICE}" = "lmi" ]; then
+DEVICE2=lmi-FW12
 DEFCONFIG=vendor/lmi_defconfig
+MODEL=Poco F2 Pro
+VERSION=BETA
+curl https://github.com/projects-nexus/nexus_kernel_xiaomi_sm8250/commit/d982f028426863ebcc1c0c247bd855434b4e9826.patch | git am
+elif [ "${DEVICE}" = "alioth" ]; then
+DEVICE2=alioth
+DEFCONFIG=vendor/alioth_defconfig
+MODEL=Poco F3
+VERSION=BETA
+elif [ "${DEVICE}" = "fw13" ]; then
+DEVICE2=lmi-FW13
+DEFCONFIG=vendor/lmi_defconfig
+MODEL=Poco F2 Pro
+VERSION=BETA
+elif [ "${DEVICE}" = "apollo" ]; then
+DEVICE2=apollo
+DEFCONFIG=vendor/apollo_defconfig
+MODEL=Mi 10T Pro
+VERSION=BETA
+fi
 
 # Files
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
-DTB=$(pwd)/out/arch/arm64/boot/dts/vendor/qcom/kona-v2.1.dtb
+OUT_DIR=out/
+dts_source=arch/arm64/boot/dts/vendor/qcom
 
 # Verbose Build
 VERBOSE=0
@@ -38,8 +64,14 @@ TANGGAL=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
-FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-MIUI-${TANGGAL}.zip
+if [ "${DEVICE}" = "fw13" ]; then
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-KERNEL-MIUI-${TANGGAL}.zip
+elif [ "${DEVICE}" = "lmi" ]; then
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
+else
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
+fi
 
 ##----------------------------------------------------------##
 # Specify Linker
@@ -47,7 +79,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=proton
+COMPILER=nex14
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -55,30 +87,46 @@ function cloneTC() {
 	
 	if [ $COMPILER = "atomx" ];
 	then
-	post_msg " Cloning Atom-X Clang ToolChain "
 	git clone --depth=1 https://gitlab.com/ElectroPerf/atom-x-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "proton" ];
 	then
-	post_msg " Cloning Proton Clang ToolChain "
 	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	
+	elif [ $COMPILER = "nexus" ];
+	then
+	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
+	elif [ $COMPILER = "nex14" ];
+	then
+	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 
 	elif [ $COMPILER = "neutron" ];
     then
     git clone --depth=1 https://gitlab.com/dakkshesh07/neutron-clang.git clang
     PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
+	elif [ $COMPILER = "zyc14" ];
+    then
+    git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14 clang
+    PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "prelude" ];
 	then
-	post_msg " Cloning Prelude Clang ToolChain"
 	git clone --depth=1 https://gitlab.com/jjpprrrr/prelude-clang.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	
+	elif [ $COMPILER = "dora" ];
+	then
+	git clone --depth=1 https://gitlab.com/zlatanr/dora-clang-1.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "eva" ];
 	then
-	post_msg " Cloning Eva GCC ToolChain "
 	git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git -b gcc-new gcc64
 	git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git -b gcc-new gcc32
 	PATH=$KERNEL_DIR/gcc64/bin/:$KERNEL_DIR/gcc32/bin/:/usr/bin:$PATH
@@ -91,9 +139,8 @@ function cloneTC() {
 	  echo "  Already Cloned Aosp Clang"
 	  echo "××××××××××××××××××××××××××××"
 	else
-	export CLANG_VERSION="clang-r450784e"
+	export CLANG_VERSION="clang-r468909b"
 	echo "* It's not cloned, cloning it..."
-	post_msg " Cloning Aosp Clang ToolChain "
         mkdir clangB
         cd clangB || exit
 	wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz
@@ -104,16 +151,25 @@ function cloneTC() {
 	fi
 	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	
-	elif [ $COMPILER = "sdclang" ];
+	elif [ $COMPILER = "zyc" ];
 	then
-        git clone --depth=1 https://github.com/ZyCromerZ/SDClang clangB
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
-	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
+        mkdir clang
+        cd clang
+		wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
+		V="$(cat Clang-main-lastbuild.txt)"
+        wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-$V-release/Clang-16.0.0-$V.tar.gz
+	    tar -xf Clang-16.0.0-$V.tar.gz
+	    cd ..
+	    PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	fi
         # Clone AnyKernel
-        git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi.git AnyKernel3
-
+        if [ "${DEVICE}" = "alioth" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b alioth AnyKernel3
+        elif [ "${DEVICE}" = "apollo" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b apollo AnyKernel3
+        else
+		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
+		fi
 	}
 	
 ##------------------------------------------------------##
@@ -182,7 +238,7 @@ function push() {
 function compile() {
 START=$(date +"%s")
 	# Push Notification
-	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE2]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
 	
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
@@ -230,6 +286,8 @@ START=$(date +"%s")
 	       exit 1
 	   else
 	       post_msg " Kernel Compilation Finished. Started Zipping "
+		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
+		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
 	}
 
@@ -238,19 +296,30 @@ function zipping() {
 	# Copy Files To AnyKernel3 Zip
 	mv $IMAGE AnyKernel3
     mv $DTBO AnyKernel3
-    mv $DTB AnyKernel3/dtb
+    mv $DTB AnyKernel3
 
 	# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
-        push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        rm -rf dtbo.img && rm -rf *.zip
-        zip -r9 ${FINAL_ZIP2} *
-        MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
-        push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        cd ..
-        rm -rf AnyKernel3
+		if [ "${DEVICE}" = "fw13" ]; then
+          push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		elif [ "${DEVICE}" = "lmi" ]; then
+		  push "$FINAL_ZIP" "FW 12. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		else
+		  push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+		fi
+        if [ "${DEVICE}" = "fw13" ]; then
+          rm -rf dtbo.img && rm -rf *.zip
+          zip -r9 ${FINAL_ZIP2} *
+          MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
+          push "$FINAL_ZIP2" "MIUI 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL (lmi)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+          cd ..
+          rm -rf AnyKernel3
+		else 
+		  cd ..
+          rm -rf AnyKernel3
+        fi
         }
     
 ##----------------------------------------------------------##
