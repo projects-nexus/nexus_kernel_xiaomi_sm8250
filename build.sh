@@ -21,18 +21,12 @@ fi
 
 DEVICE=$2
 
-if [ "${DEVICE}" = "lmi" ]; then
-DEVICE2=lmi-FW12
-DEFCONFIG=vendor/lmi_defconfig
-MODEL=Poco F2 Pro
-VERSION=BETA
-curl https://github.com/projects-nexus/nexus_kernel_xiaomi_sm8250/commit/d982f028426863ebcc1c0c247bd855434b4e9826.patch | git am
-elif [ "${DEVICE}" = "alioth" ]; then
+if [ "${DEVICE}" = "alioth" ]; then
 DEVICE2=alioth
 DEFCONFIG=alioth_defconfig
 MODEL=Poco F3
 VERSION=BETA
-elif [ "${DEVICE}" = "fw13" ]; then
+elif [ "${DEVICE}" = "lmi" ]; then
 DEVICE2=lmi-FW13
 DEFCONFIG=lmi_defconfig
 MODEL=Poco F2 Pro
@@ -64,11 +58,9 @@ TANGGAL=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-if [ "${DEVICE}" = "fw13" ]; then
+if [ "${DEVICE}" = "lmi" ]; then
   FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
   FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-KERNEL-MIUI-${TANGGAL}.zip
-elif [ "${DEVICE}" = "lmi" ]; then
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
 else
   FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
 fi
@@ -235,6 +227,9 @@ function push() {
 	}
 ##----------------------------------------------------------##
 # Compilation
+
+METHOD=$3
+
 function compile() {
 START=$(date +"%s")
 	# Push Notification
@@ -244,6 +239,10 @@ START=$(date +"%s")
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG
+           fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       LLVM=1 \
@@ -269,6 +268,10 @@ START=$(date +"%s")
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG
+           fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       LLVM=1 \
@@ -302,14 +305,12 @@ function zipping() {
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
-		if [ "${DEVICE}" = "fw13" ]; then
+		if [ "${DEVICE}" = "lmi" ]; then
           push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-		elif [ "${DEVICE}" = "lmi" ]; then
-		  push "$FINAL_ZIP" "FW 12. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		else
 		  push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		fi
-        if [ "${DEVICE}" = "fw13" ]; then
+        if [ "${DEVICE}" = "lmi" ]; then
           rm -rf dtbo.img && rm -rf *.zip
           zip -r9 ${FINAL_ZIP2} *
           MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)

@@ -2,23 +2,6 @@
 clone: 
   depth: 1
 kind: pipeline
-name : Nexus Lmi FW12
-version: lmi
-steps:
- - name: Nexus Lmi FW12
-   image: nexgang/ubuntu:latest
-   environment:
-     token:
-       from_secret: token
-     chat_id:
-       from_secret: chat_id
-   commands:
-     - /noclone3 bash build.sh null lmi
-     
---- 
-clone: 
-  depth: 1
-kind: pipeline
 name : Nexus Alioth
 version: alioth
 steps:
@@ -30,16 +13,16 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null alioth
+     - /noclone3 bash build.sh null alioth lto
 
 --- 
 clone: 
   depth: 1
 kind: pipeline
-name : Nexus Lmi FW13
+name : Nexus Lmi
 version: lmi
 steps:
- - name: Nexus Lmi FW13
+ - name: Nexus Lmi
    image: nexgang/ubuntu:latest
    environment:
      token:
@@ -47,7 +30,7 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null fw13
+     - /noclone3 bash build.sh null lmi lto
 
 --- 
 clone: 
@@ -64,4 +47,4 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null apollo
+     - /noclone3 bash build.sh null apollo lto
