@@ -48,3 +48,20 @@ steps:
        from_secret: chat_id
    commands:
      - /noclone3 bash build.sh null apollo lto
+
+--- 
+clone: 
+  depth: 1
+kind: pipeline
+name : Nexus Munch
+version: munch
+steps:
+ - name: Nexus Munch
+   image: nexgang/ubuntu:latest
+   environment:
+     token:
+       from_secret: token
+     chat_id:
+       from_secret: chat_id
+   commands:
+     - /noclone3 bash build.sh null munch lto
