@@ -76,7 +76,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=nex14
 
 ##----------------------------------------------------------##
 # Clone ToolChain
