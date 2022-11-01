@@ -248,7 +248,7 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG
+             -e LTO_CLANG \
 			 -e THINLTO
            fi
 	       make -kj$(nproc --all) O=out \
@@ -278,7 +278,7 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG
+             -e LTO_CLANG \
 			 -e THINLTO
            fi
            make -kj$(nproc --all) O=out \
