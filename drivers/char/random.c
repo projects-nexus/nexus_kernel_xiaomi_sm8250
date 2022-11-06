@@ -656,7 +656,7 @@ static void __cold _credit_init_bits(size_t bits)
  * the above entropy accumulation routines:
  *
  *	void add_device_randomness(const void *buf, size_t len);
- *	void add_hwgenerator_randomness(const void *buf, size_t len, size_t entropy);
+ *	void add_hwgenerator_randomness(const void *buf, size_t len, size_t entropy, bool sleep_after);
  *	void add_bootloader_randomness(const void *buf, size_t len);
  *	void add_interrupt_randomness(int irq);
  *	void add_input_randomness(unsigned int type, unsigned int code, unsigned int value);
@@ -773,11 +773,11 @@ void add_device_randomness(const void *buf, size_t len)
 EXPORT_SYMBOL(add_device_randomness);
 
 /*
- * Interface for in-kernel drivers of true hardware RNGs.
- * Those devices may produce endless random bits and will be throttled
- * when our pool is full.
+ * Interface for in-kernel drivers of true hardware RNGs. Those devices
+ * may produce endless random bits, so this function will sleep for
+ * some amount of time after, if the sleep_after parameter is true.
  */
-void add_hwgenerator_randomness(const char *buf, size_t len, size_t entropy)
+void add_hwgenerator_randomness(const char *buf, size_t len, size_t entropy, bool sleep_after)
 {
 	mix_pool_bytes(buf, len);
 	credit_init_bits(entropy);
@@ -786,7 +786,7 @@ void add_hwgenerator_randomness(const char *buf, size_t len, size_t entropy)
 	 * Throttle writing to once every reseed interval, unless we're not yet
 	 * initialized or no entropy is credited.
 	 */
-	if ((current->flags & PF_KTHREAD) &&
+	if ((current->flags & PF_KTHREAD) && sleep_after &&
 	    !kthread_should_stop() && (crng_ready() || !entropy))
 		schedule_timeout_interruptible(crng_reseed_interval());
 }
