@@ -64,10 +64,10 @@ TANGGAL=$(date +"%F%S")
 # Specify Final Zip Name
 ZIPNAME=Nexus
 if [ "${DEVICE}" = "lmi" ]; then
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-KERNEL-AOSP-${TANGGAL}.zip
-  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-KERNEL-MIUI-${TANGGAL}.zip
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-RC2.0-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-RC2.0-KERNEL-MIUI-${TANGGAL}.zip
 else
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC2.0-KERNEL-AOSP-${TANGGAL}.zip
 fi
 
 ##----------------------------------------------------------##
@@ -160,14 +160,18 @@ function cloneTC() {
 	    PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	fi
         # Clone AnyKernel
-        if [ "${DEVICE}" = "alioth" ]; then
+        if [ -d AnyKernel3 ]; then
+		  rm -rf AnyKernel3
+		else
+		if [ "${DEVICE}" = "alioth" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b alioth AnyKernel3
         elif [ "${DEVICE}" = "apollo" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b apollo AnyKernel3
         elif [ "${DEVICE}" = "munch" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
 		else
-		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
+		  git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi AnyKernel3
+		fi
 		fi
 	}
 	
