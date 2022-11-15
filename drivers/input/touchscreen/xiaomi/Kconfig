@@ -15,3 +15,10 @@ config TOUCHSCREEN_NEW_PEN_CONNECT_STRATEGY
 	  Say Y here if you enable new pen connect strategy.
 
 	  If unsure, say N.
+	
+config TOUCHSCREEN_SUPPORT_NEW_GAME_MODE
+	bool "Touch Support New Game Mode"
+	help
+	  Say Y here if the device support new game mode
+
+	  If not support, say N.
