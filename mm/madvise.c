@@ -451,7 +451,6 @@ static int madvise_free_single_vma(struct vm_area_struct *vma,
 	tlb_gather_mmu(&tlb, mm, start, end);
 	update_hiwater_rss(mm);
 
-	vm_write_begin(vma);
 	mmu_notifier_invalidate_range_start(mm, start, end);
 	tlb_start_vma(&tlb, vma);
 	walk_page_range(vma->vm_mm, start, end,
@@ -459,7 +458,6 @@ static int madvise_free_single_vma(struct vm_area_struct *vma,
 	tlb_end_vma(&tlb, vma);
 	mmu_notifier_invalidate_range_end(mm, start, end);
 	tlb_finish_mmu(&tlb, start, end);
-	vm_write_end(vma);
 
 	return 0;
 }
