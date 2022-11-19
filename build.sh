@@ -64,10 +64,10 @@ TANGGAL=$(date +"%F%S")
 # Specify Final Zip Name
 ZIPNAME=Nexus
 if [ "${DEVICE}" = "lmi" ]; then
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-RC3.0-KERNEL-AOSP-${TANGGAL}.zip
-  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-RC3.0-KERNEL-MIUI-${TANGGAL}.zip
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-RC4.0-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-RC4.0-KERNEL-MIUI-${TANGGAL}.zip
 else
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TANGGAL}.zip
+  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC4.0-KERNEL-AOSP-${TANGGAL}.zip
 fi
 
 ##----------------------------------------------------------##
