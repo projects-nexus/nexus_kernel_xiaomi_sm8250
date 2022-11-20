@@ -65,3 +65,20 @@ steps:
        from_secret: chat_id
    commands:
      - /noclone3 bash build.sh null munch lto
+
+--- 
+clone: 
+  depth: 1
+kind: pipeline
+name : Nexus Alioth Miui
+version: alioth
+steps:
+ - name: Nexus Alioth Miui
+   image: nexgang/ubuntu:latest
+   environment:
+     token:
+       from_secret: token
+     chat_id:
+       from_secret: chat_id
+   commands:
+     - /noclone3 bash build.sh null aliothm lto
