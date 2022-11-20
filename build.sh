@@ -41,6 +41,11 @@ DEVICE2=munch
 DEFCONFIG=munch_defconfig
 MODEL=Poco F4
 VERSION=BETA
+elif [ "${DEVICE}" = "aliothm" ]; then
+DEVICE2=alioth
+DEFCONFIG=alioth_defconfig
+MODEL=Poco F3
+VERSION=BETA
 fi
 
 # Files
@@ -48,6 +53,18 @@ IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
 OUT_DIR=out/
 dts_source=arch/arm64/boot/dts/vendor/qcom
+
+function miui_fix_dimens() {
+    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsisi
+    sed -i 's/<155>/<1546>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
+}
+# Enable back mi smartfps while disabling qsync min refresh-rate
+function miui_fix_fps() {
+    sed -i 's/qcom,mdss-dsi-qsync-min-refresh-rate/\/\/qcom,mdss-dsi-qsync-min-refresh-rate/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ mi,mdss-dsi-smart-fps-max_framerate/mi,mdss-dsi-smart-fps-max_framerate/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ mi,mdss-dsi-pan-enable-smart-fps/mi,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ qcom,mdss-dsi-pan-enable-smart-fps/qcom,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
+}
 
 # Verbose Build
 VERBOSE=0
@@ -65,7 +82,9 @@ TANGGAL=$(date +"%F%S")
 ZIPNAME=Nexus
 if [ "${DEVICE}" = "lmi" ]; then
   FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-RC4.0-KERNEL-AOSP-${TANGGAL}.zip
-  FINAL_ZIP2=${ZIPNAME}-${VERSION}-lmi-RC4.0-KERNEL-MIUI-${TANGGAL}.zip
+  FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE2}-RC4.0-KERNEL-MIUI-${TANGGAL}.zip
+elif [ "${DEVICE}" = "aliothm" ]; then
+FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE2}-RC4.0-KERNEL-MIUI-${TANGGAL}.zip
 else
   FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC4.0-KERNEL-AOSP-${TANGGAL}.zip
 fi
@@ -255,6 +274,31 @@ START=$(date +"%s")
              -e LTO_CLANG \
 			 -e THINLTO
            fi
+           if [ "$DEVICE" = "aliothm" ]; then
+                scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -d TOUCHSCREEN_COMMON \
+                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
+                -e BOOT_INFO \
+                -e BINDER_OPT \
+                -e IPC_LOGGING \
+                -e KPERFEVENTS \
+                -e MIGT \
+                -e MIGT_ENERGY_MODEL \
+                -e MIHW \
+                -e MILLET \
+                -e MI_DRM_OPT \
+                -e MIUI_ZRAM_MEMORY_TRACKING \
+                -e MI_RECLAIM \
+                -e PACKAGE_RUNTIME_INFO \
+                -e PERF_HUMANTASK \
+                -e PERF_CRITICAL_RT_TASK \
+                -e SF_BINDER \
+                -e TASK_DELAY_ACCT
+                
+                miui_fix_dimens
+                miui_fix_fps
+           fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       LLVM=1 \
@@ -284,6 +328,31 @@ START=$(date +"%s")
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
 			 -e THINLTO
+           fi
+           if [ "$DEVICE" = "aliothm" ]; then
+                scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -d TOUCHSCREEN_COMMON \
+                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
+                -e BOOT_INFO \
+                -e BINDER_OPT \
+                -e IPC_LOGGING \
+                -e KPERFEVENTS \
+                -e MIGT \
+                -e MIGT_ENERGY_MODEL \
+                -e MIHW \
+                -e MILLET \
+                -e MI_DRM_OPT \
+                -e MIUI_ZRAM_MEMORY_TRACKING \
+                -e MI_RECLAIM \
+                -e PACKAGE_RUNTIME_INFO \
+                -e PERF_HUMANTASK \
+                -e PERF_CRITICAL_RT_TASK \
+                -e SF_BINDER \
+                -e TASK_DELAY_ACCT
+                
+                miui_fix_dimens
+                miui_fix_fps
            fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -321,8 +390,11 @@ function zipping() {
 		if [ "${DEVICE}" = "lmi" ]; then
           push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		else
-		  push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+        if [ "${DEVICE}" = "aliothm" ]; then
+		  push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		fi
+        push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+        fi
         if [ "${DEVICE}" = "lmi" ]; then
           rm -rf dtbo.img && rm -rf *.zip
           zip -r9 ${FINAL_ZIP2} *
