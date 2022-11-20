@@ -186,23 +186,24 @@ bool f2fs_need_SSR(struct f2fs_sb_info *sbi)
 
 void f2fs_abort_atomic_write(struct inode *inode, bool clean)
 {
-	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	struct f2fs_inode_info *fi = F2FS_I(inode);
 
 	if (!f2fs_is_atomic_file(inode))
 		return;
 
-	if (clean)
-		truncate_inode_pages_final(inode->i_mapping);
 	clear_inode_flag(fi->cow_inode, FI_COW_FILE);
 	iput(fi->cow_inode);
 	fi->cow_inode = NULL;
 	release_atomic_write_cnt(inode);
+	clear_inode_flag(inode, FI_ATOMIC_COMMITTED);
+	clear_inode_flag(inode, FI_ATOMIC_REPLACE);
 	clear_inode_flag(inode, FI_ATOMIC_FILE);
+	stat_dec_atomic_inode(inode);
 
-	spin_lock(&sbi->inode_lock[ATOMIC_FILE]);
-	sbi->atomic_files--;
-	spin_unlock(&sbi->inode_lock[ATOMIC_FILE]);
+	if (clean) {
+		truncate_inode_pages_final(inode->i_mapping);
+		f2fs_i_size_write(inode, fi->original_i_size);
+	}
 }
 
 static int __replace_atomic_write_block(struct inode *inode, pgoff_t index,
@@ -260,14 +261,24 @@ static void __complete_revoke_list(struct inode *inode, struct list_head *head,
 					bool revoke)
 {
 	struct revoke_entry *cur, *tmp;
+	pgoff_t start_index = 0;
+	bool truncate = is_inode_flag_set(inode, FI_ATOMIC_REPLACE);
 
 	list_for_each_entry_safe(cur, tmp, head, list) {
-		if (revoke)
+		if (revoke) {
 			__replace_atomic_write_block(inode, cur->index,
 						cur->old_addr, NULL, true);
+		} else if (truncate) {
+			f2fs_truncate_hole(inode, start_index, cur->index);
+			start_index = cur->index + 1;
+		}
+
 		list_del(&cur->list);
 		kmem_cache_free(revoke_entry_slab, cur);
 	}
+
+	if (!revoke && truncate)
+		f2fs_do_truncate_blocks(inode, start_index * PAGE_SIZE, false);
 }
 
 static int __f2fs_commit_atomic_write(struct inode *inode)
@@ -311,6 +322,8 @@ static int __f2fs_commit_atomic_write(struct inode *inode)
 					DATA_GENERIC_ENHANCE)) {
 				f2fs_put_dnode(&dn);
 				ret = -EFSCORRUPTED;
+				f2fs_handle_error(sbi,
+						ERROR_INVALID_BLKADDR);
 				goto out;
 			}
 
@@ -336,10 +349,12 @@ next:
 	}
 
 out:
-	if (ret)
+	if (ret) {
 		sbi->revoked_atomic_block += fi->atomic_write_cnt;
-	else
+	} else {
 		sbi->committed_atomic_block += fi->atomic_write_cnt;
+		set_inode_flag(inode, FI_ATOMIC_COMMITTED);
+	}
 
 	__complete_revoke_list(inode, &revoke_list, ret ? true : false);
 
@@ -375,7 +390,7 @@ void f2fs_balance_fs(struct f2fs_sb_info *sbi, bool need)
 {
 	if (time_to_inject(sbi, FAULT_CHECKPOINT)) {
 		f2fs_show_injection_info(sbi, FAULT_CHECKPOINT);
-		f2fs_stop_checkpoint(sbi, false);
+		f2fs_stop_checkpoint(sbi, false, STOP_CP_REASON_FAULT_INJECT);
 	}
 
 	/* balance_fs_bg is able to be pending */
@@ -475,7 +490,7 @@ do_sync:
 		mutex_lock(&sbi->flush_lock);
 
 		blk_start_plug(&plug);
-		f2fs_sync_dirty_inodes(sbi, FILE_INODE);
+		f2fs_sync_dirty_inodes(sbi, FILE_INODE, false);
 		blk_finish_plug(&plug);
 
 		mutex_unlock(&sbi->flush_lock);
@@ -621,12 +636,11 @@ int f2fs_create_flush_cmd_control(struct f2fs_sb_info *sbi)
 {
 	dev_t dev = sbi->sb->s_bdev->bd_dev;
 	struct flush_cmd_control *fcc;
-	int err = 0;
 
 	if (SM_I(sbi)->fcc_info) {
 		fcc = SM_I(sbi)->fcc_info;
 		if (fcc->f2fs_issue_flush)
-			return err;
+			return 0;
 		goto init_thread;
 	}
 
@@ -639,19 +653,20 @@ int f2fs_create_flush_cmd_control(struct f2fs_sb_info *sbi)
 	init_llist_head(&fcc->issue_list);
 	SM_I(sbi)->fcc_info = fcc;
 	if (!test_opt(sbi, FLUSH_MERGE))
-		return err;
+		return 0;
 
 init_thread:
 	fcc->f2fs_issue_flush = kthread_run(issue_flush_thread, sbi,
 				"f2fs_flush-%u:%u", MAJOR(dev), MINOR(dev));
 	if (IS_ERR(fcc->f2fs_issue_flush)) {
-		err = PTR_ERR(fcc->f2fs_issue_flush);
+		int err = PTR_ERR(fcc->f2fs_issue_flush);
+
 		kfree(fcc);
 		SM_I(sbi)->fcc_info = NULL;
 		return err;
 	}
 
-	return err;
+	return 0;
 }
 
 void f2fs_destroy_flush_cmd_control(struct f2fs_sb_info *sbi, bool free)
@@ -693,7 +708,8 @@ int f2fs_flush_device_cache(struct f2fs_sb_info *sbi)
 		} while (ret && --count);
 
 		if (ret) {
-			f2fs_stop_checkpoint(sbi, false);
+			f2fs_stop_checkpoint(sbi, false,
+					STOP_CP_REASON_FLUSH_FAIL);
 			break;
 		}
 
@@ -856,7 +872,7 @@ block_t f2fs_get_unusable_blocks(struct f2fs_sb_info *sbi)
 	}
 	mutex_unlock(&dirty_i->seglist_lock);
 
-	unusable = holes[DATA] > holes[NODE] ? holes[DATA] : holes[NODE];
+	unusable = max(holes[DATA], holes[NODE]);
 	if (unusable > ovp_holes)
 		return unusable - ovp_holes;
 	return 0;
@@ -1127,13 +1143,12 @@ static int __submit_discard_cmd(struct f2fs_sb_info *sbi,
 		if (time_to_inject(sbi, FAULT_DISCARD)) {
 			f2fs_show_injection_info(sbi, FAULT_DISCARD);
 			err = -EIO;
-			goto submit;
-		}
-		err = __blkdev_issue_discard(bdev,
+		} else {
+			err = __blkdev_issue_discard(bdev,
 					SECTOR_FROM_BLOCK(start),
 					SECTOR_FROM_BLOCK(len),
 					GFP_NOFS, 0, &bio);
-submit:
+		}
 		if (err) {
 			spin_lock_irqsave(&dc->lock, flags);
 			if (dc->state == D_PARTIAL)
@@ -1450,7 +1465,7 @@ retry:
 		if (i + 1 < dpolicy->granularity)
 			break;
 
-		if (i < DEFAULT_DISCARD_GRANULARITY && dpolicy->ordered)
+		if (i + 1 < dcc->max_ordered_discard && dpolicy->ordered)
 			return __issue_discard_cmd_orderly(sbi, dpolicy);
 
 		pend_list = &dcc->pend_list[i];
@@ -2026,8 +2041,10 @@ int f2fs_start_discard_thread(struct f2fs_sb_info *sbi)
 
 	dcc->f2fs_issue_discard = kthread_run(issue_discard_thread, sbi,
 				"f2fs_discard-%u:%u", MAJOR(dev), MINOR(dev));
-	if (IS_ERR(dcc->f2fs_issue_discard))
+	if (IS_ERR(dcc->f2fs_issue_discard)) {
 		err = PTR_ERR(dcc->f2fs_issue_discard);
+		dcc->f2fs_issue_discard = NULL;
+	}
 
 	return err;
 }
@@ -2047,6 +2064,7 @@ static int create_discard_cmd_control(struct f2fs_sb_info *sbi)
 		return -ENOMEM;
 
 	dcc->discard_granularity = DEFAULT_DISCARD_GRANULARITY;
+	dcc->max_ordered_discard = DEFAULT_MAX_ORDERED_DISCARD_GRANULARITY;
 	if (F2FS_OPTION(sbi).discard_unit == DISCARD_UNIT_SEGMENT)
 		dcc->discard_granularity = sbi->blocks_per_seg;
 	else if (F2FS_OPTION(sbi).discard_unit == DISCARD_UNIT_SECTION)
@@ -3432,6 +3450,7 @@ int f2fs_inplace_write_data(struct f2fs_io_info *fio)
 		f2fs_warn(sbi, "%s: incorrect segment(%u) type, run fsck to fix.",
 			  __func__, segno);
 		err = -EFSCORRUPTED;
+		f2fs_handle_error(sbi, ERROR_INCONSISTENT_SUM_TYPE);
 		goto drop_bio;
 	}
 
@@ -4379,6 +4398,8 @@ static int build_sit_entries(struct f2fs_sb_info *sbi)
 			if (se->type >= NR_PERSISTENT_LOG) {
 				f2fs_err(sbi, "Invalid segment type: %u, segno: %u",
 							se->type, start);
+				f2fs_handle_error(sbi,
+						ERROR_INCONSISTENT_SUM_TYPE);
 				return -EFSCORRUPTED;
 			}
 
@@ -4415,6 +4436,7 @@ static int build_sit_entries(struct f2fs_sb_info *sbi)
 			f2fs_err(sbi, "Wrong journal entry on segno %u",
 				 start);
 			err = -EFSCORRUPTED;
+			f2fs_handle_error(sbi, ERROR_CORRUPTED_JOURNAL);
 			break;
 		}
 
@@ -4434,6 +4456,7 @@ static int build_sit_entries(struct f2fs_sb_info *sbi)
 			f2fs_err(sbi, "Invalid segment type: %u, segno: %u",
 							se->type, start);
 			err = -EFSCORRUPTED;
+			f2fs_handle_error(sbi, ERROR_INCONSISTENT_SUM_TYPE);
 			break;
 		}
 
@@ -4465,6 +4488,7 @@ static int build_sit_entries(struct f2fs_sb_info *sbi)
 	if (sit_valid_blocks[NODE] != valid_node_count(sbi)) {
 		f2fs_err(sbi, "SIT is corrupted node# %u vs %u",
 			 sit_valid_blocks[NODE], valid_node_count(sbi));
+		f2fs_handle_error(sbi, ERROR_INCONSISTENT_NODE_COUNT);
 		return -EFSCORRUPTED;
 	}
 
@@ -4473,6 +4497,7 @@ static int build_sit_entries(struct f2fs_sb_info *sbi)
 		f2fs_err(sbi, "SIT is corrupted data# %u %u vs %u",
 			 sit_valid_blocks[DATA], sit_valid_blocks[NODE],
 			 valid_user_blocks(sbi));
+		f2fs_handle_error(sbi, ERROR_INCONSISTENT_BLOCK_COUNT);
 		return -EFSCORRUPTED;
 	}
 
@@ -4623,6 +4648,7 @@ static int sanity_check_curseg(struct f2fs_sb_info *sbi)
 			f2fs_err(sbi,
 				 "Current segment has invalid alloc_type:%d",
 				 curseg->alloc_type);
+			f2fs_handle_error(sbi, ERROR_INVALID_CURSEG);
 			return -EFSCORRUPTED;
 		}
 
@@ -4640,6 +4666,7 @@ out:
 				 "Current segment's next free block offset is inconsistent with bitmap, logtype:%u, segno:%u, type:%u, next_blkoff:%u, blkofs:%u",
 				 i, curseg->segno, curseg->alloc_type,
 				 curseg->next_blkoff, blkofs);
+			f2fs_handle_error(sbi, ERROR_INVALID_CURSEG);
 			return -EFSCORRUPTED;
 		}
 	}
