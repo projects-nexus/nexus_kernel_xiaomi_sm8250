@@ -274,30 +274,9 @@ START=$(date +"%s")
              -e LTO_CLANG \
 			 -e THINLTO
            fi
-           if [ "$DEVICE" = "aliothm" ]; then
-                miui_fix_dimens
-                miui_fix_fps
-                
+           if [ "$DEVICE" = "alioth" ]; then
                 scripts/config --file ${OUT_DIR}/.config \
-                -d LOCALVERSION_AUTO \
-                -d TOUCHSCREEN_COMMON \
-                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-                -e BOOT_INFO \
-                -e BINDER_OPT \
-                -e IPC_LOGGING \
-                -e KPERFEVENTS \
-                -e MIGT \
-                -e MIGT_ENERGY_MODEL \
-                -e MIHW \
-                -e MILLET \
-                -e MI_DRM_OPT \
-                -e MIUI_ZRAM_MEMORY_TRACKING \
-                -e MI_RECLAIM \
-                -e PACKAGE_RUNTIME_INFO \
-                -e PERF_HUMANTASK \
-                -e PERF_CRITICAL_RT_TASK \
-                -e SF_BINDER \
-                -e TASK_DELAY_ACCT
+                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd
            fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -329,30 +308,9 @@ START=$(date +"%s")
              -e LTO_CLANG \
 			 -e THINLTO
            fi
-           if [ "$DEVICE" = "aliothm" ]; then
-                miui_fix_dimens
-                miui_fix_fps
-                
+           if [ "$DEVICE" = "alioth" ]; then
                 scripts/config --file ${OUT_DIR}/.config \
-                -d LOCALVERSION_AUTO \
-                -d TOUCHSCREEN_COMMON \
-                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-                -e BOOT_INFO \
-                -e BINDER_OPT \
-                -e IPC_LOGGING \
-                -e KPERFEVENTS \
-                -e MIGT \
-                -e MIGT_ENERGY_MODEL \
-                -e MIHW \
-                -e MILLET \
-                -e MI_DRM_OPT \
-                -e MIUI_ZRAM_MEMORY_TRACKING \
-                -e MI_RECLAIM \
-                -e PACKAGE_RUNTIME_INFO \
-                -e PERF_HUMANTASK \
-                -e PERF_CRITICAL_RT_TASK \
-                -e SF_BINDER \
-                -e TASK_DELAY_ACCT
+                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd
            fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \

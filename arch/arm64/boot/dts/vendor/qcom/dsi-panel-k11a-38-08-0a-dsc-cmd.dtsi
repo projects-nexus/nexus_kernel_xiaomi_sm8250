@@ -24,8 +24,8 @@
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-reset-sequence = <0 12>, <1 10>;
 		qcom,mdss-dsi-reset-powerdown-delay = <10>;
-		qcom,mdss-pan-physical-width-dimension = <70>;
-		qcom,mdss-pan-physical-height-dimension = <155>;
+		qcom,mdss-pan-physical-width-dimension = <695>;
+		qcom,mdss-pan-physical-height-dimension = <1546>;
 		qcom,mdss-dsi-te-pin-select = <1>;
 		qcom,mdss-dsi-wr-mem-start = <0x2c>;
 		qcom,mdss-dsi-wr-mem-continue = <0x3c>;
@@ -352,8 +352,8 @@
 	mi,mdss-dsi-panel-hbm-off-51-index = <1>;
 	mi,esd-err-irq-gpio = <&tlmm 51 0x2001>;
 	mi,mdss-panel-on-dimming-delay = <120>;
-	// mi,mdss-dsi-pan-enable-smart-fps;
-	// mi,mdss-dsi-smart-fps-max_framerate = <120>;
+	mi,mdss-dsi-pan-enable-smart-fps;
+	mi,mdss-dsi-smart-fps-max_framerate = <120>;
 	mi,mdss-dsi-panel-hbm-brightness = <1>;
 	mi,mdss-dsi-panel-dc-threshold = <440>;
 	mi,mdss-dsi-panel-max-brightness-clone = <8191>;
