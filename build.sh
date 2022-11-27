@@ -275,6 +275,9 @@ START=$(date +"%s")
 			 -e THINLTO
            fi
            if [ "$DEVICE" = "aliothm" ]; then
+                miui_fix_dimens
+                miui_fix_fps
+                
                 scripts/config --file ${OUT_DIR}/.config \
                 -d LOCALVERSION_AUTO \
                 -d TOUCHSCREEN_COMMON \
@@ -295,9 +298,6 @@ START=$(date +"%s")
                 -e PERF_CRITICAL_RT_TASK \
                 -e SF_BINDER \
                 -e TASK_DELAY_ACCT
-                
-                miui_fix_dimens
-                miui_fix_fps
            fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -330,6 +330,9 @@ START=$(date +"%s")
 			 -e THINLTO
            fi
            if [ "$DEVICE" = "aliothm" ]; then
+                miui_fix_dimens
+                miui_fix_fps
+                
                 scripts/config --file ${OUT_DIR}/.config \
                 -d LOCALVERSION_AUTO \
                 -d TOUCHSCREEN_COMMON \
@@ -350,9 +353,6 @@ START=$(date +"%s")
                 -e PERF_CRITICAL_RT_TASK \
                 -e SF_BINDER \
                 -e TASK_DELAY_ACCT
-                
-                miui_fix_dimens
-                miui_fix_fps
            fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -391,6 +391,7 @@ function zipping() {
           push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		else
         if [ "${DEVICE}" = "aliothm" ]; then
+		  MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
 		  push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		fi
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
