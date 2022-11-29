@@ -958,6 +958,8 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 	set_irq_regs(old_regs);
 }
 
+extern void update_ipi_history(int cpu);
+
 void smp_send_ipi(const struct cpumask *cpus)
 {
 	int cpu;
