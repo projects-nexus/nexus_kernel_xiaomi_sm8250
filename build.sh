@@ -95,7 +95,7 @@ LINKER=ld.lld
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=playground
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -131,6 +131,11 @@ function cloneTC() {
     git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14 clang
     PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
+	elif [ $COMPILER = "playground" ];
+	then
+	git clone --depth=1 https://gitlab.com/PixelOS-Devices/playgroundtc.git clang
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
 	elif [ $COMPILER = "prelude" ];
 	then
 	git clone --depth=1 https://gitlab.com/jjpprrrr/prelude-clang.git clang
