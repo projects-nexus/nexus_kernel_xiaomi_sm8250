@@ -22,29 +22,20 @@ fi
 DEVICE=$2
 
 if [ "${DEVICE}" = "alioth" ]; then
-DEVICE2=alioth
 DEFCONFIG=alioth_defconfig
 MODEL=Poco F3
 VERSION=BETA
 elif [ "${DEVICE}" = "lmi" ]; then
-DEVICE2=lmi-FW13
 DEFCONFIG=lmi_defconfig
 MODEL=Poco F2 Pro
 VERSION=BETA
 elif [ "${DEVICE}" = "apollo" ]; then
-DEVICE2=apollo
 DEFCONFIG=apollo_defconfig
 MODEL=Mi 10T Pro
 VERSION=BETA
 elif [ "${DEVICE}" = "munch" ]; then
-DEVICE2=munch
 DEFCONFIG=munch_defconfig
 MODEL=Poco F4
-VERSION=BETA
-elif [ "${DEVICE}" = "aliothm" ]; then
-DEVICE2=aliothm
-DEFCONFIG=alioth_defconfig
-MODEL=Poco F3
 VERSION=BETA
 fi
 
@@ -53,18 +44,6 @@ IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
 OUT_DIR=out/
 dts_source=arch/arm64/boot/dts/vendor/qcom
-
-function miui_fix_dimens() {
-    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsisi
-    sed -i 's/<155>/<1546>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
-}
-# Enable back mi smartfps while disabling qsync min refresh-rate
-function miui_fix_fps() {
-    sed -i 's/qcom,mdss-dsi-qsync-min-refresh-rate/\/\/qcom,mdss-dsi-qsync-min-refresh-rate/g' $dts_source/dsi-panel*
-    sed -i 's/\/\/ mi,mdss-dsi-smart-fps-max_framerate/mi,mdss-dsi-smart-fps-max_framerate/g' $dts_source/dsi-panel*
-    sed -i 's/\/\/ mi,mdss-dsi-pan-enable-smart-fps/mi,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
-    sed -i 's/\/\/ qcom,mdss-dsi-pan-enable-smart-fps/qcom,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
-}
 
 # Verbose Build
 VERBOSE=0
@@ -75,23 +54,12 @@ KERVER=$(make kernelversion)
 COMMIT_HEAD=$(git log --oneline -1)
 
 # Date and Time
-DATE=$(TZ=Asia/Kolkata date +"%Y%m%d-%T")
-TANGGAL=$(date +"%F%S")
+DATE=$(TZ=Europe/Lisbon date +"%Y%m%d-%T")
+TM=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-if [ "${DEVICE}" = "lmi" ]; then
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE2}-RC1.0-KERNEL-AOSP-${TANGGAL}.zip
-  FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE2}-RC1.0-KERNEL-MIUI-${TANGGAL}.zip
-elif [ "${DEVICE}" = "aliothm" ]; then
-FINAL_ZIP2=${ZIPNAME}-${VERSION}-${DEVICE2}-RC1.0-KERNEL-MIUI-${TANGGAL}.zip
-else
-  FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC1.0-KERNEL-AOSP-${TANGGAL}.zip
-fi
-
-##----------------------------------------------------------##
-# Specify Linker
-LINKER=ld.lld
+FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC1.0-KERNEL-AOSP-${TM}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
@@ -101,12 +69,7 @@ COMPILER=aosp
 # Clone ToolChain
 function cloneTC() {
 	
-	if [ $COMPILER = "atomx" ];
-	then
-	git clone --depth=1 https://gitlab.com/ElectroPerf/atom-x-clang.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	
-	elif [ $COMPILER = "proton" ];
+	if [ $COMPILER = "proton" ];
 	then
 	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
@@ -121,30 +84,10 @@ function cloneTC() {
 	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 
-	elif [ $COMPILER = "neutron" ];
-    then
-    git clone --depth=1 https://gitlab.com/dakkshesh07/neutron-clang.git clang
-    PATH="${KERNEL_DIR}/clang/bin:$PATH"
-
 	elif [ $COMPILER = "zyc14" ];
     then
     git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14 clang
     PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	
-	elif [ $COMPILER = "playground" ];
-	then
-	git clone --depth=1 https://gitlab.com/PixelOS-Devices/playgroundtc.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
-
-	elif [ $COMPILER = "prelude" ];
-	then
-	git clone --depth=1 https://gitlab.com/jjpprrrr/prelude-clang.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	
-	elif [ $COMPILER = "dora" ];
-	then
-	git clone --depth=1 https://gitlab.com/zlatanr/dora-clang-1.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	
 	elif [ $COMPILER = "eva" ];
 	then
@@ -194,7 +137,7 @@ function cloneTC() {
         elif [ "${DEVICE}" = "munch" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
 		else
-		  git clone --depth=1 https://github.com/NotZeetaa/Flashable_Zip_lmi AnyKernel3
+		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
 		fi
 		fi
 	}
@@ -268,7 +211,7 @@ METHOD=$3
 function compile() {
 START=$(date +"%s")
 	# Push Notification
-	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Asia/Kolkata date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE2]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER</code>%0A<b>Date : </b><code>$(TZ=Europe/Lisbon date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
 	
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
@@ -276,39 +219,12 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG \
-			 -e THINLTO
-           fi
-           if [ "$DEVICE" = "aliothm" ]; then
-                miui_fix_dimens
-                miui_fix_fps
-                
-                scripts/config --file ${OUT_DIR}/.config \
-                -d LOCALVERSION_AUTO \
-                -d TOUCHSCREEN_COMMON \
-                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-                -e BOOT_INFO \
-                -e BINDER_OPT \
-                -e IPC_LOGGING \
-                -e KPERFEVENTS \
-                -e MIGT \
-                -e MIGT_ENERGY_MODEL \
-                -e MIHW \
-                -e MILLET \
-                -e MI_DRM_OPT \
-                -e MIUI_ZRAM_MEMORY_TRACKING \
-                -e MI_RECLAIM \
-                -e PACKAGE_RUNTIME_INFO \
-                -e PERF_HUMANTASK \
-                -e PERF_CRITICAL_RT_TASK \
-                -e SF_BINDER \
-                -e TASK_DELAY_ACCT
+             -e LTO_CLANG
            fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       LLVM=1 \
 	       LLVM_IAS=1 \
-	       LD=${LINKER} \
 	       CROSS_COMPILE=aarch64-linux-gnu- \
 	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
 	       V=$VERBOSE 2>&1 | tee error.log
@@ -331,33 +247,7 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG \
-			 -e THINLTO
-           fi
-           if [ "$DEVICE" = "aliothm" ]; then
-                miui_fix_dimens
-                miui_fix_fps
-                
-                scripts/config --file ${OUT_DIR}/.config \
-                -d LOCALVERSION_AUTO \
-                -d TOUCHSCREEN_COMMON \
-                --set-str STATIC_USERMODEHELPER_PATH /system/bin/micd \
-                -e BOOT_INFO \
-                -e BINDER_OPT \
-                -e IPC_LOGGING \
-                -e KPERFEVENTS \
-                -e MIGT \
-                -e MIGT_ENERGY_MODEL \
-                -e MIHW \
-                -e MILLET \
-                -e MI_DRM_OPT \
-                -e MIUI_ZRAM_MEMORY_TRACKING \
-                -e MI_RECLAIM \
-                -e PACKAGE_RUNTIME_INFO \
-                -e PERF_HUMANTASK \
-                -e PERF_CRITICAL_RT_TASK \
-                -e SF_BINDER \
-                -e TASK_DELAY_ACCT
+             -e LTO_CLANG
            fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -392,26 +282,9 @@ function zipping() {
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
-		if [ "${DEVICE}" = "lmi" ]; then
-          push "$FINAL_ZIP" "FW 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-		else
-        if [ "${DEVICE}" = "aliothm" ]; then
-		  MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
-		  push "$FINAL_ZIP2" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-		fi
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-        fi
-        if [ "${DEVICE}" = "lmi" ]; then
-          rm -rf dtbo.img && rm -rf *.zip
-          zip -r9 ${FINAL_ZIP2} *
-          MD5CHECK=$(md5sum "$FINAL_ZIP2" | cut -d' ' -f1)
-          push "$FINAL_ZIP2" "MIUI 13. Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL (lmi)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-          cd ..
-          rm -rf AnyKernel3
-		else 
-		  cd ..
-          rm -rf AnyKernel3
-        fi
+		cd ..
+        rm -rf AnyKernel3
         }
     
 ##----------------------------------------------------------##

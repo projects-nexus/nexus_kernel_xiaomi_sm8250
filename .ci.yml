@@ -13,7 +13,7 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null alioth lto
+     - /noclone3 bash build.sh null alioth null
 
 --- 
 clone: 
@@ -30,7 +30,7 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null lmi lto
+     - /noclone3 bash build.sh null lmi null
 
 --- 
 clone: 
@@ -47,7 +47,7 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null apollo lto
+     - /noclone3 bash build.sh null apollo null
 
 --- 
 clone: 
@@ -64,21 +64,4 @@ steps:
      chat_id:
        from_secret: chat_id
    commands:
-     - /noclone3 bash build.sh null munch lto
-
---- 
-clone: 
-  depth: 1
-kind: pipeline
-name : Nexus Alioth Miui
-version: alioth
-steps:
- - name: Nexus Alioth Miui
-   image: nexgang/ubuntu:latest
-   environment:
-     token:
-       from_secret: token
-     chat_id:
-       from_secret: chat_id
-   commands:
-     - /noclone3 bash build.sh null aliothm lto
+     - /noclone3 bash build.sh null munch null
