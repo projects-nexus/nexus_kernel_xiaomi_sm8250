@@ -5,7 +5,6 @@
 #include <linux/compiler.h>
 #include <linux/threads.h>
 #include <linux/percpu-defs.h>
-#include <linux/irqflags.h>
 
 #ifdef CONFIG_SMP
 
