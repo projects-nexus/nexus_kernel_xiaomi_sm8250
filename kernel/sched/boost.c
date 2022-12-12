@@ -198,12 +198,12 @@ static void sched_boost_enable(int type)
 static void sched_boost_disable_all(void)
 {
 	int i;
-	int prev_boost = sched_boost_type;
 
-	if (prev_boost != NO_BOOST) {
-		sched_boosts[prev_boost].exit();
-		for (i = SCHED_BOOST_START; i < SCHED_BOOST_END; i++)
+	for (i = SCHED_BOOST_START; i < SCHED_BOOST_END; i++) {
+		if (sched_boosts[i].refcount > 0) {
+			sched_boosts[i].exit();
 			sched_boosts[i].refcount = 0;
+		}
 	}
 }
 
