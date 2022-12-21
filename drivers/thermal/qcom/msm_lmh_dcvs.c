@@ -80,8 +80,6 @@ struct __limits_cdev_data {
 	u32 min_freq;
 };
 
-static bool lmh_enabled = false;
-
 struct limits_dcvs_hw {
 	char sensor_name[THERMAL_NAME_LENGTH];
 	uint32_t affinity;
@@ -184,7 +182,6 @@ static unsigned long limits_mitigation_notify(struct limits_dcvs_hw *hw)
 	if (max_cpu_ct == cpumask_weight(&hw->core_map))
 		max_limit = max_cpu_limit;
 	sched_update_cpu_freq_min_max(&hw->core_map, 0, max_limit);
-	arch_set_max_thermal_scale(&hw->core_map, max_limit);
 	pr_debug("CPU:%d max limit:%lu\n", cpumask_first(&hw->core_map),
 			max_limit);
 	trace_lmh_dcvs_freq(cpumask_first(&hw->core_map), max_limit);
@@ -347,13 +344,10 @@ static struct limits_dcvs_hw *get_dcvsh_hw_from_cpu(int cpu)
 	return NULL;
 }
 
-static int enable_lmh(struct device_node *dn)
+static int enable_lmh(void)
 {
 	int ret = 0;
 	struct scm_desc desc_arg;
-
-	if (lmh_enabled)
-		return 0;
 
 	desc_arg.args[0] = 1;
 	desc_arg.arginfo = SCM_ARGS(1, SCM_VAL);
@@ -363,9 +357,6 @@ static int enable_lmh(struct device_node *dn)
 		pr_err("Error switching profile:[1]. err:%d\n", ret);
 		return ret;
 	}
-
-	if (of_property_read_bool(dn, "qcom,legacy-lmh-enable"))
-		lmh_enabled = true;
 
 	return ret;
 }
@@ -658,7 +649,7 @@ static int limits_dcvs_probe(struct platform_device *pdev)
 				affinity);
 			return ret;
 		}
-		ret = enable_lmh(dn);
+		ret = enable_lmh();
 		if (ret)
 			return ret;
 	}
@@ -679,13 +670,6 @@ static int limits_dcvs_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	request_reg = be32_to_cpu(addr[0]) + LIMITS_CLUSTER_REQ_OFFSET;
-
-	if (!IS_ENABLED(CONFIG_QTI_THERMAL_LIMITS_DCVS)) {
-		limits_isens_vref_ldo_init(pdev, hw);
-		devm_kfree(&pdev->dev, hw->cdev_data);
-		devm_kfree(&pdev->dev, hw);
-		return 0;
-	}
 
 	/*
 	 * Setup virtual thermal zones for each LMH-DCVS hardware
