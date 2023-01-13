@@ -19,7 +19,7 @@ SPATCH_VERSION=$($SPATCH --version | head -1 | awk '{print $3}')
 SPATCH_VERSION_NUM=$(echo $SPATCH_VERSION | ${DIR}/scripts/ld-version.sh)
 
 USE_JOBS="no"
-$SPATCH --help | grep "\-\-jobs" > /dev/null && USE_JOBS="yes"
+$SPATCH --help | grep -e "--jobs" > /dev/null && USE_JOBS="yes"
 
 # The verbosity may be set by the environmental parameter V=
 # as for example with 'make V=1 coccicheck'
