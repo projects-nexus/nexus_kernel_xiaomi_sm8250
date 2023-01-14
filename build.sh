@@ -11,12 +11,19 @@ KERNEL_DIR="$(pwd)"
 BUILD=$1
 
 if [ "$BUILD" = "local" ]; then
-echo "Type ur chat id:"
-read chat
-chat_id=$chat
-echo "Type ur bot token:"
-read token
-token=$token
+	if [ -e ids.txt ]; then
+		chat_id=$(awk "NR==1{print;exit}" ids.txt)
+		token=$(awk "NR==2{print;exit}" ids.txt)
+	else
+		echo "Type ur chat id:"
+		read chat
+		echo "$chat" > ids.txt
+		chat_id=$chat
+		echo "Type ur bot token:"
+		read token
+		echo "$token" >> ids.txt
+		token=$token
+	fi
 fi
 
 DEVICE=$2
