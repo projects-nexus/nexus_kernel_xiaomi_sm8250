@@ -144,3 +144,12 @@ kernel/configs/android-*.cfg
 scripts/build_dtbo
 scripts/build_kernel
 scripts/update_defconfig
+
+# Nexus
+clang/
+clangB/
+gcc/
+gcc32/
+out/
+ids.txt
+error.log
