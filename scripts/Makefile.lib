@@ -320,8 +320,14 @@ dtc-tmp = $(subst $(comma),_,$(dot-target).dts.tmp)
 
 # mkdtimg
 #----------------------------------------------------------------------------
+ifneq ($(MKDTBO_EXT),)
+MKDTBO = $(MKDTBO_EXT)
+else
+MKDTBO = $(srctree)/scripts/ufdt/libufdt/utils/src/mkdtboimg.py
+endif
+
 quiet_cmd_mkdtimg = DTBOIMG $@
-cmd_mkdtimg = mkdtboimg.py create $@ --page_size=4096 $(filter-out FORCE,$^)
+cmd_mkdtimg = python2 $(MKDTBO) create $@ --page_size=4096 $(filter-out FORCE,$^)
 
 # cat
 # ---------------------------------------------------------------------------
