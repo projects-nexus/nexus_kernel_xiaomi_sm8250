@@ -711,7 +711,7 @@ void ax_mdio_write(struct net_device *netdev, int phy_id, int reg, int val)
 	ax_write_cmd(axdev, AX_ACCESS_PHY, phy_id, (__u16)reg, 2, &res);
 }
 
-inline struct net_device_stats *ax_get_stats(struct net_device *netdev)
+struct net_device_stats *ax_get_stats(struct net_device *netdev)
 {
 	return &netdev->stats;
 }
@@ -932,12 +932,12 @@ resubmit:
 	}
 }
 
-inline void *__rx_buf_align(void *data)
+void *__rx_buf_align(void *data)
 {
 	return (void *)ALIGN((uintptr_t)data, RX_ALIGN);
 }
 
-inline void *__tx_buf_align(void *data, u8 tx_align_len)
+void *__tx_buf_align(void *data, u8 tx_align_len)
 {
 	return (void *)ALIGN((uintptr_t)data, tx_align_len);
 }
