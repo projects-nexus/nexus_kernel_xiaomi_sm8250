@@ -70,7 +70,7 @@ FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
 
 ##----------------------------------------------------------##
 # Specify compiler [ proton, atomx, eva, aosp ]
-COMPILER=aosp
+COMPILER=neutron
 
 ##----------------------------------------------------------##
 # Clone ToolChain
@@ -85,6 +85,15 @@ function cloneTC() {
 	then
 	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git clang
 	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+
+	elif [ $COMPILER = "neutron" ];
+	then
+	if [ ! -d clang ]; then
+	mkdir clang && cd clang
+	bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) -S
+	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	cd ..
+	fi
 
 	elif [ $COMPILER = "nex14" ];
 	then
