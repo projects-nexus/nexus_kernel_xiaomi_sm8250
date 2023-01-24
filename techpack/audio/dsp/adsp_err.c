@@ -148,7 +148,7 @@ static void adsp_err_check_restart(u32 adsp_error)
 
 		do_gettimeofday(&curtime);
 
-		pr_err("%s: err_count = %d [%lld - %lld = %lld]\n", __func__,
+		pr_err("%s: err_count = %d [%ld - %ld = %ld]\n", __func__,
 			err_count, curtime.tv_sec, last_time, curtime.tv_sec - last_time);
 
 		if ((err_count >= ADSP_ERR_LIMITED_COUNT) &&
