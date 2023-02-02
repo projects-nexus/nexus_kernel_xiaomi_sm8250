@@ -74,28 +74,22 @@ static int pm8xxx_rtc_read_rtc_data(struct pm8xxx_rtc *rtc_dd, unsigned long *rt
 	const struct pm8xxx_rtc_regs *regs = rtc_dd->regs;
 
 	rc = regmap_bulk_read(rtc_dd->regmap, regs->read, value, sizeof(value));
-	if (rc) {
-		dev_err(rtc_dd->rtc_dev, "RTC read rtc data register failed\n");
+	if (rc)
 		return rc;
-	}
 
 	/*
 	 * Read the LSB again and check if there has been a carry over.
 	 * If there is, redo the read operation.
 	 */
 	rc = regmap_read(rtc_dd->regmap, regs->read, &reg);
-	if (rc < 0) {
-		dev_err(rtc_dd->rtc_dev, "RTC read rtc data register failed\n");
+	if (rc < 0)
 		return rc;
-	}
 
 	if (unlikely(reg < value[0])) {
 		rc = regmap_bulk_read(rtc_dd->regmap, regs->read,
 				      value, sizeof(value));
-		if (rc) {
-			dev_err(rtc_dd->rtc_dev, "RTC read rtc data register failed\n");
+		if (rc)
 			return rc;
-		}
 	}
 
 	*rtc_data = value[0] | (value[1] << 8) | (value[2] << 16) |
@@ -111,10 +105,8 @@ static int pm8xxx_rtc_read_alarm_data(struct pm8xxx_rtc *rtc_dd, unsigned long *
 
 	rc = regmap_bulk_read(rtc_dd->regmap, rtc_dd->regs->alarm_rw, value,
 			      sizeof(value));
-	if (rc) {
-		dev_err(rtc_dd->rtc_dev, "RTC read alarm data failed\n");
+	if (rc)
 		return rc;
-	}
 
 	*alarm_data = value[0] | (value[1] << 8) | (value[2] << 16) |
 			((unsigned long)value[3] << 24);
@@ -162,10 +154,8 @@ static int pm8xxx_rtc_set_time(struct device *dev, struct rtc_time *tm)
 		alarm_enabled = 1;
 		ctrl_reg &= ~regs->alarm_en;
 		rc = regmap_write(rtc_dd->regmap, regs->alarm_ctrl, ctrl_reg);
-		if (rc) {
-			dev_err(dev, "Write to RTC Alarm control register failed\n");
+		if (rc)
 			goto rtc_rw_fail;
-		}
 	}
 
 	/* Disable RTC H/w before writing on RTC register */
@@ -177,51 +167,39 @@ static int pm8xxx_rtc_set_time(struct device *dev, struct rtc_time *tm)
 		rtc_disabled = 1;
 		rtc_ctrl_reg &= ~PM8xxx_RTC_ENABLE;
 		rc = regmap_write(rtc_dd->regmap, regs->ctrl, rtc_ctrl_reg);
-		if (rc) {
-			dev_err(dev, "Write to RTC control register failed\n");
+		if (rc)
 			goto rtc_rw_fail;
-		}
 	}
 
 	/* Write 0 to Byte[0] */
 	rc = regmap_write(rtc_dd->regmap, regs->write, 0);
-	if (rc) {
-		dev_err(dev, "Write to RTC write data register failed\n");
+	if (rc)
 		goto rtc_rw_fail;
-	}
 
 	/* Write Byte[1], Byte[2], Byte[3] */
 	rc = regmap_bulk_write(rtc_dd->regmap, regs->write + 1,
 			       &value[1], sizeof(value) - 1);
-	if (rc) {
-		dev_err(dev, "Write to RTC write data register failed\n");
+	if (rc)
 		goto rtc_rw_fail;
-	}
 
 	/* Write Byte[0] */
 	rc = regmap_write(rtc_dd->regmap, regs->write, value[0]);
-	if (rc) {
-		dev_err(dev, "Write to RTC write data register failed\n");
+	if (rc)
 		goto rtc_rw_fail;
-	}
 
 	/* Enable RTC H/w after writing on RTC register */
 	if (rtc_disabled) {
 		rtc_ctrl_reg |= PM8xxx_RTC_ENABLE;
 		rc = regmap_write(rtc_dd->regmap, regs->ctrl, rtc_ctrl_reg);
-		if (rc) {
-			dev_err(dev, "Write to RTC control register failed\n");
+		if (rc)
 			goto rtc_rw_fail;
-		}
 	}
 
 	if (alarm_enabled) {
 		ctrl_reg |= regs->alarm_en;
 		rc = regmap_write(rtc_dd->regmap, regs->alarm_ctrl, ctrl_reg);
-		if (rc) {
-			dev_err(dev, "Write to RTC Alarm control register failed\n");
+		if (rc)
 			goto rtc_rw_fail;
-		}
 	}
 
 rtc_rw_fail:
@@ -237,10 +215,8 @@ static int pm8xxx_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	struct pm8xxx_rtc *rtc_dd = dev_get_drvdata(dev);
 
 	rc = pm8xxx_rtc_read_rtc_data(rtc_dd, &secs);
-	if (rc) {
-		dev_err(dev, "RTC read time failed\n");
+	if (rc)
 		return rc;
-	}
 
 	rtc_time64_to_tm(secs, tm);
 
@@ -273,10 +249,8 @@ static int pm8xxx_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 
 	rc = regmap_bulk_write(rtc_dd->regmap, regs->alarm_rw, value,
 			       sizeof(value));
-	if (rc) {
-		dev_err(dev, "Write to RTC ALARM register failed\n");
+	if (rc)
 		goto rtc_rw_fail;
-	}
 
 	if (alarm->enabled) {
 		rc = regmap_update_bits(rtc_dd->regmap, regs->alarm_ctrl,
@@ -301,18 +275,14 @@ static int pm8xxx_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 	const struct pm8xxx_rtc_regs *regs = rtc_dd->regs;
 
 	rc = pm8xxx_rtc_read_alarm_data(rtc_dd, &secs);
-	if (rc) {
-		dev_err(dev, "RTC alarm data read failed\n");
+	if (rc)
 		return rc;
-	}
 
 	rtc_time64_to_tm(secs, &alarm->time);
 
 	rc = regmap_read(rtc_dd->regmap, regs->alarm_ctrl, &ctrl_reg);
-	if (rc) {
-		dev_err(dev, "Read from RTC alarm control register failed\n");
+	if (rc)
 		return rc;
-	}
 
 	alarm->enabled = !!(ctrl_reg & PM8xxx_RTC_ALARM_ENABLE);
 
@@ -343,19 +313,15 @@ static int pm8xxx_rtc_alarm_irq_enable(struct device *dev, unsigned int enable)
 		ctrl_reg &= ~regs->alarm_en;
 
 	rc = regmap_write(rtc_dd->regmap, regs->alarm_ctrl, ctrl_reg);
-	if (rc) {
-		dev_err(dev, "Write to RTC control register failed\n");
+	if (rc)
 		goto rtc_rw_fail;
-	}
 
 	/* Clear Alarm register */
 	if (!enable) {
 		rc = regmap_bulk_write(rtc_dd->regmap, regs->alarm_rw, value,
 					sizeof(value));
-		if (rc) {
-			dev_err(dev, "Write to RTC ALARM register failed\n");
+		if (rc)
 			goto rtc_rw_fail;
-		}
 	}
 
 rtc_rw_fail:
@@ -394,8 +360,6 @@ static irqreturn_t pm8xxx_alarm_trigger(int irq, void *dev_id)
 	rc = regmap_write(rtc_dd->regmap, regs->alarm_ctrl, ctrl_reg);
 	if (rc) {
 		spin_unlock(&rtc_dd->ctrl_reg_lock);
-		dev_err(rtc_dd->rtc_dev,
-			"Write to alarm control register failed\n");
 		goto rtc_alarm_handled;
 	}
 
@@ -403,17 +367,11 @@ static irqreturn_t pm8xxx_alarm_trigger(int irq, void *dev_id)
 
 	/* Clear RTC alarm register */
 	rc = regmap_read(rtc_dd->regmap, regs->alarm_ctrl2, &ctrl_reg);
-	if (rc) {
-		dev_err(rtc_dd->rtc_dev,
-			"RTC Alarm control2 register read failed\n");
+	if (rc)
 		goto rtc_alarm_handled;
-	}
 
 	ctrl_reg |= PM8xxx_RTC_ALARM_CLEAR;
 	rc = regmap_write(rtc_dd->regmap, regs->alarm_ctrl2, ctrl_reg);
-	if (rc)
-		dev_err(rtc_dd->rtc_dev,
-			"Write to RTC Alarm control2 register failed\n");
 
 rtc_alarm_handled:
 	return IRQ_HANDLED;
@@ -437,21 +395,18 @@ static int pm8xxx_rtc_init_alarm(struct pm8xxx_rtc *rtc_dd)
 	rc = pm8xxx_rtc_read_rtc_data(rtc_dd, &rtc_data);
 	if (rc) {
 		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
-		dev_err(rtc_dd->rtc_dev, "rtc read rtc data failed\n");
 		return rc;
 	}
 
 	rc = pm8xxx_rtc_read_alarm_data(rtc_dd, &alarm_data);
 	if (rc) {
 		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
-		dev_err(rtc_dd->rtc_dev, "rtc read alarm data failed\n");
 		return rc;
 	}
 
 	rc = regmap_read(rtc_dd->regmap, regs->alarm_ctrl, &ctrl_reg);
 	if (rc) {
 		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
-		dev_err(rtc_dd->rtc_dev, "Read from RTC alarm control register failed\n");
 		return rc;
 	}
 
