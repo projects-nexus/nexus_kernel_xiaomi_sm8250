@@ -4,7 +4,6 @@
  # Script For Building Android Kernel
  #
 
-##----------------------------------------------------------##
 # Specify Kernel Directory
 KERNEL_DIR="$(pwd)"
 
@@ -28,22 +27,19 @@ fi
 
 DEVICE=$2
 
+VERSION=BETA
 if [ "${DEVICE}" = "alioth" ]; then
 DEFCONFIG=alioth_defconfig
-MODEL=Poco F3
-VERSION=BETA
+MODEL="Poco F3"
 elif [ "${DEVICE}" = "lmi" ]; then
 DEFCONFIG=lmi_defconfig
-MODEL=Poco F2 Pro
-VERSION=BETA
+MODEL="Poco F2 Pro"
 elif [ "${DEVICE}" = "apollo" ]; then
 DEFCONFIG=apollo_defconfig
-MODEL=Mi 10T Pro
-VERSION=BETA
+MODEL="Mi 10T Pro"
 elif [ "${DEVICE}" = "munch" ]; then
 DEFCONFIG=munch_defconfig
-MODEL=Poco F4
-VERSION=BETA
+MODEL="Poco F4"
 fi
 
 # Files
@@ -68,11 +64,9 @@ TM=$(date +"%F%S")
 ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC1.0-KERNEL-AOSP-${TM}.zip
 
-##----------------------------------------------------------##
-# Specify compiler [ proton, atomx, eva, aosp ]
+# Specify compiler [ proton, nexus, aosp ]
 COMPILER=aosp
 
-##----------------------------------------------------------##
 # Clone ToolChain
 function cloneTC() {
 	
@@ -144,7 +138,6 @@ function cloneTC() {
 		fi
 	}
 	
-##------------------------------------------------------##
 # Export Variables
 function exports() {
 	
@@ -186,8 +179,7 @@ function exports() {
 	export PROCS=$(nproc --all)
 	export DISTRO=$(source /etc/os-release && echo "${NAME}")
 	}
-        
-##----------------------------------------------------------------##
+
 # Telegram Bot Integration
 
 function post_msg() {
@@ -205,7 +197,7 @@ function push() {
 	-F "parse_mode=html" \
 	-F caption="$2"
 	}
-##----------------------------------------------------------##
+
 # Compilation
 
 METHOD=$3
@@ -273,7 +265,7 @@ START=$(date +"%s")
 	fi
 	}
 
-##----------------------------------------------------------------##
+# Zipping
 function zipping() {
 	# Copy Files To AnyKernel3 Zip
 	mv $IMAGE AnyKernel3
@@ -288,8 +280,6 @@ function zipping() {
 		cd ..
         rm -rf AnyKernel3
         }
-    
-##----------------------------------------------------------##
 
 cloneTC
 exports
@@ -297,5 +287,3 @@ compile
 END=$(date +"%s")
 DIFF=$(($END - $START))
 zipping
-
-##----------------*****-----------------------------##
