@@ -76,72 +76,58 @@ COMPILER=neutron
 # Clone ToolChain
 function cloneTC() {
 	
-	if [ $COMPILER = "proton" ];
-	then
-	git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	case $COMPILER in
 	
-	elif [ $COMPILER = "nexus" ];
-	then
-	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+		proton)
+			git clone --depth=1  https://github.com/kdrag0n/proton-clang.git clang
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
+			;;
+		
+		nexus)
+			git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git clang
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
+			;;
 
-	elif [ $COMPILER = "neutron" ];
-	then
-	if [ ! -d clang ]; then
-	mkdir clang && cd clang
-	bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) -S
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	cd ..
-	fi
+		neutron)
+			if [ ! -d clang ]; then
+			mkdir clang && cd clang
+			bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) -S
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
+			cd ..
+			else
+			echo "Neutron alreay cloned"
+			fi
+			;;
 
-	elif [ $COMPILER = "nex14" ];
-	then
-	git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
-	PATH="${KERNEL_DIR}/clang/bin:$PATH"
+		nex14)
+			git clone --depth=1  https://gitlab.com/Project-Nexus/nexus-clang.git -b nexus-14 clang
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
+			;;
 
-	elif [ $COMPILER = "zyc14" ];
-    then
-    git clone --depth=1 https://github.com/EmanuelCN/zyc_clang-14 clang
-    PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	
-	elif [ $COMPILER = "eva" ];
-	then
-	git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git -b gcc-new gcc64
-	git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git -b gcc-new gcc32
-	PATH=$KERNEL_DIR/gcc64/bin/:$KERNEL_DIR/gcc32/bin/:/usr/bin:$PATH
-	
-	elif [ $COMPILER = "aosp" ];
-	then
-	echo "* Checking if Aosp Clang is already cloned..."
-	if [ -d clangB ]; then
-	  echo "××××××××××××××××××××××××××××"
-	  echo "  Already Cloned Aosp Clang"
-	  echo "××××××××××××××××××××××××××××"
-	else
-	export CLANG_VERSION="clang-r475365"
-	echo "* It's not cloned, cloning it..."
-        mkdir clangB
-        cd clangB || exit
-	wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz
-        tar -xf ${CLANG_VERSION}.tgz
-        cd .. || exit
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
-	git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
-	fi
-	PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
-	
-	elif [ $COMPILER = "zyc" ];
-	then
-        mkdir clang
-        cd clang
-		wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
-		V="$(cat Clang-main-lastbuild.txt)"
-        wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.0-$V-release/Clang-16.0.0-$V.tar.gz
-	    tar -xf Clang-16.0.0-$V.tar.gz
-	    cd ..
-	    PATH="${KERNEL_DIR}/clang/bin:$PATH"
-	fi
+		aosp)
+			echo "* Checking if Aosp Clang is already cloned..."
+			if [ -d clangB ]; then
+	  		echo "××××××××××××××××××××××××××××"
+	  		echo "  Already Cloned Aosp Clang"
+	  		echo "××××××××××××××××××××××××××××"
+			else
+			export CLANG_VERSION="clang-r475365"
+			echo "* It's not cloned, cloning it..."
+        		mkdir clangB
+        		cd clangB || exit
+			wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz
+        		tar -xf ${CLANG_VERSION}.tgz
+        		cd .. || exit
+			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
+			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
+			fi
+			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
+			;;
+
+		*)
+			echo "Compiler not defined"
+			;;
+	esac
         # Clone AnyKernel
         if [ -d AnyKernel3 ]; then
 		  rm -rf AnyKernel3
