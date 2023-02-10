@@ -1977,7 +1977,7 @@ static void kcompactd_do_work(pg_data_t *pgdat)
 			return;
 
 		cc.zone = zone;
-		compact_zone(zone, &cc);
+		status = compact_zone(zone, &cc);
 
 		if (status == COMPACT_SUCCESS) {
 			compaction_defer_reset(zone, cc.order, false);
