@@ -578,7 +578,7 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	unsigned long flags;
 	struct sighand_struct *sighand;
 	struct task_struct *p = timer->it.cpu.task;
-	u64 old_expires, new_expires, old_incr, val;
+	u64 old_expires, new_expires, old_incr, val = 0;
 	int ret;
 
 	if (WARN_ON_ONCE(!p))
