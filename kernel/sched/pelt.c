@@ -30,6 +30,10 @@
 
 #include <trace/events/sched.h>
 
+int pelt_load_avg_period = PELT16_LOAD_AVG_PERIOD;
+int pelt_load_avg_max = PELT16_LOAD_AVG_MAX;
+const u32 *pelt_runnable_avg_yN_inv = pelt16_runnable_avg_yN_inv;
+
 /*
  * Approximate:
  *   val * y^n,    where y^32 ~= 0.5 (~1 scheduling period)
@@ -56,7 +60,7 @@ static u64 decay_load(u64 val, u64 n)
 		local_n %= LOAD_AVG_PERIOD;
 	}
 
-	val = mul_u64_u32_shr(val, runnable_avg_yN_inv[local_n], 32);
+	val = mul_u64_u32_shr(val, pelt_runnable_avg_yN_inv[local_n], 32);
 	return val;
 }
 
