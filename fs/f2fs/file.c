@@ -4506,6 +4506,19 @@ static int f2fs_preallocate_blocks(struct kiocb *iocb, struct iov_iter *iter)
 	return map.m_len;
 }
 
+static void f2fs_flush_buffered_write(struct address_space *mapping,
+				      loff_t start_pos, loff_t end_pos)
+{
+	int ret;
+
+	ret = filemap_write_and_wait_range(mapping, start_pos, end_pos);
+	if (ret < 0)
+		return;
+	invalidate_mapping_pages(mapping,
+				 start_pos >> PAGE_SHIFT,
+				 end_pos >> PAGE_SHIFT);
+}
+
 static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
@@ -4513,6 +4526,7 @@ static ssize_t f2fs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	const loff_t orig_pos = iocb->ki_pos;
 	const size_t orig_count = iov_iter_count(from);
 	loff_t target_size;
+	bool dio;
 	int preallocated;
 	ssize_t ret;
 
@@ -4600,8 +4614,18 @@ out_unlock:
 	inode_unlock(inode);
 out:
 	trace_f2fs_file_write_iter(inode, orig_pos, orig_count, ret);
+
 	if (ret > 0)
 		ret = generic_write_sync(iocb, ret);
+
+	/* If buffered IO was forced, flush and drop the data from
+	 * the page cache to preserve O_DIRECT semantics
+	 */
+	if (ret > 0 && !dio && (iocb->ki_flags & IOCB_DIRECT))
+		f2fs_flush_buffered_write(iocb->ki_filp->f_mapping,
+					  orig_pos,
+					  orig_pos + ret - 1);
+
 	return ret;
 }
 
