@@ -1,0 +1,22 @@
+name: Nexus Kernel Lmi
+run-name: Nexus Kernel Lmi
+
+on:
+  push:
+    branches: [ rebase ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: nexgang/ubuntu:latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Nexus Kernel Lmi
+        run: bash build.sh null lmi null
+        env:
+           token: ${{ secrets.TOKEN }}
+           chat_id: ${{ secrets.CHAT_ID }}
