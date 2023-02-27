@@ -23,23 +23,23 @@
  * tunables
  */
 /* max queue in one round of service */
-static const int cfq_quantum = 32;
+static const int cfq_quantum = 8;
 static const u64 cfq_fifo_expire[2] = { NSEC_PER_SEC / 4, NSEC_PER_SEC / 8 };
 /* maximum backwards seek, in KiB */
-static const int cfq_back_max = 32 * 1024;
+static const int cfq_back_max = 16 * 1024;
 /* penalty of a backwards seek */
-static const int cfq_back_penalty = 1;
+static const int cfq_back_penalty = 2;
 static const u64 cfq_slice_sync = NSEC_PER_SEC / 10;
 static u64 cfq_slice_async = NSEC_PER_SEC / 25;
 static const int cfq_slice_async_rq = 2;
-static u64 cfq_slice_idle = 0;
-static u64 cfq_group_idle = 1;
+static u64 cfq_slice_idle = NSEC_PER_SEC / 125;
+static u64 cfq_group_idle = NSEC_PER_SEC / 125;
 /* IOPP-cfq_rt_idle_only-v1.0.k4.19 */
-static int cfq_rt_idle_only = 0;
-static const u64 cfq_target_latency = (u64)NSEC_PER_SEC * 1/10; /* 100 ms */
+static int cfq_rt_idle_only = 1;
+static const u64 cfq_target_latency = (u64)NSEC_PER_SEC * 3/10; /* 300 ms */
 static const int cfq_hist_divisor = 4;
 /* IOPP-cfq_max_async_dispatch-v1.0.4.4 */
-static int cfq_max_async_dispatch = 8;
+static int cfq_max_async_dispatch = 4;
 
 /*
  * offset from end of queue service tree for idle class
@@ -1669,20 +1669,14 @@ static void cfq_pd_offline(struct blkg_policy_data *pd)
 	int i;
 
 	for (i = 0; i < IOPRIO_BE_NR; i++) {
-		if (cfqg->async_cfqq[0][i]) {
+		if (cfqg->async_cfqq[0][i])
 			cfq_put_queue(cfqg->async_cfqq[0][i]);
-			cfqg->async_cfqq[0][i] = NULL;
-		}
-		if (cfqg->async_cfqq[1][i]) {
+		if (cfqg->async_cfqq[1][i])
 			cfq_put_queue(cfqg->async_cfqq[1][i]);
-			cfqg->async_cfqq[1][i] = NULL;
-		}
 	}
 
-	if (cfqg->async_idle_cfqq) {
+	if (cfqg->async_idle_cfqq)
 		cfq_put_queue(cfqg->async_idle_cfqq);
-		cfqg->async_idle_cfqq = NULL;
-	}
 
 	/*
 	 * @blkg is going offline and will be ignored by
@@ -4750,7 +4744,7 @@ static int cfq_init_queue(struct request_queue *q, struct elevator_type *e)
 	cfqd->cfq_slice[1] = cfq_slice_sync;
 	cfqd->cfq_target_latency = cfq_target_latency;
 	cfqd->cfq_slice_async_rq = cfq_slice_async_rq;
-	cfqd->cfq_slice_idle = cfq_slice_idle;
+	cfqd->cfq_slice_idle = blk_queue_nonrot(q) ? 0 : cfq_slice_idle;
 	cfqd->cfq_max_async_dispatch = cfq_max_async_dispatch;
 	cfqd->cfq_group_idle = cfq_group_idle;
 	cfqd->cfq_rt_idle_only = cfq_rt_idle_only;
@@ -4815,7 +4809,7 @@ SHOW_FUNCTION(cfq_back_seek_max_show, cfqd->cfq_back_max, 0);
 SHOW_FUNCTION(cfq_back_seek_penalty_show, cfqd->cfq_back_penalty, 0);
 SHOW_FUNCTION(cfq_slice_idle_show, cfqd->cfq_slice_idle, 1);
 SHOW_FUNCTION(cfq_max_async_dispatch_show, cfqd->cfq_max_async_dispatch, 0);
-SHOW_FUNCTION(cfq_group_idle_show, cfqd->cfq_group_idle, 0);
+SHOW_FUNCTION(cfq_group_idle_show, cfqd->cfq_group_idle, 1);
 SHOW_FUNCTION(cfq_rt_idle_only_show, cfqd->cfq_rt_idle_only, 0);
 SHOW_FUNCTION(cfq_slice_sync_show, cfqd->cfq_slice[1], 1);
 SHOW_FUNCTION(cfq_slice_async_show, cfqd->cfq_slice[0], 1);
@@ -4866,7 +4860,7 @@ STORE_FUNCTION(cfq_back_seek_penalty_store, &cfqd->cfq_back_penalty, 1,
 		UINT_MAX, 0);
 STORE_FUNCTION(cfq_slice_idle_store, &cfqd->cfq_slice_idle, 0, UINT_MAX, 1);
 STORE_FUNCTION(cfq_max_async_dispatch_store, &cfqd->cfq_max_async_dispatch, 1, UINT_MAX, 0);
-STORE_FUNCTION(cfq_group_idle_store, &cfqd->cfq_group_idle, 0, UINT_MAX, 0);
+STORE_FUNCTION(cfq_group_idle_store, &cfqd->cfq_group_idle, 0, UINT_MAX, 1);
 STORE_FUNCTION(cfq_rt_idle_only_store, &cfqd->cfq_rt_idle_only, 0, 1, 0);
 STORE_FUNCTION(cfq_slice_sync_store, &cfqd->cfq_slice[1], 1, UINT_MAX, 1);
 STORE_FUNCTION(cfq_slice_async_store, &cfqd->cfq_slice[0], 1, UINT_MAX, 1);
@@ -4900,11 +4894,8 @@ USEC_STORE_FUNCTION(cfq_target_latency_us_store, &cfqd->cfq_target_latency, 1, U
 #define CFQ_ATTR(name) \
 	__ATTR(name, 0644, cfq_##name##_show, cfq_##name##_store)
 
-#define CFQ_RO_ATTR(name) \
-	__ATTR(name, S_IRUGO, cfq_##name##_show, cfq_##name##_store)
-
 static struct elv_fs_entry cfq_attrs[] = {
-	CFQ_RO_ATTR(quantum),
+	CFQ_ATTR(quantum),
 	CFQ_ATTR(fifo_expire_sync),
 	CFQ_ATTR(fifo_expire_async),
 	CFQ_ATTR(back_seek_max),
@@ -4916,7 +4907,7 @@ static struct elv_fs_entry cfq_attrs[] = {
 	CFQ_ATTR(slice_async_rq),
 	CFQ_ATTR(slice_idle),
 	CFQ_ATTR(slice_idle_us),
-	CFQ_RO_ATTR(group_idle),
+	CFQ_ATTR(group_idle),
 	CFQ_ATTR(group_idle_us),
 	CFQ_ATTR(rt_idle_only),
 	CFQ_ATTR(low_latency),
