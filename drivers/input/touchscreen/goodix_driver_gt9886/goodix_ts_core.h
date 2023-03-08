@@ -507,10 +507,12 @@ struct goodix_ts_core {
 #endif
 	struct notifier_block power_supply_notifier;
 	struct notifier_block bl_notifier;
+	struct workqueue_struct *gesture_wq;
 	struct workqueue_struct *event_wq;
 	struct workqueue_struct *touch_feature_wq;
 	struct work_struct cmd_update_work;
 	struct work_struct aod_set_work;
+	struct work_struct gesture_work;
 	struct work_struct fod_set_work;
 	struct work_struct suspend_work;
 	struct work_struct resume_work;
