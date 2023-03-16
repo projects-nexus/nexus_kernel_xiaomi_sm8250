@@ -1261,13 +1261,13 @@ static int wm_coeff_read_control(struct wm_coeff_ctl *ctl, void *buf,
 		regmap_raw_read(dsp->regmap, reg + read_len / REG_BYTESIZE,
 				scratch + read_len, toread_len);
 		if (ret) {
-			adsp_err(dsp, "Failed to read %zu bytes from %x: %d\n",
+			adsp_err(dsp, "Failed to read %d bytes from %x: %d\n",
 				 toread_len, reg + read_len / REG_BYTESIZE,
 				 ret);
 			kfree(scratch);
 			return ret;
 		}
-		adsp_dbg(dsp, "Read %zu bytes from %x\n", toread_len,
+		adsp_dbg(dsp, "Read %d bytes from %x\n", toread_len,
 			 reg + read_len / REG_BYTESIZE);
 		read_len += toread_len;
 	}
