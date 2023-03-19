@@ -1835,7 +1835,7 @@ busy:
  */
 int isolate_lru_page(struct page *page)
 {
-	int ret = -EBUSY;
+	int ret = -EBUSY, lru = page_lru(page);
 
 	VM_BUG_ON_PAGE(!page_count(page), page);
 	WARN_RATELIMIT(PageTail(page), "trying to isolate tail page");
@@ -1847,7 +1847,6 @@ int isolate_lru_page(struct page *page)
 		get_page(page);
 		lruvec = mem_cgroup_page_lruvec(page, zone->zone_pgdat);
 
-		int lru = page_lru(page);
 		spin_lock_irq(zone_lru_lock(zone));
 		del_page_from_lru_list(page, lruvec, lru);
 		spin_unlock_irq(zone_lru_lock(zone));
