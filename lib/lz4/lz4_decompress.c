@@ -87,6 +87,7 @@ static FORCE_INLINE int LZ4_decompress_generic(
 	BYTE * const oend = op + outputSize;
 	BYTE *cpy;
 
+	const BYTE * const dictEnd = (const BYTE *)dictStart + dictSize;
 	static const unsigned int inc32table[8] = {0, 1, 2, 1, 0, 4, 4, 4};
 	static const int dec64table[8] = {0, 0, 0, -1, -4, 1, 2, 3};
 
