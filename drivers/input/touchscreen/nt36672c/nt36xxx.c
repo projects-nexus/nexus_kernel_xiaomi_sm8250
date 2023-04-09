@@ -2377,8 +2377,6 @@ static ssize_t nvt_touch_test_write(struct file *file, const char __user *buf,
 		NVT_LOG("%s invalid input cmd, set default value\n", __func__);
 		ts->debug_flag = 2;
 	}
-	NVT_LOG("%s set touch boost debug flag to %d\n", __func__,
-		ts->debug_flag);
 	retval = count;
 out:
 	return retval;
@@ -2884,8 +2882,6 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 	if (ts->debugfs) {
 		debugfs_create_file("switch_state", 0660, ts->debugfs, ts,
 				    &tpdbg_ops);
-		debugfs_create_file("touch_boost", 0660, ts->debugfs, ts,
-				    &nvt_touch_test_fops);
 	}
 #endif
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
