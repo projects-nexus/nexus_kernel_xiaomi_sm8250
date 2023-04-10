@@ -2015,9 +2015,9 @@ static ssize_t reclaim_write(struct file *file, const char __user *buf,
 					else
 						break;
 				}
-				reclaim_walk_ops.pmd_entry = reclaim_pte_range;
+				reclaim_walk.pmd_entry = reclaim_pte_range;
 			} else {
-				reclaim_walk_ops.pmd_entry = deactivate_pte_range;
+				reclaim_walk.pmd_entry = deactivate_pte_range;
 			}
 
 			walk_page_range(vma->vm_start, vma->vm_end,
