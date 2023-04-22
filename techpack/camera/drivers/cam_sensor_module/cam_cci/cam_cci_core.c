@@ -8,7 +8,6 @@
 #include "cam_cci_core.h"
 #include "cam_cci_dev.h"
 
-
 static int disable_optmz;
 module_param(disable_optmz, int, 0644);
 
