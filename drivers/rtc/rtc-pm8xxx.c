@@ -334,31 +334,21 @@ out:
 static int pm8xxx_rtc_init_alarm(struct pm8xxx_rtc *rtc_dd)
 {
 	int rc;
-	unsigned long rtc_data, alarm_data, irq_flags;
+	unsigned long rtc_data, alarm_data;
 	unsigned int ctrl_reg, alarm_en;
 	const struct pm8xxx_rtc_regs *regs = rtc_dd->regs;
 
-	spin_lock_irqsave(&rtc_dd->ctrl_reg_lock, irq_flags);
-
 	rc = pm8xxx_rtc_read_rtc_data(rtc_dd, &rtc_data);
-	if (rc) {
-		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
+	if (rc)
 		return rc;
-	}
 
 	rc = pm8xxx_rtc_read_alarm_data(rtc_dd, &alarm_data);
-	if (rc) {
-		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
+	if (rc)
 		return rc;
-	}
 
 	rc = regmap_read(rtc_dd->regmap, regs->alarm_ctrl, &ctrl_reg);
-	if (rc) {
-		spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
+	if (rc)
 		return rc;
-	}
-
-	spin_unlock_irqrestore(&rtc_dd->ctrl_reg_lock, irq_flags);
 
 	alarm_en = !!(ctrl_reg & PM8xxx_RTC_ALARM_ENABLE);
 
