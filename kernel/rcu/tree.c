@@ -2943,11 +2943,11 @@ static void check_cb_ovld(struct rcu_data *rdp)
 }
 
 static void
-__call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy_in)
+__call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy)
 {
 	unsigned long flags;
 	struct rcu_data *rdp;
-	bool was_alldone, lazy;
+	bool was_alldone;
 
 	/* Misaligned rcu_head! */
 	WARN_ON_ONCE((unsigned long)head & (sizeof(void *) - 1));
@@ -2967,7 +2967,6 @@ __call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy_in)
 	head->next = NULL;
 	local_irq_save(flags);
 	rdp = this_cpu_ptr(&rcu_data);
-	lazy = lazy_in && !rcu_gp_is_expedited();
 
 	/* Add the callback to our list. */
 	if (unlikely(!rcu_segcblist_is_enabled(&rdp->cblist))) {
