@@ -1172,6 +1172,7 @@ enum iostat_type {
 	/* other */
 	FS_DISCARD,			/* discard */
 	FS_FLUSH_IO,			/* flush */
+	FS_ZONE_RESET_IO,		/* zone reset */
 	NR_IO_TYPE,
 };
 
