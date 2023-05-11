@@ -11,6 +11,11 @@
 #define __LINUX_RCU_H
 
 #include <trace/events/rcu.h>
+#ifdef CONFIG_RCU_TRACE
+#define RCU_TRACE(stmt) stmt
+#else /* #ifdef CONFIG_RCU_TRACE */
+#define RCU_TRACE(stmt)
+#endif /* #else #ifdef CONFIG_RCU_TRACE */
 
 /* Offset to allow distinguishing irq vs. task-based idle entry/exit. */
 #define DYNTICK_IRQ_NONIDLE	((LONG_MAX / 2) + 1)
