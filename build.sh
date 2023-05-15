@@ -65,7 +65,7 @@ ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=aosp
+COMPILER=zyc
 
 # Clone ToolChain
 function cloneTC() {
@@ -124,8 +124,8 @@ function cloneTC() {
             	cd clang
 		    	wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-16-lastbuild.txt
 		    	V="$(cat Clang-16-lastbuild.txt)"
-            	wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.3-$V-release/Clang-16.0.3-$V.tar.gz
-	        	tar -xf Clang-16.0.3-$V.tar.gz
+            	wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.4-$V-release/Clang-16.0.4-$V.tar.gz
+	        	tar -xf Clang-16.0.4-$V.tar.gz
 	        	cd ..
 				fi
 	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
