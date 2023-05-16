@@ -131,6 +131,10 @@ ifdef CONFIG_WCD_DSP_GLINK
 WDSP_GLINK += wcd-dsp-glink.o
 endif
 
+ifneq (,$(filter $(TARGET_PRODUCT), dagu pipa))
+CDEFINES += -DCONFIG_MMHARDWARE_DETECTION
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \

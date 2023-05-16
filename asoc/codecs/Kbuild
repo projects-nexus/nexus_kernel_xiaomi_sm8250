@@ -77,6 +77,22 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 endif
 
+ifeq ($(TARGET_PRODUCT), psyche)
+        CDEFINES += -DCONFIG_TARGET_PRODUCT_PSYCHE
+endif
+
+ifeq ($(TARGET_PRODUCT), munch)
+        CDEFINES += -DCONFIG_TARGET_PRODUCT_MUNCH
+endif
+
+ifeq ($(TARGET_PRODUCT), dagu)
+        CDEFINES += -DCONFIG_TARGET_PRODUCT_DAGU
+endif
+
+ifeq ($(TARGET_PRODUCT), pipa)
+        CDEFINES += -DCONFIG_TARGET_PRODUCT_PIPA
+endif
+
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
 # Slub      : defconfig  + CONFIG_SLUB_DEBUG := y +
@@ -231,6 +247,18 @@ ifeq ($(KERNEL_BUILD), 1)
 	obj-y	+= wcd937x/
 	obj-y	+= wcd938x/
 	obj-y	+= bolero/
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), enuma))
+	obj-y	+= cs35l41_k81/
+else ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), elish))
+	obj-y	+= cs35l41_k81/
+else ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), dagu))
+	obj-y	+= cs35l41_k81/
+else ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), munch))
+	obj-y	+= tfa9874/
+else
+	obj-y	+= cs35l41/
+endif
+	obj-y	+= aw882xx/
 	obj-y	+= rouleur/
 	obj-y	+= wsa883x/
 	obj-y	+= sdm660_cdc/

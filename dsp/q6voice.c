@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
+//#define DEBUG
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/kernel.h>
@@ -24,7 +25,7 @@
 #include "adsp_err.h"
 #include <dsp/voice_mhi.h>
 
-#define TIMEOUT_MS 300
+#define TIMEOUT_MS 1000
 
 
 #define CMD_STATUS_SUCCESS 0
@@ -4123,7 +4124,16 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 	case EC_REF_PATH:
 		channel_info_param_data->param_id =
 			VSS_PARAM_VOCPROC_EC_REF_CHANNEL_INFO;
+#if defined(CONFIG_TARGET_PRODUCT_ENUMA) || defined(CONFIG_TARGET_PRODUCT_ELISH)
+		if (v->dev_rx.port_id == 0x9020) {
+			channel_info->num_channels = 4;
+			pr_err("%s: set channel num 4 for port 9020", __func__);
+		} else {
+			channel_info->num_channels = v->dev_rx.no_of_channels;
+        	}
+#else
 		channel_info->num_channels = v->dev_rx.no_of_channels;
+#endif
 		channel_info->bits_per_sample = v->dev_rx.bits_per_sample;
 		memcpy(&channel_info->channel_mapping,
 		       v->dev_rx.channel_mapping,

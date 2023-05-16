@@ -12,14 +12,28 @@ $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/codecs
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/soc/Module.symvers)
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/Module.symvers)
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/Module.symvers)
+#$(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/tfa98xx/Module.symvers)
 
 include $(MY_LOCAL_PATH)/include/uapi/Android.mk
 include $(MY_LOCAL_PATH)/ipc/Android.mk
 include $(MY_LOCAL_PATH)/dsp/Android.mk
 include $(MY_LOCAL_PATH)/dsp/codecs/Android.mk
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), dagu pipa))
+include $(MY_LOCAL_PATH)/dsp/mmhardware/Android.mk
+endif
 include $(MY_LOCAL_PATH)/soc/Android.mk
 include $(MY_LOCAL_PATH)/asoc/Android.mk
 include $(MY_LOCAL_PATH)/asoc/codecs/Android.mk
+#include $(MY_LOCAL_PATH)/asoc/codecs/tfa98xx/Android.mk
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), enuma))
+include $(MY_LOCAL_PATH)/asoc/codecs/cs35l41_k81/Android.mk
+else ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), elish))
+include $(MY_LOCAL_PATH)/asoc/codecs/cs35l41_k81/Android.mk
+else ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), dagu))
+include $(MY_LOCAL_PATH)/asoc/codecs/cs35l41_k81/Android.mk
+else
+include $(MY_LOCAL_PATH)/asoc/codecs/cs35l41/Android.mk
+endif
 endif
 
 ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) sdmshrike),true)
@@ -62,6 +76,18 @@ $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codec
 include $(MY_LOCAL_PATH)/asoc/codecs/bolero/Android.mk
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd938x/Module.symvers)
 include $(MY_LOCAL_PATH)/asoc/codecs/wcd938x/Android.mk
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), munch))
+$(warning compile 9874 $(TARGET_PRODUCT))
+$(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/tfa9874/Module.symvers)
+include $(MY_LOCAL_PATH)/asoc/codecs/tfa9874/Android.mk
+else
+$(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/tfa98xx/Module.symvers)
+include $(MY_LOCAL_PATH)/asoc/codecs/tfa98xx/Android.mk
+endif
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), pipa))
+$(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/aw882xx/Module.symvers)
+include $(MY_LOCAL_PATH)/asoc/codecs/aw882xx/Android.mk
+endif
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd937x/Module.symvers)
 include $(MY_LOCAL_PATH)/asoc/codecs/wcd937x/Android.mk
 endif

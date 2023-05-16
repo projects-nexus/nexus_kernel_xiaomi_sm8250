@@ -224,6 +224,64 @@ CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 		-Werror\
 		-D__linux__
 
+
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT),lmi lmiin lmiinpro munch))
+CDEFINES += -DTFA_ADSP_SUPPORTED
+endif
+
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT),lmi lmiin lmiinpro cas skuld umi cmi apollo alioth thyme enuma elish psyche munch dagu pipa))
+CDEFINES += -DAUDIO_SM8250_FLAG
+endif
+
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), picasso picassoin monet vangogh))
+CDEFINES += -DAUDIO_SM7250_FLAG
+endif
+
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), picasso picassoin))
+CDEFINES += -DTFA_ADSP_SUPPORTED
+endif
+
+ifeq ($(TARGET_PRODUCT), apollo)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_APOLLO
+endif
+
+ifeq ($(TARGET_PRODUCT), cas)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_CAS
+endif
+
+ifeq ($(TARGET_PRODUCT), alioth)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_ALIOTH
+endif
+
+ifeq ($(TARGET_PRODUCT), enuma)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_ENUMA
+endif
+
+ifeq ($(TARGET_PRODUCT), elish)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_ELISH
+endif
+
+ifeq ($(TARGET_PRODUCT), dagu)
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_DAGU
+endif
+
+ifeq ($(TARGET_PRODUCT), pipa)
+		CDEFINES += -DCONFIG_SND_SOC_AW882XX_TDM
+		CDEFINES += -DCONFIG_TARGET_PRODUCT_PIPA
+endif
+
+ifeq ($(TARGET_PRODUCT), thyme)
+                CDEFINES += -DCONFIG_TARGET_PRODUCT_THYME
+endif
+
+ifeq ($(TARGET_PRODUCT), psyche)
+                CDEFINES += -DCONFIG_TARGET_PRODUCT_PSYCHE
+endif
+
+ifeq ($(TARGET_PRODUCT), munch)
+                CDEFINES += -DCONFIG_TARGET_PRODUCT_MUNCH
+endif
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
