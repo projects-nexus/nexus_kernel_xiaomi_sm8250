@@ -383,4 +383,22 @@ static inline void blk_mq_cleanup_rq(struct request *rq)
 		rq->q->mq_ops->cleanup_rq(rq);
 }
 
+#ifdef CONFIG_BLK_DEV_ZONED
+/**
+ * blk_rq_is_seq_zoned_write() - Check if @rq requires write serialization.
+ * @rq: Request to examine.
+ *
+ * Note: REQ_OP_ZONE_APPEND requests do not require serialization.
+ */
+static inline bool blk_rq_is_seq_zoned_write(struct request *rq)
+{
+	return op_needs_zoned_write_locking(req_op(rq)) &&
+		blk_rq_zone_is_seq(rq);
+}
+#else /* CONFIG_BLK_DEV_ZONED */
+static inline bool blk_rq_is_seq_zoned_write(struct request *rq)
+{
+	return false;
+}
+#endif /* CONFIG_BLK_DEV_ZONED */
 #endif
