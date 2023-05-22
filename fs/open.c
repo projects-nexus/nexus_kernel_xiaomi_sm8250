@@ -367,6 +367,7 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
 	struct vfsmount *mnt;
 	int res;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+        ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
 
 #ifdef CONFIG_KSU
         ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
