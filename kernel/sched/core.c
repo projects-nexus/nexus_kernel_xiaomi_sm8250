@@ -2900,9 +2900,6 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 	 * __schedule().  See the comment for smp_mb__after_spinlock().
 	 */
 	smp_rmb();
-	if (p->state & TASK_UNINTERRUPTIBLE)
-		trace_sched_blocked_reason(p);
-
 	if (READ_ONCE(p->on_rq)) {
 		if (ttwu_remote(p, wake_flags))
 			goto unlock;
