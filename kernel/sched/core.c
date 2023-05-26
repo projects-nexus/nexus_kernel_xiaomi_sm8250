@@ -7965,6 +7965,7 @@ void ___might_sleep(const char *file, int line, int preempt_offset)
 #ifdef CONFIG_PANIC_ON_SCHED_BUG
 	BUG();
 #endif
+	panic("%s: Panicking due to potential bug", __func__);
 	dump_stack();
 	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
 }
