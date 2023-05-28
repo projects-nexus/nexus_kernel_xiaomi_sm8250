@@ -136,9 +136,7 @@ function cloneTC() {
 			;;
 	esac
         # Clone AnyKernel
-        if [ -d AnyKernel3 ]; then
-		  rm -rf AnyKernel3
-		else
+		rm -rf AnyKernel3
 		if [ "${DEVICE}" = "alioth" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b alioth AnyKernel3
         elif [ "${DEVICE}" = "apollo" ]; then
@@ -147,7 +145,6 @@ function cloneTC() {
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
 		else
 		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
-		fi
 		fi
 	}
 	
@@ -281,24 +278,35 @@ START=$(date +"%s")
 	}
 
 # Zipping
-function zipping() {
+function move() {
 	# Copy Files To AnyKernel3 Zip
 	mv $IMAGE AnyKernel3
     mv $DTBO AnyKernel3
     mv $DTB AnyKernel3
+}
 
-	# Zipping and Push Kernel
+function move_ksu() {
+	mv $IMAGE AnyKernel3/ksu/
+}
+
+function zipping() {
+# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		cd ..
         rm -rf AnyKernel3
-        }
+}
 
 cloneTC
 exports
 compile
 END=$(date +"%s")
 DIFF=$(($END - $START))
+move
+# KernelSU
+echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
+compile
+move_ksu
 zipping
