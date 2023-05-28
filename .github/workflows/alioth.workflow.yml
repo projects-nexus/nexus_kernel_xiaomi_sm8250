@@ -3,7 +3,7 @@ run-name: Nexus Kernel Alioth
 
 on:
   push:
-    branches: [ deep_sleep ]
+    branches: [ rebase ]
 
   workflow_dispatch:
 

@@ -3,7 +3,7 @@ run-name: Nexus Kernel Apollo
 
 on:
   push:
-    branches: [ deep_sleep ]
+    branches: [ rebase ]
 
   workflow_dispatch:
 
