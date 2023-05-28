@@ -1,6 +1,5 @@
 config KSU
 	tristate "KernelSU module"
-	default y
 	depends on OVERLAY_FS
 	help
 	This is the KSU privilege driver for android system.
