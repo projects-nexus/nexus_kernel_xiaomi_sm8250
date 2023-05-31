@@ -606,6 +606,9 @@ struct cfs_rq {
 	/* h_nr_running for SCHED_IDLE tasks */
 	unsigned int		idle_h_nr_running;
 
+	s64			avg_vruntime;
+	u64			avg_load;
+
 	u64			exec_clock;
 	u64			min_vruntime;
 #ifndef CONFIG_64BIT
@@ -3305,3 +3308,5 @@ struct sched_avg_stats {
 	int nr_scaled;
 };
 extern void sched_get_nr_running_avg(struct sched_avg_stats *stats);
+
+extern u64 avg_vruntime(struct cfs_rq *cfs_rq);
