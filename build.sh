@@ -271,11 +271,72 @@ START=$(date +"%s")
 	       push "error.log" "Build Throws Errors"
 	       exit 1
 	   else
-	       post_msg " Kernel Compilation Finished. Started Zipping "
 		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
 		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
 	}
+	
+function compile_ksu() {
+START=$(date +"%s")
+	# Compile
+	if [ -d ${KERNEL_DIR}/clang ];
+	   then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CROSS_COMPILE=aarch64-linux-gnu- \
+	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+	   then
+           make O=out ARCH=arm64 ${DEFCONFIG}
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size \
+	       V=$VERBOSE 2>&1 | tee error.log
+        elif [ -d ${KERNEL_DIR}/clangB ];
+           then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+           make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CLANG_TRIPLE=aarch64-linux-gnu- \
+	       CROSS_COMPILE=aarch64-linux-android- \
+	       CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	fi
+	
+	# Verify Files
+	if ! [ -a "$IMAGE" ];
+	   then
+	       push "error.log" "Build Throws Errors"
+	       exit 1
+	   else
+	       post_msg " Kernel Compilation Finished. Started Zipping "
+		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
+		   DTB=$(pwd)/out/arch/arm64/boot/dtb
+	fi
+}
 
 # Zipping
 function move() {
@@ -307,6 +368,6 @@ DIFF=$(($END - $START))
 move
 # KernelSU
 echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
-compile
+compile_ksu
 move_ksu
 zipping
