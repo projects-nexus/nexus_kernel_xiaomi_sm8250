@@ -2153,13 +2153,8 @@ int smblib_set_prop_batt_status(struct smb_charger *chg,
 int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 				const union power_supply_propval *val)
 {
-	if (val->intval < 0)
-		return -EINVAL;
-
-	if (chg->thermal_levels <= 0)
-		return -EINVAL;
-
-	if (val->intval > chg->thermal_levels)
+	if ((val->intval < 0) || (chg->thermal_levels <= 0) ||
+	    (val->intval > chg->thermal_levels))
 		return -EINVAL;
 
 	chg->system_temp_level = val->intval;
