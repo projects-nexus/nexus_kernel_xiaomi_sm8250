@@ -3,7 +3,7 @@ run-name: Nexus Kernel Lmi
 
 on:
   push:
-    branches: [ sultan ]
+    branches: [ sultan2 ]
 
   workflow_dispatch:
 
