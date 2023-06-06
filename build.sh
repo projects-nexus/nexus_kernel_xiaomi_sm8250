@@ -62,10 +62,10 @@ TM=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC2.0-KERNEL-AOSP-${TM}.zip
+FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=aosp
+COMPILER=neutron
 
 # Clone ToolChain
 function cloneTC() {
@@ -86,11 +86,11 @@ function cloneTC() {
 			if [ ! -d clang ]; then
 			mkdir clang && cd clang
 			bash <(curl -s https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman) -S
-			PATH="${KERNEL_DIR}/clang/bin:$PATH"
 			cd ..
 			else
 			echo "Neutron alreay cloned"
 			fi
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
 			;;
 
 		nex14)
@@ -105,7 +105,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo "××××××××××××××××××××××××××××"
 			else
-			export CLANG_VERSION="clang-r487747"
+			export CLANG_VERSION="clang-r487747c"
 			echo "* It's not cloned, cloning it..."
         		mkdir clangB
         		cd clangB || exit
@@ -119,14 +119,16 @@ function cloneTC() {
 			;;
 			
 		zyc)
-		    mkdir clang
-            cd clang
-		    wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
-		    V="$(cat Clang-main-lastbuild.txt)"
-            wget -q https://github.com/ZyCromerZ/Clang/releases/download/17.0.0-$V-release/Clang-17.0.0-$V.tar.gz
-	        tar -xf Clang-17.0.0-$V.tar.gz
-	        cd ..
-	        PATH="${KERNEL_DIR}/clang/bin:$PATH"
+		    if [ ! -d clang ]; then
+				mkdir clang
+            	cd clang
+		    	wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-16-lastbuild.txt
+		    	V="$(cat Clang-16-lastbuild.txt)"
+            	wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.4-$V-release/Clang-16.0.4-$V.tar.gz
+	        	tar -xf Clang-16.0.4-$V.tar.gz
+	        	cd ..
+				fi
+	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	        ;;
 
 		*)
@@ -134,9 +136,7 @@ function cloneTC() {
 			;;
 	esac
         # Clone AnyKernel
-        if [ -d AnyKernel3 ]; then
-		  rm -rf AnyKernel3
-		else
+		rm -rf AnyKernel3
 		if [ "${DEVICE}" = "alioth" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b alioth AnyKernel3
         elif [ "${DEVICE}" = "apollo" ]; then
@@ -145,7 +145,6 @@ function cloneTC() {
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
 		else
 		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
-		fi
 		fi
 	}
 	
@@ -224,7 +223,8 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG
+             -e LTO_CLANG \
+             -d THINLTO
            fi
 	       make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -252,7 +252,69 @@ START=$(date +"%s")
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
-             -e LTO_CLANG
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+           make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CLANG_TRIPLE=aarch64-linux-gnu- \
+	       CROSS_COMPILE=aarch64-linux-android- \
+	       CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	fi
+	
+	# Verify Files
+	if ! [ -a "$IMAGE" ];
+	   then
+	       push "error.log" "Build Throws Errors"
+	       exit 1
+	   else
+		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
+		   DTB=$(pwd)/out/arch/arm64/boot/dtb
+	fi
+	}
+	
+function compile_ksu() {
+START=$(date +"%s")
+	# Compile
+	if [ -d ${KERNEL_DIR}/clang ];
+	   then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CROSS_COMPILE=aarch64-linux-gnu- \
+	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+	   then
+           make O=out ARCH=arm64 ${DEFCONFIG}
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size \
+	       V=$VERBOSE 2>&1 | tee error.log
+        elif [ -d ${KERNEL_DIR}/clangB ];
+           then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
            fi
            make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
@@ -274,27 +336,38 @@ START=$(date +"%s")
 		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
 		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
-	}
+}
 
 # Zipping
-function zipping() {
+function move() {
 	# Copy Files To AnyKernel3 Zip
 	mv $IMAGE AnyKernel3
     mv $DTBO AnyKernel3
     mv $DTB AnyKernel3
+}
 
-	# Zipping and Push Kernel
+function move_ksu() {
+	mv $IMAGE AnyKernel3/ksu/
+}
+
+function zipping() {
+# Zipping and Push Kernel
 	cd AnyKernel3 || exit 1
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		cd ..
         rm -rf AnyKernel3
-        }
+}
 
 cloneTC
 exports
 compile
 END=$(date +"%s")
 DIFF=$(($END - $START))
+move
+# KernelSU
+echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
+compile_ksu
+move_ksu
 zipping

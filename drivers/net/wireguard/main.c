@@ -29,7 +29,7 @@ static int __init wg_mod_init(void)
 	ret = -ENOTRECOVERABLE;
 	if (!wg_allowedips_selftest() || !wg_packet_counter_selftest() ||
 	    !wg_ratelimiter_selftest())
-		goto err_device;
+		goto err_peer;
 #endif
 	wg_noise_init();
 

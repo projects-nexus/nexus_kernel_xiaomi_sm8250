@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -39,9 +39,7 @@ void diag_cntl_channel_open(struct diagfwd_info *p_info)
 {
 	if (!p_info)
 		return;
-	mutex_lock(&driver->cntl_lock);
 	driver->mask_update |= PERIPHERAL_MASK(p_info->peripheral);
-	mutex_unlock(&driver->cntl_lock);
 	queue_work(driver->cntl_wq, &driver->mask_update_work);
 	diag_notify_md_client(DIAG_LOCAL_PROC, p_info->peripheral,
 				DIAG_STATUS_OPEN);
@@ -328,18 +326,16 @@ static void diag_close_transport_work_fn(struct work_struct *work)
 	uint8_t transport;
 	uint8_t peripheral;
 
+	mutex_lock(&driver->cntl_lock);
 	for (peripheral = 0; peripheral <= NUM_PERIPHERALS; peripheral++) {
-		mutex_lock(&driver->cntl_lock);
-		if (!(driver->close_transport & PERIPHERAL_MASK(peripheral))) {
-			mutex_unlock(&driver->cntl_lock);
+		if (!(driver->close_transport & PERIPHERAL_MASK(peripheral)))
 			continue;
-		}
 		driver->close_transport ^= PERIPHERAL_MASK(peripheral);
 		transport = driver->feature[peripheral].sockets_enabled ?
 					TRANSPORT_RPMSG : TRANSPORT_SOCKET;
-		mutex_unlock(&driver->cntl_lock);
 		diagfwd_close_transport(transport, peripheral);
 	}
+	mutex_unlock(&driver->cntl_lock);
 }
 
 static void process_socket_feature(uint8_t peripheral)
@@ -1434,7 +1430,7 @@ int diag_send_peripheral_buffering_mode(struct diag_buffering_mode_t *params)
 	}
 
 	if (!driver->buffering_flag[params->peripheral]) {
-		pr_debug("diag: In %s, buffering flag not set for %d\n", __func__,
+		pr_err("diag: In %s, buffering flag not set for %d\n", __func__,
 		       params->peripheral);
 		return -EINVAL;
 	}

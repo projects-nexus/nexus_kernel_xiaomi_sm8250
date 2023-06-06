@@ -353,13 +353,13 @@ CPU_LE(	rev64		T1.16b, T1.16b	)
 	 * void pmull_ghash_update(int blocks, u64 dg[], const char *src,
 	 *			   struct ghash_key const *k, const char *head)
 	 */
-SYM_FUNC_START(pmull_ghash_update_p64)
+ENTRY(pmull_ghash_update_p64)
 	__pmull_ghash	p64
-SYM_FUNC_END(pmull_ghash_update_p64)
+ENDPROC(pmull_ghash_update_p64)
 
-SYM_FUNC_START(pmull_ghash_update_p8)
+ENTRY(pmull_ghash_update_p8)
 	__pmull_ghash	p8
-SYM_FUNC_END(pmull_ghash_update_p8)
+ENDPROC(pmull_ghash_update_p8)
 
 	KS0		.req	v12
 	KS1		.req	v13
@@ -552,27 +552,27 @@ CPU_LE(	rev		x8, x8		)
 	 *			  struct ghash_key const *k, u8 ctr[],
 	 *			  int rounds, u8 ks[])
 	 */
-SYM_FUNC_START(pmull_gcm_encrypt)
+ENTRY(pmull_gcm_encrypt)
 	pmull_gcm_do_crypt	1
-SYM_FUNC_END(pmull_gcm_encrypt)
+ENDPROC(pmull_gcm_encrypt)
 
 	/*
 	 * void pmull_gcm_decrypt(int blocks, u64 dg[], u8 dst[], const u8 src[],
 	 *			  struct ghash_key const *k, u8 ctr[],
 	 *			  int rounds)
 	 */
-SYM_FUNC_START(pmull_gcm_decrypt)
+ENTRY(pmull_gcm_decrypt)
 	pmull_gcm_do_crypt	0
-SYM_FUNC_END(pmull_gcm_decrypt)
+ENDPROC(pmull_gcm_decrypt)
 
 	/*
 	 * void pmull_gcm_encrypt_block(u8 dst[], u8 src[], u8 rk[], int rounds)
 	 */
-SYM_FUNC_START(pmull_gcm_encrypt_block)
+ENTRY(pmull_gcm_encrypt_block)
 	cbz		x2, 0f
 	load_round_keys	w3, x2
 0:	ld1		{v0.16b}, [x1]
 	enc_block	v0, w3
 	st1		{v0.16b}, [x0]
 	ret
-SYM_FUNC_END(pmull_gcm_encrypt_block)
+ENDPROC(pmull_gcm_encrypt_block)

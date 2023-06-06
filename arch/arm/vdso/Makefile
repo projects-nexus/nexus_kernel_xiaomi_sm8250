@@ -15,7 +15,7 @@ ldflags-y := -Bsymbolic --no-undefined -soname=linux-vdso.so.1 \
 	    -z max-page-size=4096 -z common-page-size=4096 \
 	    -nostdlib -shared $(ldflags-y) \
 	    $(call ld-option, --hash-style=sysv) \
-	    $(call ld-option, --build-id=sha1) \
+	    $(call ld-option, --build-id) \
 	    -T
 
 obj-$(CONFIG_VDSO) += vdso.o

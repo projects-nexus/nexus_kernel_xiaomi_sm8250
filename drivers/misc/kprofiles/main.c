@@ -64,7 +64,7 @@ void kp_set_mode_rollback(unsigned int level, unsigned int duration_ms)
 		return;
 
 	if (unlikely(level > 3)) {
-		pr_err("%s: Invalid mode requested, Skipping mode change",
+		pr_err("%s: Invalid mode requested, Skipping mode change\n",
 		       __func__);
 		return;
 	}
@@ -92,7 +92,7 @@ void kp_set_mode(unsigned int level)
 #endif
 
 	if (unlikely(level > 3)) {
-		pr_err("%s: Invalid mode requested, Skipping mode change",
+		pr_err("%s: Invalid mode requested, Skipping mode change\n",
 		       __func__);
 		return;
 	}
@@ -137,7 +137,8 @@ int kp_active_mode(void)
 
 	if (unlikely(kp_mode > 3)) {
 		kp_mode = 0;
-		pr_info("Invalid value passed, falling back to level 0\n");
+		pr_info("%s: Invalid value passed, falling back to level 0\n",
+			__func__);
 	}
 
 	return kp_mode;
@@ -149,27 +150,27 @@ static inline int kp_notifier_callback(struct notifier_block *self,
 				       unsigned long event, void *data)
 {
 	struct kprofiles_events *evdata = data;
-	int *blank;
+	unsigned int blank;
 
-	if (event != KP_EVENT_BLANK
-#ifdef CONFIG_AUTO_KPROFILES_MSM_DRM
-	    || !evdata || !evdata->data || evdata->id != MSM_DRM_PRIMARY_DISPLAY
-#endif
-	)
-		return NOTIFY_OK;
+	if (event != KP_EVENT_BLANK)
+		return 0;
 
-	blank = evdata->data;
-	switch (*blank) {
-	case KP_BLANK_POWERDOWN:
-		if (!screen_on)
+	if (evdata && evdata->data) {
+		blank = *(int *)(evdata->data);
+		switch (blank) {
+		case KP_BLANK_POWERDOWN:
+			if (!screen_on)
+				break;
+			screen_on = false;
 			break;
-		screen_on = false;
-		break;
-	case KP_BLANK_UNBLANK:
-		if (screen_on)
+		case KP_BLANK_UNBLANK:
+			if (screen_on)
+				break;
+			screen_on = true;
 			break;
-		screen_on = true;
-		break;
+		default:
+			break;
+		}
 	}
 
 	return NOTIFY_OK;

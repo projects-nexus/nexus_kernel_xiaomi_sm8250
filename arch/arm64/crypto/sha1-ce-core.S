@@ -68,7 +68,7 @@
 	 * void sha1_ce_transform(struct sha1_ce_state *sst, u8 const *src,
 	 *			  int blocks)
 	 */
-SYM_FUNC_START(sha1_ce_transform)
+ENTRY(sha1_ce_transform)
 	frame_push	3
 
 	mov		x19, x0
@@ -163,4 +163,4 @@ CPU_LE(	rev32		v11.16b, v11.16b	)
 	str		dgb, [x19, #16]
 	frame_pop
 	ret
-SYM_FUNC_END(sha1_ce_transform)
+ENDPROC(sha1_ce_transform)

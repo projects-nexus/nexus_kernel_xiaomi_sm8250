@@ -66,7 +66,6 @@ struct wg_peer *wg_peer_create(struct wg_device *wg,
 
 err:
 	kmem_cache_free(peer_cache, peer);
-	kfree(peer);
 	return ERR_PTR(ret);
 }
 

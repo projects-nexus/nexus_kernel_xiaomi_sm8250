@@ -79,35 +79,35 @@ static ssize_t show_trans_table(struct cpufreq_policy *policy, char *buf)
 	ssize_t len = 0;
 	int i, j;
 
-	len += scnprintf(buf + len, PAGE_SIZE - len, "   From  :    To\n");
-	len += scnprintf(buf + len, PAGE_SIZE - len, "         : ");
+	len += snprintf(buf + len, PAGE_SIZE - len, "   From  :    To\n");
+	len += snprintf(buf + len, PAGE_SIZE - len, "         : ");
 	for (i = 0; i < stats->state_num; i++) {
 		if (len >= PAGE_SIZE)
 			break;
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%9u ",
+		len += snprintf(buf + len, PAGE_SIZE - len, "%9u ",
 				stats->freq_table[i]);
 	}
 	if (len >= PAGE_SIZE)
 		return PAGE_SIZE;
 
-	len += scnprintf(buf + len, PAGE_SIZE - len, "\n");
+	len += snprintf(buf + len, PAGE_SIZE - len, "\n");
 
 	for (i = 0; i < stats->state_num; i++) {
 		if (len >= PAGE_SIZE)
 			break;
 
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%9u: ",
+		len += snprintf(buf + len, PAGE_SIZE - len, "%9u: ",
 				stats->freq_table[i]);
 
 		for (j = 0; j < stats->state_num; j++) {
 			if (len >= PAGE_SIZE)
 				break;
-			len += scnprintf(buf + len, PAGE_SIZE - len, "%9u ",
+			len += snprintf(buf + len, PAGE_SIZE - len, "%9u ",
 					stats->trans_table[i*stats->max_state+j]);
 		}
 		if (len >= PAGE_SIZE)
 			break;
-		len += scnprintf(buf + len, PAGE_SIZE - len, "\n");
+		len += snprintf(buf + len, PAGE_SIZE - len, "\n");
 	}
 
 	if (len >= PAGE_SIZE) {
@@ -220,7 +220,7 @@ void cpufreq_stats_record_transition(struct cpufreq_policy *policy,
 	struct cpufreq_stats *stats = policy->stats;
 	int old_index, new_index;
 
-	if (unlikely(!stats)) {
+	if (!stats) {
 		pr_debug("%s: No stats found\n", __func__);
 		return;
 	}
@@ -229,7 +229,7 @@ void cpufreq_stats_record_transition(struct cpufreq_policy *policy,
 	new_index = freq_table_get_index(stats, new_freq);
 
 	/* We can't do stats->time_in_state[-1]= .. */
-	if (unlikely(old_index == -1 || new_index == -1 || old_index == new_index))
+	if (old_index == -1 || new_index == -1 || old_index == new_index)
 		return;
 
 	cpufreq_stats_update(stats);

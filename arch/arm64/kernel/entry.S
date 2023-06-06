@@ -923,21 +923,6 @@ el0_error_naked:
 ENDPROC(el0_error)
 
 /*
- * "slow" syscall return path.
- */
-SYM_CODE_START_LOCAL(ret_to_user)
-	disable_daif
-	ldr	x1, [tsk, #TSK_TI_FLAGS]
-	and	x2, x1, #_TIF_WORK_MASK
-	cbnz	x2, work_pending
-finish_ret_to_user:
-	enable_step_tsk x1, x2
-#ifdef CONFIG_GCC_PLUGIN_STACKLEAK
-	bl	stackleak_erase
-#endif
-	kernel_exit 0
-
-/*
  * Ok, we need to do extra processing, enter the slow path.
  */
 work_pending:
@@ -948,7 +933,21 @@ work_pending:
 #endif
 	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for single-step
 	b	finish_ret_to_user
-SYM_CODE_END(ret_to_user)
+/*
+ * "slow" syscall return path.
+ */
+ret_to_user:
+	disable_daif
+	ldr	x1, [tsk, #TSK_TI_FLAGS]
+	and	x2, x1, #_TIF_WORK_MASK
+	cbnz	x2, work_pending
+finish_ret_to_user:
+	enable_step_tsk x1, x2
+#ifdef CONFIG_GCC_PLUGIN_STACKLEAK
+	bl	stackleak_erase
+#endif
+	kernel_exit 0
+ENDPROC(ret_to_user)
 
 /*
  * SVC handler.

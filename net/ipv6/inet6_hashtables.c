@@ -223,7 +223,7 @@ port_lookup:
 		}
 	}
 done:
-	if (IS_ERR(result))
+	if (unlikely(IS_ERR(result)))
 		return NULL;
 	return result;
 }

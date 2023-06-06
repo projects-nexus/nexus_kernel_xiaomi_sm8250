@@ -15,7 +15,6 @@
 
 #include <asm/unistd.h>
 
-	.section .rodata
 	.align	5
 	.globl	__kuser_helper_start
 __kuser_helper_start:

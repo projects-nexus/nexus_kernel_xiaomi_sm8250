@@ -104,12 +104,18 @@ static inline void bss_ref_get(struct cfg80211_registered_device *rdev,
 	lockdep_assert_held(&rdev->bss_lock);
 
 	bss->refcount++;
-
-	if (bss->pub.hidden_beacon_bss)
-		bss_from_pub(bss->pub.hidden_beacon_bss)->refcount++;
-
-	if (bss->pub.transmitted_bss)
-		bss_from_pub(bss->pub.transmitted_bss)->refcount++;
+	if (bss->pub.hidden_beacon_bss) {
+		bss = container_of(bss->pub.hidden_beacon_bss,
+				   struct cfg80211_internal_bss,
+				   pub);
+		bss->refcount++;
+	}
+	if (bss->pub.transmitted_bss) {
+		bss = container_of(bss->pub.transmitted_bss,
+				   struct cfg80211_internal_bss,
+				   pub);
+		bss->refcount++;
+	}
 }
 
 static inline void bss_ref_put(struct cfg80211_registered_device *rdev,
@@ -319,15 +325,7 @@ cfg80211_add_nontrans_list(struct cfg80211_bss *trans_bss,
 		}
 	}
 
-    rcu_read_unlock();
-    
-	/* This is a bit weird - it's not on the list, but already on another
-	 * one! The only way that could happen is if there's some BSSID/SSID
-	 * shared by multiple APs in their multi-BSSID profiles, potentially
-	 * with hidden SSID mixed in ... ignore it.
-	 */
-	if (!list_empty(&nontrans_bss->nontrans_list))
-		return -EINVAL;
+	rcu_read_unlock();
 
 	/* add to the list */
 	list_add_tail(&nontrans_bss->nontrans_list, &trans_bss->nontrans_list);
@@ -1163,8 +1161,6 @@ cfg80211_bss_update(struct cfg80211_registered_device *rdev,
 		new->refcount = 1;
 		INIT_LIST_HEAD(&new->hidden_list);
 		INIT_LIST_HEAD(&new->pub.nontrans_list);
-		/* we'll set this later if it was non-NULL */
-		new->pub.transmitted_bss = NULL;
 
 		if (rcu_access_pointer(tmp->pub.proberesp_ies)) {
 			hidden = rb_find_bss(rdev, tmp, BSS_CMP_HIDE_ZLEN);
@@ -1400,14 +1396,9 @@ cfg80211_inform_single_bss_data(struct wiphy *wiphy,
 		 */
 		if (cfg80211_add_nontrans_list(non_tx_data->tx_bss,
 					       &res->pub)) {
-			if (__cfg80211_unlink_bss(rdev, res)) {
+			if (__cfg80211_unlink_bss(rdev, res))
 				rdev->bss_generation++;
-				res = NULL;
-			}
 		}
-
-		if (!res)
-			return NULL;
 	}
 
 	trace_cfg80211_return_bss(&res->pub);
@@ -1563,7 +1554,7 @@ cfg80211_update_notlisted_nontrans(struct wiphy *wiphy,
 	size_t new_ie_len;
 	struct cfg80211_bss_ies *new_ies;
 	const struct cfg80211_bss_ies *old;
-	size_t cpy_len;
+	u8 cpy_len;
 
 	ie = mgmt->u.probe_resp.variable;
 

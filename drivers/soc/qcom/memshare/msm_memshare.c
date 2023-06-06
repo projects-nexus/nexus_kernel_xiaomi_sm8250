@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/err.h>
@@ -752,7 +751,6 @@ static void memshare_init_worker(struct work_struct *work)
 		dev_err(memsh_child->dev,
 			"memshare: Creating mem_share_svc qmi handle failed\n");
 		kfree(mem_share_svc_handle);
-		mem_share_svc_handle = NULL;
 		destroy_workqueue(mem_share_svc_workqueue);
 		return;
 	}
@@ -761,11 +759,8 @@ static void memshare_init_worker(struct work_struct *work)
 	if (rc < 0) {
 		dev_err(memsh_child->dev,
 			"memshare: Registering mem share svc failed %d\n", rc);
-		if (mem_share_svc_handle) {
-			qmi_handle_release(mem_share_svc_handle);
-			kfree(mem_share_svc_handle);
-			mem_share_svc_handle = NULL;
-		}
+		qmi_handle_release(mem_share_svc_handle);
+		kfree(mem_share_svc_handle);
 		destroy_workqueue(mem_share_svc_workqueue);
 		return;
 	}
@@ -922,11 +917,8 @@ static int memshare_remove(struct platform_device *pdev)
 		return 0;
 
 	flush_workqueue(mem_share_svc_workqueue);
-	if (mem_share_svc_handle) {
-		qmi_handle_release(mem_share_svc_handle);
-		kfree(mem_share_svc_handle);
-		mem_share_svc_handle = NULL;
-	}
+	qmi_handle_release(mem_share_svc_handle);
+	kfree(mem_share_svc_handle);
 	destroy_workqueue(mem_share_svc_workqueue);
 	return 0;
 }

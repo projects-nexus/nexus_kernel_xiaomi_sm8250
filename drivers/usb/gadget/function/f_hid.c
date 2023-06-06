@@ -739,8 +739,8 @@ static int hidg_setup(struct usb_function *f,
 		VDBG(cdev, "set_report | wLength=%d\n", ctrl->wLength);
 		if (hidg->use_out_ep)
 			goto stall;
+		req->context = hidg;
 		req->complete = hidg_ssreport_complete;
-		req->context  = hidg;
 		goto respond;
 		break;
 
@@ -1296,7 +1296,6 @@ static void hidg_free(struct usb_function *f)
 	hidg = func_to_hidg(f);
 	opts = container_of(f->fi, struct f_hid_opts, func_inst);
 	kref_put(&hidg->kref, hidg_destroy);
-	put_device(&hidg->dev);
 	mutex_lock(&opts->lock);
 	--opts->refcnt;
 	mutex_unlock(&opts->lock);

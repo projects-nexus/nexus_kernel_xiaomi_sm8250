@@ -61,7 +61,7 @@
 	ldp x28, x29, [sp, #S_X28]
 	.endm
 
-SYM_CODE_START(kretprobe_trampoline)
+ENTRY(kretprobe_trampoline)
 	sub sp, sp, #S_FRAME_SIZE
 
 	save_all_base_regs
@@ -79,4 +79,4 @@ SYM_CODE_START(kretprobe_trampoline)
 	add sp, sp, #S_FRAME_SIZE
 	ret
 
-SYM_CODE_END(kretprobe_trampoline)
+ENDPROC(kretprobe_trampoline)

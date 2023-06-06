@@ -1245,7 +1245,10 @@ int subsystem_restart_dev(struct subsys_device *dev)
 		return 0;
 	}
 
-	__subsystem_restart_dev(dev);
+	if (!strcmp(name, "modem") || !strcmp(name, "adsp"))
+		dev->restart_level = RESET_SUBSYS_COUPLED;
+
+        __subsystem_restart_dev(dev);
 
 	module_put(dev->owner);
 	put_device(&dev->dev);
@@ -1971,7 +1974,8 @@ static int __init subsys_restart_init(void)
 {
 	int ret;
 
-	ssr_wq = alloc_workqueue("ssr_wq", WQ_UNBOUND | WQ_HIGHPRI, 0);
+	ssr_wq = alloc_workqueue("ssr_wq",
+		WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 0);
 	BUG_ON(!ssr_wq);
 
 	ret = bus_register(&subsys_bus_type);

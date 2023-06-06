@@ -125,14 +125,14 @@ CPU_BE(	rev		w7, w7		)
 	ret
 	.endm
 
-SYM_FUNC_START(__aes_arm64_encrypt)
+ENTRY(__aes_arm64_encrypt)
 	do_crypt	fround, crypto_ft_tab, crypto_ft_tab + 1, 2
-SYM_FUNC_END(__aes_arm64_encrypt)
+ENDPROC(__aes_arm64_encrypt)
 
 	.align		5
-SYM_FUNC_START(__aes_arm64_decrypt)
+ENTRY(__aes_arm64_decrypt)
 	do_crypt	iround, crypto_it_tab, __aes_arm64_inverse_sbox, 0
-SYM_FUNC_END(__aes_arm64_decrypt)
+ENDPROC(__aes_arm64_decrypt)
 
 	.section	".rodata", "a"
 	.align		L1_CACHE_SHIFT

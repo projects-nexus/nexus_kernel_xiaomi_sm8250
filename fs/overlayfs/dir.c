@@ -582,9 +582,9 @@ static int ovl_create_or_link(struct dentry *dentry, struct inode *inode,
 		override_cred->fsuid = inode->i_uid;
 		override_cred->fsgid = inode->i_gid;
 		err = security_dentry_create_files_as(dentry,
-					attr->mode, &dentry->d_name,
-					old_cred ? old_cred : current_cred(),
-					override_cred);
+				attr->mode, &dentry->d_name,
+				old_cred ? old_cred : current_cred(),
+				override_cred);
 		if (err) {
 			put_cred(override_cred);
 			goto out_revert_creds;

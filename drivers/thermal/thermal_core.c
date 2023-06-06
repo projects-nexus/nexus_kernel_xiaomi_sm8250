@@ -23,6 +23,7 @@
 #include <net/genetlink.h>
 #include <linux/suspend.h>
 #include <linux/cpu_cooling.h>
+#include <soc/qcom/socinfo.h>
 
 #ifdef CONFIG_DRM
 #include <drm/drm_notifier_mi.h>
@@ -69,8 +70,15 @@ struct screen_monitor sm;
 #endif
 
 static struct device thermal_message_dev;
-static atomic_t switch_mode = ATOMIC_INIT(10);
+
+static atomic_t switch_mode = ATOMIC_INIT(0);
+
 static atomic_t temp_state = ATOMIC_INIT(0);
+static atomic_t balance_mode = ATOMIC_INIT(0);
+static atomic_t board_sensor_temp_comp_default = ATOMIC_INIT(0);
+static atomic_t cpu_nolimit_temp_default = ATOMIC_INIT(0);
+static atomic_t wifi_limit = ATOMIC_INIT(0);
+
 static char boost_buf[128];
 const char *board_sensor;
 static char board_sensor_temp[128];
@@ -323,11 +331,12 @@ static void thermal_zone_device_set_polling(struct workqueue_struct *queue,
 					    int delay)
 {
 	if (delay > 1000)
-		mod_delayed_work(queue, &tz->poll_queue,
+		mod_delayed_work(system_freezable_power_efficient_wq,
+				 &tz->poll_queue,
 				 round_jiffies(msecs_to_jiffies(delay)));
 	else if (delay)
-		mod_delayed_work(queue, &tz->poll_queue,
-				 msecs_to_jiffies(delay));
+		mod_delayed_work(system_freezable_power_efficient_wq,
+				 &tz->poll_queue, msecs_to_jiffies(delay));
 	else
 		cancel_delayed_work(&tz->poll_queue);
 }
@@ -1653,6 +1662,7 @@ static int thermal_pm_notify(struct notifier_block *nb,
 			     unsigned long mode, void *_unused)
 {
 	struct thermal_zone_device *tz;
+	enum thermal_device_mode tz_mode;
 
 	switch (mode) {
 	case PM_HIBERNATION_PREPARE:
@@ -1665,9 +1675,15 @@ static int thermal_pm_notify(struct notifier_block *nb,
 	case PM_POST_SUSPEND:
 		atomic_set(&in_suspend, 0);
 		list_for_each_entry(tz, &thermal_tz_list, node) {
-			if (tz->ops->is_wakeable &&
-				tz->ops->is_wakeable(tz))
+			tz_mode = THERMAL_DEVICE_ENABLED;
+			if (tz->ops->get_mode)
+				tz->ops->get_mode(tz, &tz_mode);
+
+			if ((tz->ops->is_wakeable &&
+				tz->ops->is_wakeable(tz)) ||
+				tz_mode == THERMAL_DEVICE_DISABLED)
 				continue;
+
 			thermal_zone_device_init(tz);
 			thermal_zone_device_update(tz,
 						   THERMAL_EVENT_UNSPECIFIED);
@@ -1761,6 +1777,29 @@ static DEVICE_ATTR(boost, 0644,
 		   thermal_boost_show, thermal_boost_store);
 
 static ssize_t
+thermal_balance_mode_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&balance_mode));
+}
+
+static ssize_t
+thermal_balance_mode_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	int val = -1;
+
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&balance_mode, val);
+
+	return len;
+}
+
+static DEVICE_ATTR(balance_mode, 0664,
+		thermal_balance_mode_show, thermal_balance_mode_store);
+
+static ssize_t
 thermal_temp_state_show(struct device *dev,
 				      struct device_attribute *attr, char *buf)
 {
@@ -1845,6 +1884,72 @@ static DEVICE_ATTR(board_sensor_temp, 0664,
 		thermal_board_sensor_temp_show, thermal_board_sensor_temp_store);
 
 static ssize_t
+thermal_board_sensor_temp_comp_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&board_sensor_temp_comp_default));
+}
+
+static ssize_t
+thermal_board_sensor_temp_comp_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	int val = -1;
+
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&board_sensor_temp_comp_default, val);
+
+	return len;
+}
+
+static DEVICE_ATTR(board_sensor_temp_comp, 0664,
+		   thermal_board_sensor_temp_comp_show, thermal_board_sensor_temp_comp_store);
+
+static ssize_t
+thermal_wifi_limit_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&wifi_limit));
+}
+static ssize_t
+thermal_wifi_limit_store(struct device *dev,
+				      struct device_attribute *attr, const char *buf, size_t len)
+{
+	int val = -1;
+
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&wifi_limit, val);
+	return len;
+}
+
+static DEVICE_ATTR(wifi_limit, 0664,
+	   thermal_wifi_limit_show, thermal_wifi_limit_store);
+
+static ssize_t
+thermal_cpu_nolimit_temp_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&cpu_nolimit_temp_default));
+}
+
+static ssize_t
+thermal_cpu_nolimit_temp_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t len)
+{
+	int val = -1;
+
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&cpu_nolimit_temp_default, val);
+
+	return len;
+}
+
+static DEVICE_ATTR(cpu_nolimit_temp, 0664,
+		   thermal_cpu_nolimit_temp_show, thermal_cpu_nolimit_temp_store);
+static ssize_t
 thermal_ambient_sensor_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -1875,6 +1980,31 @@ thermal_ambient_sensor_temp_store(struct device *dev,
 
 static DEVICE_ATTR(ambient_sensor_temp, 0664,
 		thermal_ambient_sensor_temp_show, thermal_ambient_sensor_temp_store);
+
+/**
+ * Atomic function to set initial thermal config
+ * For CountryIndia => Set thermal config to Game 2 [16]
+ * For other countries => Set thermal config to Dynamic (emulation) [10]
+ */
+inline int set_thermal_sconfig_init(void)
+{
+	int ret;
+	ret = atomic_read(&switch_mode);
+
+	if (ret < 0) {
+		return -EINVAL;
+	} else {
+		if (get_hw_country_version() == (uint32_t)CountryIndia) {
+			pr_info("%s: set sconfig to Game 2 for India\n", __func__);
+			atomic_set(&switch_mode, 16);
+		} else {
+			pr_info("%s: set sconfig to Dynamic (emulation)\n", __func__);
+			atomic_set(&switch_mode, 10);
+		}
+	}
+
+	return ret;
+}
 
 static int create_thermal_message_node(void)
 {
@@ -1914,6 +2044,22 @@ static int create_thermal_message_node(void)
 		if (ret < 0)
 			pr_warn("Thermal: create board sensor temp node failed\n");
 
+		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_board_sensor_temp_comp.attr);
+		if (ret < 0)
+			pr_warn("Thermal: create board sensor temp comp node failed\n");
+
+		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_balance_mode.attr);
+		if (ret < 0)
+			pr_warn("Thermal: create balance mode node failed\n");
+
+		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_wifi_limit.attr);
+		if (ret < 0)
+			pr_warn("Thermal: create wifi limit node failed\n");
+
+		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_cpu_nolimit_temp.attr);
+		if (ret < 0)
+			pr_warn("Thermal: create cpu nolimit node failed\n");
+
 		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_ambient_sensor.attr);
 		if (ret < 0)
 			pr_warn("Thermal: create ambient sensor node failed\n");
@@ -1921,6 +2067,10 @@ static int create_thermal_message_node(void)
 		ret = sysfs_create_file(&thermal_message_dev.kobj, &dev_attr_ambient_sensor_temp.attr);
 		if (ret < 0)
 			pr_warn("Thermal: create ambient sensor temp node failed\n");
+
+		ret = set_thermal_sconfig_init();
+		if (ret < 0)
+			pr_warn("Thermal: Initial thermal config set failed\n");
 	}
 	return ret;
 }

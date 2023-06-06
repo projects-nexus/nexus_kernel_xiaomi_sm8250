@@ -460,7 +460,7 @@ reorder:
 	 */
 	device_reorder_to_tail(consumer, NULL);
 
-	dev_dbg(consumer, "Linked as a consumer to %s\n", dev_name(supplier));
+	dev_info(consumer, "Linked as a consumer to %s\n", dev_name(supplier));
 
 out:
 	device_pm_unlock();
@@ -561,7 +561,7 @@ static void __device_link_del(struct kref *kref)
 {
 	struct device_link *link = container_of(kref, struct device_link, kref);
 
-	dev_dbg(link->consumer, "Dropping the link to %s\n",
+	dev_info(link->consumer, "Dropping the link to %s\n",
 		 dev_name(link->supplier));
 
 	if (link->flags & DL_FLAG_PM_RUNTIME)
@@ -576,7 +576,7 @@ static void __device_link_del(struct kref *kref)
 {
 	struct device_link *link = container_of(kref, struct device_link, kref);
 
-	dev_dbg(link->consumer, "Dropping the link to %s\n",
+	dev_info(link->consumer, "Dropping the link to %s\n",
 		 dev_name(link->supplier));
 
 	if (link->flags & DL_FLAG_PM_RUNTIME)
@@ -841,7 +841,7 @@ late_initcall(sync_state_resume_initcall);
 
 static void __device_links_supplier_defer_sync(struct device *sup)
 {
-	if (list_empty(&sup->links.defer_hook))
+	if (list_empty(&sup->links.defer_hook) && dev_has_sync_state(sup))
 		list_add_tail(&sup->links.defer_hook, &deferred_sync);
 }
 

@@ -8,7 +8,7 @@
 
 #include <linux/linkage.h>
 
-SYM_FUNC_START(__efi_rt_asm_wrapper)
+ENTRY(__efi_rt_asm_wrapper)
 	stp	x29, x30, [sp, #-32]!
 	mov	x29, sp
 
@@ -47,4 +47,4 @@ SYM_FUNC_START(__efi_rt_asm_wrapper)
 	mov	x18, x2
 #endif
 	b	efi_handle_corrupted_x18	// tail call
-SYM_FUNC_END(__efi_rt_asm_wrapper)
+ENDPROC(__efi_rt_asm_wrapper)

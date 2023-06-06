@@ -163,7 +163,7 @@ static int fiemap_check_ranges(struct super_block *sb,
 	if (len == 0)
 		return -EINVAL;
 
-	if (start > maxbytes)
+	if (start >= maxbytes)
 		return -EFBIG;
 
 	/*

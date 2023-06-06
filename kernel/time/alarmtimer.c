@@ -32,7 +32,6 @@
 #include <linux/freezer.h>
 #include <linux/compat.h>
 #include <linux/module.h>
-#include <linux/delay.h>
 
 #include "posix-timers.h"
 
@@ -355,8 +354,8 @@ static int alarmtimer_suspend(struct device *dev)
 	if (min == 0)
 		return 0;
 
-	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
-		__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);
+	if (ktime_to_ns(min) < NSEC_PER_SEC / 2) {
+		__pm_wakeup_event(ws, MSEC_PER_SEC / 2);
 #if IS_ENABLED(ENABLE_ALARMTIMER_RECORD)
 		if (min_timer)
 			pr_info("[oem][alarm]: [%p]type=%d, func=%pf\n",
@@ -376,7 +375,7 @@ static int alarmtimer_suspend(struct device *dev)
 	/* Set alarm, if in the past reject suspend briefly to handle */
 	ret = rtc_timer_start(rtc, &rtctimer, now, 0);
 	if (ret < 0)
-		__pm_wakeup_event(ws, MSEC_PER_SEC);
+		__pm_wakeup_event(ws, MSEC_PER_SEC /2);
 	return ret;
 }
 
@@ -513,7 +512,6 @@ int alarm_cancel(struct alarm *alarm)
 		if (ret >= 0)
 			return ret;
 		cpu_relax();
-		ndelay(TIMER_LOCK_TIGHT_LOOP_DELAY_NS);
 	}
 }
 EXPORT_SYMBOL_GPL(alarm_cancel);

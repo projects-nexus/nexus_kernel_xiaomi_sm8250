@@ -21,6 +21,10 @@
 #include "sde_dbg.h"
 #include "dsi_mi_feature.h"
 
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+#include "exposure_adjustment.h"
+#endif
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -835,7 +839,9 @@ static u32 dsi_panel_get_backlight(struct dsi_panel *panel)
 
 static u32 interpolate(uint32_t x, uint32_t xa, uint32_t xb, uint32_t ya, uint32_t yb)
 {
-	return ya - (ya - yb) * (x - xa) / (xb - xa);
+	u32 base = ya - (ya - yb) * (x - xa) / (xb - xa);
+
+	return base - 0.0125*base;
 }
 
 u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel)
@@ -883,6 +889,7 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 {
 	int rc = 0;
+	int bl_dc_min = panel->bl_config.bl_min_level * 2;
 	struct dsi_backlight_config *bl = &panel->bl_config;
 	struct dsi_panel_mi_cfg *mi_cfg = &panel->mi_cfg;
 
@@ -908,6 +915,13 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_INSERT_BLACK);
 		usleep_range((6 * 1000),(6 * 1000) + 10);
 	}
+
+	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
+
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+	if (bl_lvl > 0)
+		bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
+#endif
 
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
@@ -1081,11 +1095,6 @@ error:
 	return rc;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_LMI
-static unsigned int framerate_override;
-module_param(framerate_override, uint, 0444);
-#endif
-
 static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 				  struct dsi_parser_utils *utils)
 {
@@ -1107,18 +1116,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	}
 
 	mode->clk_rate_hz = !rc ? tmp64 : 0;
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (tmp64 == 1106000000) {
-		if (framerate_override == 4)
-			mode->clk_rate_hz = 1420000000;
-		else if (framerate_override == 3)
-			mode->clk_rate_hz = 1327200000;
-		else if (framerate_override == 2)
-			mode->clk_rate_hz = 1271900000;
-		else if (framerate_override == 1)
-			mode->clk_rate_hz = 1216600000;
-	}
-#endif
 	display_mode->priv_info->clk_rate_hz = mode->clk_rate_hz;
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-mdp-transfer-time-us",
@@ -1137,18 +1134,7 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		       rc);
 		goto error;
 	}
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (mode->refresh_rate == 60) {
-		if (framerate_override == 4)
-			mode->refresh_rate = 77;
-		else if (framerate_override == 3)
-			mode->refresh_rate = 72;
-		else if (framerate_override == 2)
-			mode->refresh_rate = 69;
-		else if (framerate_override == 1)
-			mode->refresh_rate = 66;
-	}
-#endif
+
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-panel-width",
 				  &mode->h_active);
 	if (rc) {
@@ -1166,11 +1152,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_front_porch = 16;
-#endif
-
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-h-back-porch",
 				  &mode->h_back_porch);
@@ -1180,11 +1161,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_back_porch = 8;
-#endif
-
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-h-pulse-width",
 				  &mode->h_sync_width);
@@ -1193,11 +1169,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		       rc);
 		goto error;
 	}
-
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_sync_width = 8;
-#endif
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-h-sync-skew",
 				  &mode->h_skew);
@@ -1225,11 +1196,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_sync_width = 8;
-#endif
-
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-v-front-porch",
 				  &mode->v_front_porch);
 	if (rc) {
@@ -1238,11 +1204,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_sync_width = 4;
-#endif
-
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-v-pulse-width",
 				  &mode->v_sync_width);
 	if (rc) {
@@ -1250,12 +1211,6 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		       rc);
 		goto error;
 	}
-
-#ifdef CONFIG_MACH_XIAOMI_LMI
-	if (framerate_override)
-		mode->h_sync_width = 4;
-#endif
-
 	DSI_DEBUG("panel vert active:%d front_portch:%d back_porch:%d pulse_width:%d\n",
 		mode->v_active, mode->v_front_porch, mode->v_back_porch,
 		mode->v_sync_width);
@@ -4083,6 +4038,47 @@ void dsi_panel_put(struct dsi_panel *panel)
 	kfree(panel);
 }
 
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+static struct dsi_panel * set_panel;
+static ssize_t mdss_fb_set_ea_enable(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t len)
+{
+	u32 anti_flicker;
+
+	if (sscanf(buf, "%d", &anti_flicker) != 1) {
+		pr_err("sccanf buf error!\n");
+		return len;
+	}
+
+	ea_panel_mode_ctrl(set_panel, anti_flicker != 0);
+
+	return len;
+}
+
+static ssize_t mdss_fb_get_ea_enable(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int ret;
+	bool anti_flicker = ea_panel_is_enabled();
+
+	ret = scnprintf(buf, PAGE_SIZE, "%d\n", anti_flicker ? 1 : 0);
+
+	return ret;
+}
+
+static DEVICE_ATTR(anti_flicker, S_IRUGO | S_IWUSR,
+	mdss_fb_get_ea_enable, mdss_fb_set_ea_enable);
+
+static struct attribute *mdss_fb_attrs[] = {
+	&dev_attr_anti_flicker.attr,
+	NULL,
+};
+
+static struct attribute_group mdss_fb_attr_group = {
+	.attrs = mdss_fb_attrs,
+};
+#endif
+
 int dsi_panel_drv_init(struct dsi_panel *panel,
 		       struct mipi_dsi_host *host)
 {
@@ -4136,6 +4132,13 @@ int dsi_panel_drv_init(struct dsi_panel *panel,
 			       panel->name, rc);
 		goto error_gpio_release;
 	}
+
+#ifdef CONFIG_EXPOSURE_ADJUSTMENT
+	rc = sysfs_create_group(&(panel->parent->kobj), &mdss_fb_attr_group);
+	if (rc)
+		pr_err("sysfs group creation failed, rc=%d\n", rc);
+	set_panel = panel;
+#endif
 
 	goto exit;
 
@@ -4195,6 +4198,7 @@ int dsi_panel_validate_mode(struct dsi_panel *panel,
 
 int dsi_panel_get_mode_count(struct dsi_panel *panel)
 {
+	const u32 SINGLE_MODE_SUPPORT = 1;
 	struct dsi_parser_utils *utils;
 	struct device_node *timings_np, *child_np;
 	int num_dfps_rates, num_bit_clks;
@@ -4225,6 +4229,14 @@ int dsi_panel_get_mode_count(struct dsi_panel *panel)
 		rc = -EINVAL;
 		goto error;
 	}
+
+	/* No multiresolution support is available for video mode panels.
+	 * Multi-mode is supported for video mode during POMS is enabled.
+	 */
+	if (panel->panel_mode != DSI_OP_CMD_MODE &&
+		!panel->host_config.ext_bridge_mode &&
+		!panel->panel_mode_switch_enabled)
+		count = SINGLE_MODE_SUPPORT;
 
 	panel->num_timing_nodes = count;
 	dsi_for_each_child_node(timings_np, child_np) {

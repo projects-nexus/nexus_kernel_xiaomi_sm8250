@@ -778,7 +778,7 @@ struct devkmsg_user {
 
 static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 {
-	char buf[LOG_LINE_MAX + 1], *line;
+	char *buf, *line;
 	int level = default_message_loglevel;
 	int facility = 1;	/* LOG_USER */
 	struct file *file = iocb->ki_filp;
@@ -799,9 +799,15 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 			return ret;
 	}
 
+	buf = kmalloc(len+1, GFP_KERNEL);
+	if (buf == NULL)
+		return -ENOMEM;
+
 	buf[len] = '\0';
-	if (!copy_from_iter_full(buf, len, from))
+	if (!copy_from_iter_full(buf, len, from)) {
+		kfree(buf);
 		return -EFAULT;
+	}
 
 	/*
 	 * Extract and skip the syslog prefix <[0-9]*>. Coming from userspace
@@ -814,9 +820,6 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 	 */
 	line = buf;
 	if (line[0] == '<') {
-		if (memcmp(line+3, "batteryd", sizeof("batteryd")-1) == 0 ||
-			   memcmp(line+3, "healthd", sizeof("healthd")-1) == 0)
-			goto free;
 		char *endp = NULL;
 		unsigned int u;
 
@@ -831,14 +834,12 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 			if (strstr(line, "healthd") ||
 				strstr(line, "cacert"))
 				goto free;
-
-			if(strncmp(line, "logd: Skipping", sizeof("logd: Skipping")))
-				goto free;
 		}
 	}
 
 	printk_emit(facility, level, NULL, 0, "%s", line);
 free:
+	kfree(buf);
 	return ret;
 }
 
@@ -1337,9 +1338,13 @@ static size_t msg_print_text(const struct printk_log *msg, bool syslog, char *bu
 
 static int syslog_print(char __user *buf, int size)
 {
-	char text[LOG_LINE_MAX + PREFIX_MAX];
+	char *text;
 	struct printk_log *msg;
 	int len = 0;
+
+	text = kmalloc(LOG_LINE_MAX + PREFIX_MAX, GFP_KERNEL);
+	if (!text)
+		return -ENOMEM;
 
 	while (size > 0) {
 		size_t n;
@@ -1388,6 +1393,7 @@ static int syslog_print(char __user *buf, int size)
 		buf += n;
 	}
 
+	kfree(text);
 	return len;
 }
 
@@ -2235,6 +2241,7 @@ void suspend_console(void)
 {
 	if (!console_suspend_enabled)
 		return;
+	pr_info("Suspending console(s) (use no_console_suspend to debug)\n");
 	console_lock();
 	console_suspended = 1;
 	up_console_sem();
@@ -2953,7 +2960,7 @@ static void wake_up_klogd_work_func(struct irq_work *irq_work)
 
 static DEFINE_PER_CPU(struct irq_work, wake_up_klogd_work) = {
 	.func = wake_up_klogd_work_func,
-	.flags = IRQ_WORK_LAZY,
+	.flags = ATOMIC_INIT(IRQ_WORK_LAZY),
 };
 
 void wake_up_klogd(void)
