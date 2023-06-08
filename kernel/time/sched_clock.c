@@ -72,7 +72,6 @@ struct clock_data {
 static struct hrtimer sched_clock_timer;
 static int irqtime = -1;
 static u64 resume_ns;
-static u64 first_cycle = 1;
 u64 sum_wakeup_time;
 u64 sum_wakeup_times;
 u64 last_wake_time;
