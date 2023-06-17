@@ -371,5 +371,8 @@ echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
 compile_ksu
 move_ksu
 zipping
+if [ "$BUILD" = "local" ]; then
 # Discard KSU changes in defconfig
-git restore arch/arm64/configs/$DEFCONFIG
+git restore arch/arm64/configs/$DEFCONFIGf
+fi
+
