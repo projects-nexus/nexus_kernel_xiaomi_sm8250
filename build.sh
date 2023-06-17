@@ -371,3 +371,5 @@ echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
 compile_ksu
 move_ksu
 zipping
+# Discard KSU changes in defconfig
+git restore arch/arm64/configs/$DEFCONFIG
