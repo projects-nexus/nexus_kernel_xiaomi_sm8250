@@ -686,13 +686,8 @@ static void binder_do_set_priority(struct binder_thread *thread,
 	bool has_cap_nice;
 	unsigned int policy = desired->sched_policy;
 
-	if (task->policy == policy && task->normal_prio == desired->prio) {
-		spin_lock(&thread->prio_lock);
-		if (thread->prio_state == BINDER_PRIO_PENDING)
-			thread->prio_state = BINDER_PRIO_SET;
-		spin_unlock(&thread->prio_lock);
+	if (task->policy == policy && task->normal_prio == desired->prio)
 		return;
-	}
 
 	has_cap_nice = has_capability_noaudit(task, CAP_SYS_NICE);
 
