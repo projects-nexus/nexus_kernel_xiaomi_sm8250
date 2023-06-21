@@ -3,7 +3,7 @@ run-name: Nexus Kernel Lmi
 
 on:
   push:
-    branches: [ rebase-sched ]
+    branches: [ teo ]
 
   workflow_dispatch:
 
