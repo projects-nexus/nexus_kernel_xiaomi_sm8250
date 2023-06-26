@@ -426,8 +426,6 @@ exit:
 	return ret;
 }
 
-static int memlat_event_cpu_hp_init(void) { return 0; }
-
 static int memlat_idle_notif(struct notifier_block *nb, unsigned long action,
 							void *data)
 {
@@ -476,12 +474,7 @@ static int start_hwmon(struct memlat_hwmon *hw)
 				if (!cpumask_test_cpu(cpu, cpu_online_mask))
 					per_cpu(cpu_is_hp, cpu) = true;
 			}
-			ret = memlat_event_cpu_hp_init();
 			put_online_cpus();
-			if (ret < 0) {
-				mutex_unlock(&notify_lock);
-				goto unlock_out;
-			}
 			idle_notifier_register(&memlat_event_idle_nb);
 		}
 		hp_idle_register_cnt++;
