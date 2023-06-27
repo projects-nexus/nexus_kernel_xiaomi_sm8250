@@ -3,7 +3,7 @@ run-name: Nexus Kernel Apollo
 
 on:
   push:
-    branches: [ teo ]
+    branches: [ pelt ]
 
   workflow_dispatch:
 
