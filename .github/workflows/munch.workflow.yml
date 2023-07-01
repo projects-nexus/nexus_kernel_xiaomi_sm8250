@@ -3,7 +3,7 @@ run-name: Nexus Kernel Munch
 
 on:
   push:
-    branches: [ pelt ]
+    branches: [ rebase ]
 
   workflow_dispatch:
 
