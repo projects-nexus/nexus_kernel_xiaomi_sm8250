@@ -17,12 +17,6 @@ select_task_rq_stop(struct task_struct *p, int cpu, int sd_flag, int flags,
 {
 	return task_cpu(p); /* stop tasks as never migrate */
 }
-
-static int
-balance_stop(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
-{
-	return sched_stop_runnable(rq);
-}
 #endif /* CONFIG_SMP */
 
 static void
@@ -39,13 +33,16 @@ static void set_next_task_stop(struct rq *rq, struct task_struct *stop)
 static struct task_struct *
 pick_next_task_stop(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 {
+	struct task_struct *stop = rq->stop;
+
 	WARN_ON_ONCE(prev || rf);
 
-	if (!sched_stop_runnable(rq))
+	if (!stop || !task_on_rq_queued(stop))
 		return NULL;
 
-	set_next_task_stop(rq, rq->stop);
-	return rq->stop;
+	set_next_task_stop(rq, stop);
+
+	return stop;
 }
 
 static void
@@ -67,7 +64,7 @@ static void yield_task_stop(struct rq *rq)
 	BUG(); /* the stop task should never yield, its pointless. */
 }
 
-static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
+static void put_prev_task_stop(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 {
 	struct task_struct *curr = rq->curr;
 	u64 delta_exec;
@@ -136,7 +133,6 @@ const struct sched_class stop_sched_class = {
 	.set_next_task          = set_next_task_stop,
 
 #ifdef CONFIG_SMP
-	.balance		= balance_stop,
 	.select_task_rq		= select_task_rq_stop,
 	.set_cpus_allowed	= set_cpus_allowed_common,
 #endif
