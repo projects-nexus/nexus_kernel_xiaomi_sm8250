@@ -1817,7 +1817,7 @@ pick_next_task_rt(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 	return p;
 }
 
-static void put_prev_task_rt(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
+static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
 {
 	update_curr_rt(rq);
 
@@ -1829,18 +1829,6 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p, struct rq_fla
 	 */
 	if (on_rt_rq(&p->rt) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_task(rq, p);
-
-	if (rf && !on_rt_rq(&p->rt) && need_pull_rt_task(rq, p)) {
-		/*
-		 * This is OK, because current is on_cpu, which avoids it being
-		 * picked for load-balance and preemption/IRQs are still
-		 * disabled avoiding further scheduler activity on it and we've
-		 * not yet started the picking loop.
-		 */
-		rq_unpin_lock(rq, rf);
-		pull_rt_task(rq);
-		rq_repin_lock(rq, rf);
-	}
 }
 
 #ifdef CONFIG_SMP
