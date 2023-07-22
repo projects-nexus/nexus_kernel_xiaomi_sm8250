@@ -128,7 +128,7 @@ static int tcs_invalidate(struct rsc_drv *drv, int type)
 
 	tcs = get_tcs_of_type(drv, type);
 
-	spin_lock(&drv->lock);
+	raw_spin_lock(&drv->lock);
 	if (bitmap_empty(tcs->slots, MAX_TCS_SLOTS))
 		goto done;
 
@@ -143,7 +143,7 @@ static int tcs_invalidate(struct rsc_drv *drv, int type)
 	bitmap_zero(tcs->slots, MAX_TCS_SLOTS);
 
 done:
-	spin_unlock(&drv->lock);
+	raw_spin_unlock(&drv->lock);
 	return ret;
 }
 
@@ -407,7 +407,7 @@ static int tcs_write(struct rsc_drv *drv, const struct tcs_request *msg)
 	if (IS_ERR(tcs))
 		return PTR_ERR(tcs);
 
-	spin_lock(&drv->lock);
+	raw_spin_lock(&drv->lock);
 	if (msg->state == RPMH_ACTIVE_ONLY_STATE && drv->in_solver_mode) {
 		ret = -EINVAL;
 		goto done_write;
@@ -436,7 +436,7 @@ static int tcs_write(struct rsc_drv *drv, const struct tcs_request *msg)
 	__tcs_trigger(drv, tcs_id, true);
 
 done_write:
-	spin_unlock(&drv->lock);
+	raw_spin_unlock(&drv->lock);
 	return ret;
 }
 
@@ -540,12 +540,12 @@ static int tcs_ctrl_write(struct rsc_drv *drv, const struct tcs_request *msg)
 	if (IS_ERR(tcs))
 		return PTR_ERR(tcs);
 
-	spin_lock(&drv->lock);
+	raw_spin_lock(&drv->lock);
 	/* find the TCS id and the command in the TCS to write to */
 	ret = find_slots(tcs, msg, &tcs_id, &cmd_id);
 	if (!ret)
 		__tcs_buffer_write(drv, tcs_id, cmd_id, msg);
-	spin_unlock(&drv->lock);
+	raw_spin_unlock(&drv->lock);
 
 	return ret;
 }
@@ -571,15 +571,15 @@ void rpmh_rsc_mode_solver_set(struct rsc_drv *drv, bool enable)
 	if (!tcs->num_tcs)
 		tcs = get_tcs_of_type(drv, WAKE_TCS);
 again:
-	spin_lock(&drv->lock);
+	raw_spin_lock(&drv->lock);
 	for (m = tcs->offset; m < tcs->offset + tcs->num_tcs; m++) {
 		if (!tcs_is_free(drv, m)) {
-			spin_unlock(&drv->lock);
+			raw_spin_unlock(&drv->lock);
 			goto again;
 		}
 	}
 	drv->in_solver_mode = enable;
-	spin_unlock(&drv->lock);
+	raw_spin_unlock(&drv->lock);
 }
 
 /**
@@ -879,7 +879,7 @@ static int rpmh_rsc_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	spin_lock_init(&drv->lock);
+	raw_spin_lock_init(&drv->lock);
 	drv->in_solver_mode = false;
 	bitmap_zero(drv->tcs_in_use, MAX_TCS_NR);
 
@@ -890,7 +890,7 @@ static int rpmh_rsc_probe(struct platform_device *pdev)
 	drv->irq = irq;
 
 	ret = devm_request_irq(&pdev->dev, irq, tcs_tx_done,
-			       IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND,
+			       IRQF_TRIGGER_HIGH | IRQF_NO_SUSPEND | IRQF_NO_THREAD,
 			       drv->name, drv);
 	if (ret)
 		return ret;
