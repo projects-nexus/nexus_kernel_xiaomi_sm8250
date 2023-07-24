@@ -17,12 +17,10 @@
 #include <linux/mutex.h>
 #include <linux/rbtree.h>
 #include <linux/sched.h>
-#include <linux/kthread.h>
 #include <linux/shrinker.h>
 #include <linux/types.h>
 #include <linux/miscdevice.h>
 #include <linux/bitops.h>
-#include <linux/vmstat.h>
 #include <linux/msm_dma_iommu_mapping.h>
 #include "ion_kernel.h"
 #include "../uapi/ion.h"
@@ -55,16 +53,6 @@
 #define MAKE_ION_ALLOC_DMA_READY 1
 #else
 #define MAKE_ION_ALLOC_DMA_READY 0
-#endif
-
-/* ION page pool marks in bytes */
-#ifdef CONFIG_ION_POOL_AUTO_REFILL
-#define ION_POOL_FILL_MARK (CONFIG_ION_POOL_FILL_MARK * SZ_1M)
-#define POOL_LOW_MARK_PERCENT	40UL
-#define ION_POOL_LOW_MARK ((ION_POOL_FILL_MARK * POOL_LOW_MARK_PERCENT) / 100)
-#else
-#define ION_POOL_FILL_MARK 0UL
-#define ION_POOL_LOW_MARK 0UL
 #endif
 
 /* if low watermark of zones have reached, defer the refill in this window */
@@ -342,7 +330,6 @@ ion_secure_carveout_heap_create(struct ion_platform_heap *heap);
  * struct ion_page_pool - pagepool struct
  * @high_count:		number of highmem items in the pool
  * @low_count:		number of lowmem items in the pool
- * @count:		total number of pages/items in the pool
  * @high_items:		list of highmem items
  * @low_items:		list of lowmem items
  * @mutex:		lock protecting this struct and especially the count
@@ -350,8 +337,7 @@ ion_secure_carveout_heap_create(struct ion_platform_heap *heap);
  * @gfp_mask:		gfp_mask to use from alloc
  * @order:		order of pages in the pool
  * @list:		plist node for list of pools
- * @cached:		it's cached pool or not
- * @heap:		ion heap associated to this pool
+ * @cached:            it's cached pool or not
  *
  * Allows you to keep a pool of pre allocated pages to use from your heap.
  * Keeping a pool of pages that is ready for dma, ie any cached mapping have
@@ -361,7 +347,6 @@ ion_secure_carveout_heap_create(struct ion_platform_heap *heap);
 struct ion_page_pool {
 	int high_count;
 	int low_count;
-	atomic_t count;
 	bool cached;
 	struct list_head high_items;
 	struct list_head low_items;
@@ -376,7 +361,6 @@ struct ion_page_pool {
 
 struct ion_page_pool *ion_page_pool_create(gfp_t gfp_mask, unsigned int order,
 					   bool cached);
-void ion_page_pool_refill(struct ion_page_pool *pool);
 void ion_page_pool_destroy(struct ion_page_pool *pool);
 struct page *ion_page_pool_alloc(struct ion_page_pool *a, bool *from_pool);
 void ion_page_pool_free(struct ion_page_pool *pool, struct page *page);
@@ -424,23 +408,4 @@ static inline void ion_pages_sync_for_device(struct device *dev,
 	dma_sync_sg_for_device(dev, &sg, 1, dir);
 }
 
-static __always_inline int get_pool_fillmark(struct ion_page_pool *pool)
-{
-	return ION_POOL_FILL_MARK / (PAGE_SIZE << pool->order);
-}
-
-static __always_inline int get_pool_lowmark(struct ion_page_pool *pool)
-{
-	return ION_POOL_LOW_MARK / (PAGE_SIZE << pool->order);
-}
-
-static __always_inline bool pool_count_below_lowmark(struct ion_page_pool *pool)
-{
-	return atomic_read(&pool->count) < get_pool_lowmark(pool);
-}
-
-static __always_inline bool pool_fillmark_reached(struct ion_page_pool *pool)
-{
-	return atomic_read(&pool->count) >= get_pool_fillmark(pool);
-}
 #endif /* _ION_H */
