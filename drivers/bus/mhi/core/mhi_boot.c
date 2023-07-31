@@ -286,7 +286,7 @@ int mhi_download_rddm_img(struct mhi_controller *mhi_cntrl, bool in_panic)
 	MHI_CNTRL_LOG("Waiting for image download completion\n");
 
 	/* waiting for image download completion */
-	wait_event_timeout(mhi_cntrl->state_event,
+	swait_event_timeout_exclusive(mhi_cntrl->state_event,
 			   mhi_read_reg_field(mhi_cntrl, base,
 					      BHIE_RXVECSTATUS_OFFS,
 					      BHIE_RXVECSTATUS_STATUS_BMSK,
@@ -338,7 +338,7 @@ static int mhi_fw_load_amss(struct mhi_controller *mhi_cntrl,
 	MHI_CNTRL_LOG("Waiting for image transfer completion\n");
 
 	/* waiting for image download completion */
-	wait_event_timeout(mhi_cntrl->state_event,
+	swait_event_timeout_exclusive(mhi_cntrl->state_event,
 			   MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state) ||
 			   mhi_read_reg_field(mhi_cntrl, base,
 					      BHIE_TXVECSTATUS_OFFS,
@@ -398,7 +398,7 @@ static int mhi_fw_load_sbl(struct mhi_controller *mhi_cntrl,
 	MHI_CNTRL_LOG("Waiting for image transfer completion\n");
 
 	/* waiting for image download completion */
-	wait_event_timeout(mhi_cntrl->state_event,
+	swait_event_timeout_exclusive(mhi_cntrl->state_event,
 			   MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state) ||
 			   mhi_read_reg_field(mhi_cntrl, base, BHI_STATUS,
 					      BHI_STATUS_MASK, BHI_STATUS_SHIFT,
@@ -656,7 +656,7 @@ fw_load_ee_pthru:
 	}
 
 	/* wait for SBL event */
-	ret = wait_event_timeout(mhi_cntrl->state_event,
+	ret = swait_event_timeout_exclusive(mhi_cntrl->state_event,
 				 mhi_cntrl->ee == MHI_EE_SBL ||
 				 MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
 				 msecs_to_jiffies(mhi_cntrl->timeout_ms));

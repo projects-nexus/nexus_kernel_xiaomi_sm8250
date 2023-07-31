@@ -1582,7 +1582,7 @@ int of_register_mhi_controller(struct mhi_controller *mhi_cntrl)
 	spin_lock_init(&mhi_cntrl->transition_lock);
 	spin_lock_init(&mhi_cntrl->wlock);
 	INIT_WORK(&mhi_cntrl->st_worker, mhi_pm_st_worker);
-	init_waitqueue_head(&mhi_cntrl->state_event);
+	init_swait_queue_head(&mhi_cntrl->state_event);
 
 	mhi_cntrl->wq = alloc_ordered_workqueue("mhi_w", WQ_HIGHPRI);
 	if (!mhi_cntrl->wq)
@@ -2015,7 +2015,7 @@ static int mhi_driver_remove(struct device *dev)
 		    ch_state[dir] != MHI_CH_STATE_DISABLED && !interrupted) {
 			MHI_ERR("Channel %s busy, wait for it to be reset\n",
 				mhi_dev->chan_name);
-			ret = wait_event_interruptible(mhi_cntrl->state_event,
+			ret = swait_event_interruptible_exclusive(mhi_cntrl->state_event,
 				mhi_chan->ch_state == MHI_CH_STATE_DISABLED ||
 				MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state));
 			if (unlikely(ret))
