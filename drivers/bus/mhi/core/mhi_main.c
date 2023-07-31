@@ -1749,6 +1749,7 @@ irqreturn_t mhi_intvec_handlr(int irq_number, void *dev)
 	struct mhi_controller *mhi_cntrl = dev;
 
 	/* wake up any events waiting for state change */
+	local_irq_enable();
 	MHI_VERB("Enter\n");
 	if (unlikely(mhi_cntrl->initiate_mhi_reset)) {
 		u32 in_reset;
@@ -1759,6 +1760,7 @@ irqreturn_t mhi_intvec_handlr(int irq_number, void *dev)
 	}
 	swake_up_all(&mhi_cntrl->state_event);
 	MHI_VERB("Exit\n");
+	local_irq_disable();
 
 	if (MHI_IN_MISSION_MODE(mhi_cntrl->ee))
 		queue_work(mhi_cntrl->wq, &mhi_cntrl->special_work);
