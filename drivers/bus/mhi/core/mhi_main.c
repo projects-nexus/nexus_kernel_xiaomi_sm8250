@@ -1718,6 +1718,7 @@ irqreturn_t mhi_intvec_handlr(int irq_number, void *dev)
 	u32 in_reset = -1;
 
 	/* wake up any events waiting for state change */
+	local_irq_enable();
 	MHI_VERB("Enter\n");
 	if (unlikely(mhi_cntrl->initiate_mhi_reset)) {
 		mhi_read_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
@@ -1726,6 +1727,7 @@ irqreturn_t mhi_intvec_handlr(int irq_number, void *dev)
 	}
 	swake_up_all(&mhi_cntrl->state_event);
 	MHI_VERB("Exit\n");
+	local_irq_disable();
 
 	if (MHI_IN_MISSION_MODE(mhi_cntrl->ee))
 		queue_work(mhi_cntrl->wq, &mhi_cntrl->special_work);
