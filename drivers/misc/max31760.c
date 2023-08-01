@@ -19,7 +19,6 @@
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <linux/regulator/consumer.h>
-#include <linux/rwlock.h>
 #include <linux/uaccess.h>
 #include <linux/regmap.h>
 
