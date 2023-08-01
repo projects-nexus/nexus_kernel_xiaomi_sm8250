@@ -62,7 +62,8 @@ TM=$(date +"%F%S")
 
 # Specify Final Zip Name
 ZIPNAME=Nexus
-FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
+FINAL_ZIP=${ZIPNAME}-AOSP-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
+FINAL_ZIP_MIUI=${ZIPNAME}-MIUI-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
 COMPILER=neutron
@@ -356,8 +357,169 @@ function zipping() {
         zip -r9 ${FINAL_ZIP} *
         MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
         push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
+        rm ${FINAL_ZIP}
+		cd ..
+}
+
+function miui_adapt() {
+    sed -i 's/<154>/<1537>/g' $dts_source/dsi-panel-j1s*
+    sed -i 's/<154>/<1537>/g' $dts_source/dsi-panel-j2*
+    sed -i 's/<155>/<1544>/g' $dts_source/dsi-panel-j3s-37-02-0a-dsc-video.dtsi
+    sed -i 's/<155>/<1545>/g' $dts_source/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
+    sed -i 's/<155>/<1546>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
+    sed -i 's/<155>/<1546>/g' $dts_source/dsi-panel-l11r-38-08-0a-dsc-cmd.dtsi
+    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
+    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-j3s-37-02-0a-dsc-video.dtsi
+    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
+    sed -i 's/<70>/<695>/g' $dts_source/dsi-panel-l11r-38-08-0a-dsc-cmd.dtsi
+    sed -i 's/<71>/<710>/g' $dts_source/dsi-panel-j1s*
+    sed -i 's/<71>/<710>/g' $dts_source/dsi-panel-j2*
+    sed -i 's/qcom,mdss-dsi-qsync-min-refresh-rate/\/\/qcom,mdss-dsi-qsync-min-refresh-rate/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ mi,mdss-dsi-smart-fps-max_framerate/mi,mdss-dsi-smart-fps-max_framerate/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ mi,mdss-dsi-pan-enable-smart-fps/mi,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
+    sed -i 's/\/\/ qcom,mdss-dsi-pan-enable-smart-fps/qcom,mdss-dsi-pan-enable-smart-fps/g' $dts_source/dsi-panel*
+    sed -i 's/120 90 60/120 90 60 50 30/g' $dts_source/dsi-panel-g7a-37-02-0a-dsc-video.dtsi
+    sed -i 's/120 90 60/120 90 60 50 30/g' $dts_source/dsi-panel-g7a-37-02-0b-dsc-video.dtsi
+    sed -i 's/120 90 60/120 90 60 50 30/g' $dts_source/dsi-panel-g7a-36-02-0c-dsc-video.dtsi
+    sed -i 's/144 120 90 60/144 120 90 60 50 48 30/g' $dts_source/dsi-panel-j3s-37-02-0a-dsc-video.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 03 51 03 FF/39 00 00 00 00 00 03 51 03 FF/g' $dts_source/dsi-panel-j9-38-0a-0a-fhd-video.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 03 51 0D FF/39 00 00 00 00 00 03 51 0D FF/g' $dts_source/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 05 51 0F 8F 00 00/39 00 00 00 00 00 05 51 0F 8F 00 00/g' $dts_source/dsi-panel-j1s-42-02-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 05 51 0F 8F 00 00/39 00 00 00 00 00 05 51 0F 8F 00 00/g' $dts_source/dsi-panel-j1s-42-02-0a-mp-dsc-cmd.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 05 51 0F 8F 00 00/39 00 00 00 00 00 05 51 0F 8F 00 00/g' $dts_source/dsi-panel-j2-mp-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 05 51 0F 8F 00 00/39 00 00 00 00 00 05 51 0F 8F 00 00/g' $dts_source/dsi-panel-j2-p2-1-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 00 00 00 00 00 05 51 0F 8F 00 00/39 00 00 00 00 00 05 51 0F 8F 00 00/g' $dts_source/dsi-panel-j2s-mp-42-02-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 00 00/39 01 00 00 00 00 03 51 00 00/g' $dts_source/dsi-panel-j2-38-0c-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 00 00/39 01 00 00 00 00 03 51 00 00/g' $dts_source/dsi-panel-j2-38-0c-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 03 FF/39 01 00 00 00 00 03 51 03 FF/g' $dts_source/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 03 FF/39 01 00 00 00 00 03 51 03 FF/g' $dts_source/dsi-panel-j9-38-0a-0a-fhd-video.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 07 FF/39 01 00 00 00 00 03 51 07 FF/g' $dts_source/dsi-panel-j1u-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 07 FF/39 01 00 00 00 00 03 51 07 FF/g' $dts_source/dsi-panel-j2-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 07 FF/39 01 00 00 00 00 03 51 07 FF/g' $dts_source/dsi-panel-j2-p1-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' $dts_source/dsi-panel-j1u-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' $dts_source/dsi-panel-j2-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 03 51 0F FF/39 01 00 00 00 00 03 51 0F FF/g' $dts_source/dsi-panel-j2-p1-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' $dts_source/dsi-panel-j1s-42-02-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' $dts_source/dsi-panel-j1s-42-02-0a-mp-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' $dts_source/dsi-panel-j2-mp-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' $dts_source/dsi-panel-j2-p2-1-42-02-0b-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 00 00/g' $dts_source/dsi-panel-j2s-mp-42-02-0a-dsc-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 01 00 03 51 03 FF/39 01 00 00 01 00 03 51 03 FF/g' $dts_source/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
+    sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' $dts_source/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
+    
+    if [ "${DEVICE}" = "lmi" ]; then
+        scripts/config --file ${OUT_DIR}/.config \
+        -d LOCALVERSION_AUTO \
+        -e IPC_LOGGING \
+        -e MI_DRM_OPT \
+        -d OSSFOD
+    else
+        scripts/config --file ${OUT_DIR}/.config \
+        -d LOCALVERSION_AUTO \
+        -d TOUCHSCREEN_COMMON \
+        -e IPC_LOGGING \
+        -e MI_DRM_OPT \
+        -d OSSFOD
+    fi
+}
+
+function zipping_miui() {
+    cd AnyKernel3 || exit 1
+        zip -r9 ${FINAL_ZIP_MIUI} *
+        MD5CHECK=$(md5sum "$FINAL_ZIP_MIUI" | cut -d' ' -f1)
+        push "$FINAL_ZIP_MIUI" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
 		cd ..
         rm -rf AnyKernel3
+}
+
+function compile_miui() {
+START=$(date +"%s")
+	# Compile
+	if [ -d ${KERNEL_DIR}/clang ];
+	   then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+           if [ "${DEVICE}" = "lmi" ]; then
+            scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -e IPC_LOGGING \
+                -e MI_DRM_OPT \
+                -d OSSFOD
+            else
+            scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -d TOUCHSCREEN_COMMON \
+                -e IPC_LOGGING \
+                -e MI_DRM_OPT \
+                -d OSSFOD
+            fi
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CROSS_COMPILE=aarch64-linux-gnu- \
+	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+	   then
+           make O=out ARCH=arm64 ${DEFCONFIG}
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size \
+	       V=$VERBOSE 2>&1 | tee error.log
+        elif [ -d ${KERNEL_DIR}/clangB ];
+           then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+           if [ "${DEVICE}" = "lmi" ]; then
+            scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -e IPC_LOGGING \
+                -e MI_DRM_OPT \
+                -d OSSFOD
+            else
+            scripts/config --file ${OUT_DIR}/.config \
+                -d LOCALVERSION_AUTO \
+                -d TOUCHSCREEN_COMMON \
+                -e IPC_LOGGING \
+                -e MI_DRM_OPT \
+                -d OSSFOD
+            fi
+           make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CLANG_TRIPLE=aarch64-linux-gnu- \
+	       CROSS_COMPILE=aarch64-linux-android- \
+	       CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	fi
+	
+	# Verify Files
+	if ! [ -a "$IMAGE" ];
+	   then
+	       push "error.log" "Build Throws Errors"
+	       exit 1
+	   else
+	       post_msg " Kernel Compilation Finished. Started Zipping "
+		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
+		   DTB=$(pwd)/out/arch/arm64/boot/dtb
+	fi
 }
 
 cloneTC
@@ -371,8 +533,15 @@ echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
 compile_ksu
 move_ksu
 zipping
-if [ "$BUILD" = "local" ]; then
 # Discard KSU changes in defconfig
-git restore arch/arm64/configs/$DEFCONFIGf
-fi
-
+git restore arch/arm64/configs/$DEFCONFIG
+miui_adapt
+compile_miui
+move
+# KernelSU
+echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
+compile_miui
+move_ksu
+zipping_miui
+# Discard miui changes
+git restore arch/
