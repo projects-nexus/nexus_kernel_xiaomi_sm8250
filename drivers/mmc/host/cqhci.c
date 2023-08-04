@@ -603,7 +603,7 @@ static void cqhci_pm_qos_vote(struct sdhci_host *host, struct mmc_request *mrq)
 	struct request *req = mmc_queue_req_to_req(mqrq);
 
 	sdhci_msm_pm_qos_cpu_vote(host,
-		msm_host->pdata->pm_qos_data.cmdq_latency, req->cpu);
+		msm_host->pdata->pm_qos_data.cmdq_latency, blk_mq_rq_cpu(req));
 }
 
 static void cqhci_pm_qos_unvote(struct sdhci_host *host,
@@ -614,7 +614,7 @@ static void cqhci_pm_qos_unvote(struct sdhci_host *host,
 	struct request *req = mmc_queue_req_to_req(mqrq);
 
 	/* use async as we're inside an atomic context (soft-irq) */
-	sdhci_msm_pm_qos_cpu_unvote(host, req->cpu, true);
+	sdhci_msm_pm_qos_cpu_unvote(host, blk_mq_rq_cpu(req), true);
 }
 
 static void cqhci_post_req(struct mmc_host *host, struct mmc_request *mrq)
