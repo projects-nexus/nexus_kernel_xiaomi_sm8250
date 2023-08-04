@@ -567,12 +567,8 @@ static void dd_finish_request(struct request *rq)
 
 		spin_lock_irqsave(&dd->zone_lock, flags);
 		blk_req_zone_write_unlock(rq);
-		if (!list_empty(&dd->fifo_list[WRITE])) {
-			struct blk_mq_hw_ctx *hctx;
-
-			hctx = blk_mq_map_queue(q, rq->mq_ctx->cpu);
-			blk_mq_sched_mark_restart_hctx(hctx);
-		}
+		if (!list_empty(&dd->fifo_list[WRITE]))
+			blk_mq_sched_mark_restart_hctx(rq->mq_hctx);
 		spin_unlock_irqrestore(&dd->zone_lock, flags);
 	}
 }
