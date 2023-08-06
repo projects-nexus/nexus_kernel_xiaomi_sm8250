@@ -154,22 +154,26 @@ static struct cache_req *cache_rpm_request(struct rpmh_ctrlr *ctrlr,
 					   enum rpmh_state state,
 					   struct tcs_cmd *cmd)
 {
-	struct cache_req *req;
+	struct cache_req *req, *new_req = NULL;
 
 	spin_lock(&ctrlr->cache_lock);
 	req = __find_req(ctrlr, cmd->addr);
 	if (req)
 		goto existing;
+	spin_unlock(&ctrlr->cache_lock);
 
-	req = kzalloc(sizeof(*req), GFP_ATOMIC);
-	if (!req) {
+	new_req = kzalloc(sizeof(*req), GFP_ATOMIC);
+	if (!new_req)
 		req = ERR_PTR(-ENOMEM);
-		goto unlock;
-	}
 
+	spin_lock(&ctrlr->cache_lock);
+	req = __find_req(ctrlr, cmd->addr);
+	if (req)
+                goto existing;
+
+	req = new_req;
 	req->addr = cmd->addr;
 	req->sleep_val = req->wake_val = UINT_MAX;
-	INIT_LIST_HEAD(&req->list);
 	list_add_tail(&req->list, &ctrlr->cache);
 
 existing:
@@ -196,8 +200,10 @@ existing:
 		break;
 	}
 
-unlock:
 	spin_unlock(&ctrlr->cache_lock);
+
+	if (new_req && new_req != req)
+		kfree(new_req);
 
 	return req;
 }
@@ -360,7 +366,6 @@ static int flush_batch(struct rpmh_ctrlr *ctrlr)
 	int i;
 
 	/* Send Sleep/Wake requests to the controller, expect no response */
-	spin_lock(&ctrlr->cache_lock);
 	list_for_each_entry(req, &ctrlr->batch_cache, list) {
 		for (i = 0; i < req->count; i++) {
 			rpm_msg = req->rpm_msgs + i;
@@ -370,7 +375,6 @@ static int flush_batch(struct rpmh_ctrlr *ctrlr)
 				break;
 		}
 	}
-	spin_unlock(&ctrlr->cache_lock);
 
 	return ret;
 }
