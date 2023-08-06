@@ -154,22 +154,26 @@ static struct cache_req *cache_rpm_request(struct rpmh_ctrlr *ctrlr,
 					   enum rpmh_state state,
 					   struct tcs_cmd *cmd)
 {
-	struct cache_req *req;
+	struct cache_req *req, *new_req = NULL;
 
 	spin_lock(&ctrlr->cache_lock);
 	req = __find_req(ctrlr, cmd->addr);
 	if (req)
 		goto existing;
+	spin_unlock(&ctrlr->cache_lock);
 
-	req = kzalloc(sizeof(*req), GFP_ATOMIC);
-	if (!req) {
+	new_req = kzalloc(sizeof(*req), GFP_ATOMIC);
+	if (!new_req)
 		req = ERR_PTR(-ENOMEM);
-		goto unlock;
-	}
 
+	spin_lock(&ctrlr->cache_lock);
+	req = __find_req(ctrlr, cmd->addr);
+	if (req)
+                goto existing;
+
+	req = new_req;
 	req->addr = cmd->addr;
 	req->sleep_val = req->wake_val = UINT_MAX;
-	INIT_LIST_HEAD(&req->list);
 	list_add_tail(&req->list, &ctrlr->cache);
 
 existing:
@@ -196,8 +200,10 @@ existing:
 		break;
 	}
 
-unlock:
 	spin_unlock(&ctrlr->cache_lock);
+
+	if (new_req && new_req != req)
+		kfree(new_req);
 
 	return req;
 }
@@ -347,9 +353,10 @@ EXPORT_SYMBOL(rpmh_write);
 static void cache_batch(struct rpmh_ctrlr *ctrlr, struct batch_cache_req *req)
 {
 
-	spin_lock(&ctrlr->cache_lock);
+	raw_spin_lock(&ctrlr->batch_lock);
 	list_add_tail(&req->list, &ctrlr->batch_cache);
-	spin_unlock(&ctrlr->cache_lock);
+	ctrlr->cache_count++;
+	raw_spin_unlock(&ctrlr->batch_lock);
 }
 
 static int flush_batch(struct rpmh_ctrlr *ctrlr)
@@ -360,7 +367,7 @@ static int flush_batch(struct rpmh_ctrlr *ctrlr)
 	int i;
 
 	/* Send Sleep/Wake requests to the controller, expect no response */
-	spin_lock(&ctrlr->cache_lock);
+	raw_spin_lock(&ctrlr->batch_lock);
 	list_for_each_entry(req, &ctrlr->batch_cache, list) {
 		for (i = 0; i < req->count; i++) {
 			rpm_msg = req->rpm_msgs + i;
@@ -370,22 +377,39 @@ static int flush_batch(struct rpmh_ctrlr *ctrlr)
 				break;
 		}
 	}
-	spin_unlock(&ctrlr->cache_lock);
+	raw_spin_unlock(&ctrlr->batch_lock);
 
 	return ret;
 }
 
-static void invalidate_batch(struct rpmh_ctrlr *ctrlr)
+static int invalidate_batch(struct rpmh_ctrlr *ctrlr)
 {
-	struct batch_cache_req *req, *tmp;
+	struct batch_cache_req *req, *tmp_list, **tmp;
+	int i = 0, count;
 
-	spin_lock(&ctrlr->cache_lock);
-	list_for_each_entry_safe(req, tmp, &ctrlr->batch_cache, list) {
+	tmp = kmalloc(sizeof(*tmp) * ctrlr->cache_count, GFP_KERNEL);
+	if (!tmp)
+		return -ENOMEM;
+
+	raw_spin_lock(&ctrlr->batch_lock);
+	list_for_each_entry_safe(req, tmp_list, &ctrlr->batch_cache, list) {
 		list_del(&req->list);
-		kfree(req);
+		tmp[i] = req;
+		i++;
 	}
 	INIT_LIST_HEAD(&ctrlr->batch_cache);
-	spin_unlock(&ctrlr->cache_lock);
+
+	count = ctrlr->cache_count;
+        ctrlr->cache_count = 0;
+
+        raw_spin_unlock(&ctrlr->batch_lock);
+
+	for (i = 0; i < count; i++)
+		kfree(tmp[i]);
+
+	kfree(tmp);
+
+	return 0;
 }
 
 /**
@@ -434,7 +458,7 @@ int rpmh_write_batch(const struct device *dev, enum rpmh_state state,
 
 	ptr = kzalloc(sizeof(*req) +
 		      count * (sizeof(req->rpm_msgs[0]) + sizeof(*compls)),
-		      GFP_ATOMIC);
+		      GFP_KERNEL);
 	if (!ptr)
 		return -ENOMEM;
 
@@ -618,6 +642,10 @@ int rpmh_invalidate(const struct device *dev)
 		return 0;
 
 	invalidate_batch(ctrlr);
+	ret = invalidate_batch(ctrlr);
+	if (ret)
+		return ret;
+
 	ctrlr->dirty = true;
 
 	do {

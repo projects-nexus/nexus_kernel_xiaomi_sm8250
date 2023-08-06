@@ -899,8 +899,10 @@ static int rpmh_rsc_probe(struct platform_device *pdev)
 	write_tcs_reg(drv, RSC_DRV_IRQ_ENABLE, 0, drv->tcs[ACTIVE_TCS].mask);
 
 	spin_lock_init(&drv->client.cache_lock);
+        raw_spin_lock_init(&drv->client.batch_lock);
 	INIT_LIST_HEAD(&drv->client.cache);
 	INIT_LIST_HEAD(&drv->client.batch_cache);
+	drv->client.cache_count = 0;
 
 	drv->ipc_log_ctx = ipc_log_context_create(RSC_DRV_IPC_LOG_SIZE,
 						  drv->name, 0);
