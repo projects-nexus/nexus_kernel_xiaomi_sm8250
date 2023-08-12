@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2019, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -14,7 +14,6 @@
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/freezer.h>
-#include <linux/signal.h>
 #include <sound/soc.h>
 #include <sound/lsm_params.h>
 #include <sound/pcm_params.h>
@@ -130,7 +129,7 @@ struct cpe_lsm_lab {
 
 struct cpe_priv {
 	void *core_handle;
-	struct snd_soc_component *component;
+	struct snd_soc_codec *codec;
 	struct wcd_cpe_lsm_ops lsm_ops;
 	struct wcd_cpe_afe_ops afe_ops;
 	bool afe_mad_ctl;
@@ -187,7 +186,6 @@ static struct cpe_priv *cpe_get_private_data(
 	struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_component *component = NULL;
 
 	if (!substream || !substream->private_data) {
 		pr_err("%s: %s is invalid\n",
@@ -198,19 +196,14 @@ static struct cpe_priv *cpe_get_private_data(
 
 	rtd = substream->private_data;
 
-	if (!rtd) {
+	if (!rtd || !rtd->platform) {
 		pr_err("%s: %s is invalid\n",
 			 __func__,
 			(!rtd) ? "runtime" : "platform");
 		goto err_ret;
 	}
 
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
-	if (!component) {
-		pr_err("%s: invalid component\n", __func__);
-		goto err_ret;
-	}
-        return snd_soc_component_get_drvdata(component);
+	return snd_soc_platform_get_drvdata(rtd->platform);
 
 err_ret:
 	return NULL;
@@ -763,7 +756,7 @@ static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
 	struct wcd_cpe_lsm_ops *lsm_ops;
 	int rc = 0;
 
-	if (!cpe || !cpe->component) {
+	if (!cpe || !cpe->codec) {
 		dev_err(rtd->dev,
 			"%s: Invalid private data\n",
 			__func__);
@@ -799,11 +792,11 @@ static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
 		return -EINVAL;
 	}
 
-	cpe->core_handle = wcd_cpe_get_core_handle(cpe->component);
+	cpe->core_handle = wcd_cpe_get_core_handle(cpe->codec);
 
 	if (!cpe->core_handle) {
 		dev_err(rtd->dev,
-			"%s: Invalid handle to component core\n",
+			"%s: Invalid handle to codec core\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -3222,6 +3215,7 @@ static int msm_asoc_cpe_lsm_probe(struct snd_soc_component *component)
 {
 	struct snd_soc_card *card;
 	struct snd_soc_pcm_runtime *rtd;
+	struct snd_soc_codec *codec;
 	struct cpe_priv *cpe_priv;
 	struct snd_soc_component *component_rtd = NULL;
 	const struct snd_kcontrol_new *kcontrol;
@@ -3265,12 +3259,14 @@ static int msm_asoc_cpe_lsm_probe(struct snd_soc_component *component)
 		port_id = 1;
 	}
 
+	codec = rtd->codec;
+
 	cpe_priv = kzalloc(sizeof(struct cpe_priv),
 			   GFP_KERNEL);
 	if (!cpe_priv)
 		return -ENOMEM;
 
-	cpe_priv->component = component;
+	cpe_priv->codec = codec;
 	cpe_priv->input_port_id = port_id;
 	wcd_cpe_get_lsm_ops(&cpe_priv->lsm_ops);
 	wcd_cpe_get_afe_ops(&cpe_priv->afe_ops);
@@ -3321,7 +3317,7 @@ static int msm_cpe_lsm_probe(struct platform_device *pdev)
  */
 static int msm_cpe_lsm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_component(&pdev->dev);
+	snd_soc_unregister_commponent(&pdev->dev);
 	return 0;
 }
 

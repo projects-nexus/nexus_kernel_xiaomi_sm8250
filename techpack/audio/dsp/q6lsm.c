@@ -1218,7 +1218,7 @@ int q6lsm_set_afe_data_format(uint64_t fe_id, uint16_t afe_data_format)
 {
 	int n = 0;
 
-#if defined(CONFIG_MACH_XIAOMI_PSYCHE) || defined(CONFIG_MACH_XIAOMI_DAGU)
+#if defined(CONFIG_TARGET_PRODUCT_PSYCHE) || defined(CONFIG_TARGET_PRODUCT_DAGU)
 	int free_session = LSM_INVALID_SESSION_ID;
 #endif
 
@@ -1229,7 +1229,7 @@ int q6lsm_set_afe_data_format(uint64_t fe_id, uint16_t afe_data_format)
 		 afe_data_format ? "unprocessed" : "processed");
 
 	for (n = LSM_MIN_SESSION_ID; n <= LSM_MAX_SESSION_ID; n++) {
-#if !defined(CONFIG_MACH_XIAOMI_PSYCHE) && !defined(CONFIG_MACH_XIAOMI_DAGU)
+#if !defined(CONFIG_TARGET_PRODUCT_PSYCHE) && !defined(CONFIG_TARGET_PRODUCT_DAGU)
 		if (0 == lsm_client_afe_data[n].fe_id) {
 			lsm_client_afe_data[n].fe_id = fe_id;
 #else
@@ -1249,7 +1249,7 @@ int q6lsm_set_afe_data_format(uint64_t fe_id, uint16_t afe_data_format)
 		}
 	}
 
-#if defined(CONFIG_MACH_XIAOMI_PSYCHE) || defined(CONFIG_MACH_XIAOMI_DAGU)
+#if defined(CONFIG_TARGET_PRODUCT_PSYCHE) || defined(CONFIG_TARGET_PRODUCT_DAGU)
 	/*
 	 * When no matching session is found, allocate
 	 * a new one if a free session is available.
@@ -2466,6 +2466,7 @@ int q6lsm_get_one_param(struct lsm_client *client,
 {
 	struct param_hdr_v3 param_info;
 	int rc = 0;
+	bool iid_supported = q6common_is_instance_id_supported();
 
 	memset(&param_info, 0, sizeof(param_info));
 
@@ -2474,7 +2475,12 @@ int q6lsm_get_one_param(struct lsm_client *client,
 		param_info.module_id = p_info->module_id;
 		param_info.instance_id = p_info->instance_id;
 		param_info.param_id = p_info->param_id;
-		param_info.param_size = p_info->param_size + sizeof(param_info);
+
+		if (iid_supported)
+			param_info.param_size = p_info->param_size + sizeof(struct param_hdr_v3);
+		else
+			param_info.param_size = p_info->param_size + sizeof(struct param_hdr_v2);
+
 		rc = q6lsm_get_params(client, NULL, &param_info);
 		if (rc) {
 			pr_err("%s: LSM_GET_CUSTOM_PARAMS failed, rc %d\n",

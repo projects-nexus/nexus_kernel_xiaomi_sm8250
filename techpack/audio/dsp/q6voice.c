@@ -4123,10 +4123,10 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 	case EC_REF_PATH:
 		channel_info_param_data->param_id =
 			VSS_PARAM_VOCPROC_EC_REF_CHANNEL_INFO;
-#if defined(CONFIG_MACH_XIAOMI_ENUMA) || defined(CONFIG_MACH_XIAOMI_ELISH)
+#if defined(CONFIG_TARGET_PRODUCT_ENUMA) || defined(CONFIG_TARGET_PRODUCT_ELISH)
 		if (v->dev_rx.port_id == 0x9020) {
 			channel_info->num_channels = 4;
-			pr_err("%s: set channel num 4 for port 9020", __func__);
+			pr_debug("%s: set channel num 4 for port 9020", __func__);
 		} else {
 			channel_info->num_channels = v->dev_rx.no_of_channels;
         	}
