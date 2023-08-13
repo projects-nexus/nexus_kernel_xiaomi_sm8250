@@ -89,14 +89,8 @@ int mb_cache_entry_create(struct mb_cache *cache, gfp_t mask, u32 key,
 		return -ENOMEM;
 
 	INIT_LIST_HEAD(&entry->e_list);
-	/*
-	 * We create entry with two references. One reference is kept by the
-	 * hash table, the other reference is used to protect us from
-	 * mb_cache_entry_delete_or_get() until the entry is fully setup. This
-	 * avoids nesting of cache->c_list_lock into hash table bit locks which
-	 * is problematic for RT.
-	 */
-	atomic_set(&entry->e_refcnt, 2);
+	/* Initial hash reference */
+	atomic_set(&entry->e_refcnt, 1);
 	entry->e_key = key;
 	entry->e_value = value;
 	entry->e_flags = 0;
@@ -112,12 +106,15 @@ int mb_cache_entry_create(struct mb_cache *cache, gfp_t mask, u32 key,
 		}
 	}
 	hlist_bl_add_head(&entry->e_hash_list, head);
-	hlist_bl_unlock(head);
+	/*
+	 * Add entry to LRU list before it can be found by
+	 * mb_cache_entry_delete() to avoid races
+	 */
 	spin_lock(&cache->c_list_lock);
 	list_add_tail(&entry->e_list, &cache->c_list);
 	cache->c_entry_count++;
 	spin_unlock(&cache->c_list_lock);
-	mb_cache_entry_put(cache, entry);
+	hlist_bl_unlock(head);
 
 	return 0;
 }
