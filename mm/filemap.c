@@ -2658,7 +2658,6 @@ vm_fault_t filemap_fault(struct vm_fault *vmf)
 	struct page *page;
 	vm_fault_t ret = 0;
 
-	if (vmf->flags & FAULT_FLAG_SPECULATIVE) {
 		page = find_get_page(mapping, offset);
 		if (unlikely(!page))
 			return VM_FAULT_RETRY;
