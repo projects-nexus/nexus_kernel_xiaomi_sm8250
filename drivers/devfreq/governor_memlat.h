@@ -15,9 +15,6 @@
  * @mem_count:			Number of memory accesses made.
  * @freq:			Effective frequency of the device in the
  *				last interval.
- * @wb_pct:			The ratio of writebacks to accesses. Used as an
- *				indirect way to identify memory latency due to
- *				snoop activity.
  */
 struct dev_stats {
 	int id;
@@ -25,7 +22,6 @@ struct dev_stats {
 	unsigned long mem_count;
 	unsigned long freq;
 	unsigned long stall_pct;
-	unsigned long wb_pct;
 };
 
 struct core_dev_map {
