@@ -130,6 +130,10 @@ function cloneTC() {
 				fi
 	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	        ;;
+	    slim)
+	        git clone --depth=1 https://gitlab.com/ThankYouMario/android_prebuilts_clang-standalone -b slim-16 clang
+	        PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	        ;;
 
 		*)
 			echo "Compiler not defined"
