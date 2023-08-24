@@ -638,8 +638,6 @@ static int aw869x_haptic_stop_delay(struct aw869x *aw869x)
 			return 0;
 
 		usleep_range(2000, 2500);
-		aw_dbg("%s wait for standby, reg glb_state=0x%02x\n", __func__,
-		       reg_val);
 	}
 	aw_err("%s do not enter standby automatically\n", __func__);
 

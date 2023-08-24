@@ -1049,8 +1049,6 @@ static int aw8697_haptic_stop_delay(struct aw8697 *aw8697)
 			return 0;
 		}
 		msleep(2);
-		pr_debug("%s wait for standby, reg glb_state=0x%02x\n",
-			 __func__, reg_val);
 	}
 	pr_err("%s do not enter standby automatically\n", __func__);
 
@@ -1074,10 +1072,6 @@ static int aw8697_haptic_stop(struct aw8697 *aw8697)
 		if ((reg_val & 0x0f) == AW869XX_BIT_GLBRD5_STATE_STANDBY ||
 		    (reg_val & 0x0f) == AW869XX_BIT_GLBRD5_STATE_I2S_GO) {
 			force_flag = false;
-			aw_dev_info(
-				aw8697->dev,
-				"%s already in standby mode! glb_state=0x%02X\n",
-				__func__, reg_val);
 		} else {
 			aw8697_i2c_write(aw8697, AW869XX_REG_PLAYCFG4,
 					 AW869XX_BIT_PLAYCFG4_STOP_ON);
@@ -1090,16 +1084,8 @@ static int aw8697_haptic_stop(struct aw8697 *aw8697)
 					    AW869XX_BIT_GLBRD5_STATE_I2S_GO) {
 					cnt = 0;
 					force_flag = false;
-					aw_dev_info(
-						aw8697->dev,
-						"%s entered standby! glb_state=0x%02X\n",
-						__func__, reg_val);
 				} else {
 					cnt--;
-					aw_dev_info(
-						aw8697->dev,
-						"%s wait for standby, glb_state=0x%02X\n",
-						__func__, reg_val);
 				}
 				usleep_range(2000, 2500);
 			}

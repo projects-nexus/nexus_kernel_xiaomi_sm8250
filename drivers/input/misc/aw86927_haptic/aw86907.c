@@ -329,12 +329,8 @@ static int aw86907_haptic_stop(struct aw86907 *aw86907)
 		    (reg_val & 0x0f) == AW86907_BIT_GLBRD5_STATE_I2S_GO) {
 			cnt = 0;
 			force_flag = false;
-			aw_info("%s entered standby! glb_state=0x%02X\n",
-				__func__, reg_val);
 		} else {
 			cnt--;
-			aw_dbg("%s wait for standby, glb_state=0x%02X\n",
-			       __func__, reg_val);
 		}
 		usleep_range(2000, 2500);
 	}

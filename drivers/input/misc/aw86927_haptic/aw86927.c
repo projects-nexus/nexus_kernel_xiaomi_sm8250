@@ -258,7 +258,6 @@ static int aw86927_haptic_wait_enter_standby(struct aw86927 *aw86927,
 			break;
 		}
 		cnt--;
-		aw_info("%s: wait for standby\n", __func__);
 
 		usleep_range(2000, 2500);
 	}
