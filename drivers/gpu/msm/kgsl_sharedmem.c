@@ -981,7 +981,6 @@ static int kgsl_memdesc_file_setup(struct kgsl_memdesc *memdesc, uint64_t size)
 			memdesc->shmem_filp = NULL;
 			return ret;
 		}
-		mapping_set_unevictable(memdesc->shmem_filp->f_mapping);
 	}
 
 	return 0;
