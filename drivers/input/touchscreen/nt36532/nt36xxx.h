@@ -24,7 +24,10 @@
 #include <linux/spi/spi.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
+#include <linux/pm_qos.h>
 #include <linux/power_supply.h>
+
+#include <linux/spi/spi-geni-qcom.h>
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
@@ -250,6 +253,9 @@ struct nvt_ts_data {
 	struct pinctrl_state *pinctrl_state_suspend;
 	struct workqueue_struct *event_wq;
 	struct work_struct resume_work;
+
+	struct pm_qos_request pm_spi_req;
+	struct pm_qos_request pm_touch_req;
 };
 
 #if NVT_TOUCH_PROC
