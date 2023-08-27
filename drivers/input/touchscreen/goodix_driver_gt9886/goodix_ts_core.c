@@ -1323,7 +1323,7 @@ int goodix_ts_irq_setup(struct goodix_ts_core *core_data)
 	ts_info("IRQ:%u,flags:%d", core_data->irq, (int)ts_bdata->irq_flags);
 	r = devm_request_threaded_irq(&core_data->pdev->dev, core_data->irq,
 				      NULL, goodix_ts_threadirq_func,
-				      ts_bdata->irq_flags | IRQF_ONESHOT,
+				      ts_bdata->irq_flags | IRQF_ONESHOT | IRQF_PERF_AFFINE,
 				      GOODIX_CORE_DRIVER_NAME, core_data);
 	if (r < 0)
 		ts_err("Failed to requeset threaded irq:%d", r);

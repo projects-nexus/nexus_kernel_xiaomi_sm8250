@@ -1377,7 +1377,7 @@ static int32_t nvt_ts_late_probe(struct i2c_client *client,
 		NVT_LOG("int_trigger_type=%d\n", ts->int_trigger_type);
 		ts->irq_enabled = true;
 		ret = request_threaded_irq(client->irq, NULL, nvt_ts_work_func,
-				ts->int_trigger_type | IRQF_ONESHOT, NVT_I2C_NAME, ts);
+				ts->int_trigger_type | IRQF_ONESHOT | IRQF_PERF_AFFINE, NVT_I2C_NAME, ts);
 		if (ret != 0) {
 			NVT_ERR("request irq failed. ret=%d\n", ret);
 			goto err_int_request_failed;
