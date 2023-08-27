@@ -44,8 +44,6 @@
 #include <linux/pm_wakeup.h>
 #include <linux/fb.h>
 #include <linux/pinctrl/qcom-pinctrl.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_notifier_mi.h>
 //#include <asm/hwconf_manager.h>
 
 #define FPC_GPIO_NO_DEFAULT -1
@@ -119,10 +117,6 @@ struct fpc1020_data {
 
 	atomic_t wakeup_enabled; /* Used both in ISR and non-ISR */
 	int irqf;
-	struct notifier_block fb_notifier;
-	bool fb_black;
-	bool wait_finger_down;
-	struct work_struct work;
 };
 
 static int reset_gpio_res(struct fpc1020_data *fpc1020);
@@ -751,26 +745,6 @@ static ssize_t irq_ack(struct device *dev, struct device_attribute *attr,
 
 static DEVICE_ATTR(irq, S_IRUSR | S_IWUSR, irq_get, irq_ack);
 
-static ssize_t fingerdown_wait_set(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
-
-	dev_info(fpc1020->dev, "%s -> %s\n", __func__, buf);
-	if (!strncmp(buf, "enable", strlen("enable")) && fpc1020->prepared)
-		fpc1020->wait_finger_down = true;
-	else if (!strncmp(buf, "disable", strlen("disable")) &&
-		 fpc1020->prepared)
-		fpc1020->wait_finger_down = false;
-	else
-		return -EINVAL;
-
-	return count;
-}
-
-static DEVICE_ATTR(fingerdown_wait, S_IWUSR, NULL, fingerdown_wait_set);
-
 static ssize_t vendor_update(struct device *dev, struct device_attribute *attr,
 			     const char *buf, size_t count)
 {
@@ -818,20 +792,11 @@ static struct attribute *attributes[] = { &dev_attr_request_vreg.attr,
 					  &dev_attr_power_cfg.attr,
 					  &dev_attr_irq.attr,
 					  &dev_attr_vendor.attr,
-					  &dev_attr_fingerdown_wait.attr,
 					  NULL };
 
 static const struct attribute_group attribute_group = {
 	.attrs = attributes,
 };
-
-#ifndef FPC_DRM_INTERFACE_WA
-static void notification_work(struct work_struct *work)
-{
-	pr_info("%s: unblank\n", __func__);
-	dsi_bridge_interface_enable(FP_UNLOCK_REJECTION_TIMEOUT);
-}
-#endif
 
 static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 {
@@ -847,15 +812,6 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	mutex_unlock(&fpc1020->lock);
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
-	if (fpc1020->wait_finger_down && fpc1020->fb_black &&
-	    fpc1020->prepared) {
-		pr_info("%s enter fingerdown & fb_black then schedule_work\n",
-			__func__);
-		fpc1020->wait_finger_down = false;
-#ifndef FPC_DRM_INTERFACE_WA
-		schedule_work(&fpc1020->work);
-#endif
-	}
 
 	return IRQ_HANDLED;
 }
@@ -887,43 +843,6 @@ static int fpc1020_request_named_gpio(struct fpc1020_data *fpc1020,
 
 	return 0;
 }
-
-static int fpc_fb_notif_callback(struct notifier_block *nb, unsigned long val,
-				 void *data)
-{
-	struct fpc1020_data *fpc1020 =
-		container_of(nb, struct fpc1020_data, fb_notifier);
-	struct fb_event *evdata = data;
-	unsigned int blank;
-
-	if (!fpc1020)
-		return 0;
-
-	if (val != MI_DRM_EVENT_BLANK || fpc1020->prepared == false)
-		return 0;
-
-	pr_debug("[info] %s value = %d\n", __func__, (int)val);
-
-	if (evdata && evdata->data && val == MI_DRM_EVENT_BLANK) {
-		blank = *(int *)(evdata->data);
-		switch (blank) {
-		case MI_DRM_BLANK_POWERDOWN:
-			fpc1020->fb_black = true;
-			break;
-		case MI_DRM_BLANK_UNBLANK:
-			fpc1020->fb_black = false;
-			break;
-		default:
-			pr_debug("%s defalut\n", __func__);
-			break;
-		}
-	}
-	return NOTIFY_OK;
-}
-
-static struct notifier_block fpc_notif_block = {
-	.notifier_call = fpc_fb_notif_callback,
-};
 
 static int fpc1020_probe(struct platform_device *pdev)
 {
@@ -1016,14 +935,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 		(void)device_prepare(fpc1020, true);
 	}
 
-	fpc1020->fb_black = false;
-	fpc1020->wait_finger_down = false;
-#ifndef FPC_DRM_INTERFACE_WA
-	INIT_WORK(&fpc1020->work, notification_work);
-#endif
-	fpc1020->fb_notifier = fpc_notif_block;
-	mi_drm_register_client(&fpc1020->fb_notifier);
-
 	//rc = hw_reset(fpc1020);
 
 	if (msm_gpio_mpm_wake_set(121, true)) {
@@ -1043,7 +954,6 @@ static int fpc1020_remove(struct platform_device *pdev)
 {
 	struct fpc1020_data *fpc1020 = platform_get_drvdata(pdev);
 
-	mi_drm_unregister_client(&fpc1020->fb_notifier);
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
 	wakeup_source_unregister(fpc1020->ttw_wl);
