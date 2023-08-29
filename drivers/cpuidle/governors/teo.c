@@ -140,8 +140,6 @@
 #include <linux/sched/topology.h>
 #include <linux/tick.h>
 
-#include "gov.h"
-
 /*
  * The number of bits to shift the CPU's capacity by in order to determine
  * the utilized threshold.
@@ -166,6 +164,12 @@
  * the detection of recent early wakeup patterns.
  */
 #define NR_RECENT	9
+
+/*
+ * Idle state target residency threshold used for deciding whether or not to
+ * check the time till the closest expected timer event.
+ */
+#define RESIDENCY_THRESHOLD_US	15
 
 /**
  * struct teo_bin - Metrics used by the TEO cpuidle governor.
@@ -229,8 +233,8 @@ static void teo_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 {
 	struct teo_cpu *cpu_data = per_cpu_ptr(&teo_cpus, dev->cpu);
 	int i, idx_timer = 0, idx_duration = 0;
-	s64 target_residency_ns;
-	u64 measured_ns;
+	s64 target_residency;
+	u64 measured_us;
 
 	if (cpu_data->time_span_ns >= cpu_data->sleep_length_ns) {
 		/*
@@ -238,9 +242,9 @@ static void teo_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 		 * enough to the closest timer event expected at the idle state
 		 * selection time to be discarded.
 		 */
-		measured_ns = U64_MAX;
+		measured_us = UINT_MAX;
 	} else {
-		u64 lat_ns = drv->states[dev->last_state_idx].exit_latency_ns;
+		unsigned int lat = drv->states[dev->last_state_idx].exit_latency;
 
 		/*
 		 * The computations below are to determine whether or not the
@@ -249,17 +253,17 @@ static void teo_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 		 * for that instead of time_span_ns which includes the cpuidle
 		 * overhead.
 		 */
-		measured_ns = dev->last_residency_ns;
+		measured_us = dev->last_residency;
 		/*
 		 * The delay between the wakeup and the first instruction
 		 * executed by the CPU is not likely to be worst-case every
 		 * time, so take 1/2 of the exit latency as a very rough
 		 * approximation of the average of it.
 		 */
-		if (measured_ns >= lat_ns)
-			measured_ns -= lat_ns / 2;
+		if (measured_us >= lat)
+			measured_us -= lat / 2;
 		else
-			measured_ns /= 2;
+			measured_us /= 2;
 	}
 
 	cpu_data->total = 0;
@@ -277,11 +281,11 @@ static void teo_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 
 		cpu_data->total += bin->hits + bin->intercepts;
 
-		target_residency_ns = drv->states[i].target_residency_ns;
+		target_residency = drv->states[i].target_residency;
 
-		if (target_residency_ns <= cpu_data->sleep_length_ns) {
+		if (target_residency <= ktime_to_us(cpu_data->sleep_length_ns)) {
 			idx_timer = i;
-			if (target_residency_ns <= measured_ns)
+			if (target_residency <= measured_us)
 				idx_duration = i;
 		}
 	}
@@ -299,14 +303,14 @@ static void teo_update(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 	 * to stop the tick.  This effectively adds an extra hits-only bin
 	 * beyond the last state-related one.
 	 */
-	if (target_residency_ns < TICK_NSEC) {
+	if (target_residency < TICK_USEC) {
 		cpu_data->tick_hits -= cpu_data->tick_hits >> DECAY_SHIFT;
 
 		cpu_data->total += cpu_data->tick_hits;
 
 		if (TICK_NSEC <= cpu_data->sleep_length_ns) {
 			idx_timer = drv->state_count;
-			if (TICK_NSEC <= measured_ns) {
+			if (TICK_USEC <= measured_us) {
 				cpu_data->tick_hits += PULSE;
 				goto end;
 			}
@@ -335,7 +339,7 @@ end:
 static bool teo_state_ok(int i, struct cpuidle_driver *drv)
 {
 	return !tick_nohz_tick_stopped() ||
-		drv->states[i].target_residency_ns >= TICK_NSEC;
+		drv->states[i].target_residency >= TICK_USEC;
 }
 
 /**
@@ -343,12 +347,12 @@ static bool teo_state_ok(int i, struct cpuidle_driver *drv)
  * @drv: cpuidle driver containing state data.
  * @dev: Target CPU.
  * @state_idx: Index of the capping idle state.
- * @duration_ns: Idle duration value to match.
+ * @duration_us: Idle duration value to match.
  * @no_poll: Don't consider polling states.
  */
 static int teo_find_shallower_state(struct cpuidle_driver *drv,
 				    struct cpuidle_device *dev, int state_idx,
-				    s64 duration_ns, bool no_poll)
+				    s64 duration_us, bool no_poll)
 {
 	int i;
 
@@ -358,7 +362,7 @@ static int teo_find_shallower_state(struct cpuidle_driver *drv,
 			continue;
 
 		state_idx = i;
-		if (drv->states[i].target_residency_ns <= duration_ns)
+		if (drv->states[i].target_residency <= duration_us)
 			break;
 	}
 	return state_idx;
@@ -387,7 +391,7 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	int idx0 = 0, idx = -1;
 	bool alt_intercepts, alt_recent;
 	bool cpu_utilized;
-	s64 duration_ns;
+	s64 duration_us;
 	int i;
 
 	if (dev->last_state_idx >= 0) {
@@ -433,7 +437,7 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		}
 		/* Assume that state 1 is not a polling one and use it. */
 		idx = 1;
-		duration_ns = drv->states[1].target_residency_ns;
+		duration_us = drv->states[1].target_residency;
 		goto end;
 	}
 
@@ -458,7 +462,7 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 
 		idx = i;
 
-		if (s->exit_latency_ns <= latency_req)
+		if (s->exit_latency <= latency_req)
 			constraint_idx = i;
 
 		/* Save the sums for the current state. */
@@ -478,7 +482,7 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		 * Only one idle state is enabled, so use it, but do not
 		 * allow the tick to be stopped it is shallow enough.
 		 */
-		duration_ns = drv->states[idx].target_residency_ns;
+		duration_us = drv->states[idx].target_residency;
 		goto end;
 	}
 
@@ -567,7 +571,7 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	 * not sufficiently large.
 	 */
 	if (cpu_utilized) {
-		i = teo_find_shallower_state(drv, dev, idx, KTIME_MAX, true);
+		i = teo_find_shallower_state(drv, dev, idx, ktime_to_us(KTIME_MAX), true);
 		if (teo_state_ok(i, drv))
 			idx = i;
 	}
@@ -585,18 +589,18 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	 * check in that case too.
 	 */
 	if ((drv->states[0].flags & CPUIDLE_FLAG_POLLING) &&
-	    drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS)
+	    drv->states[idx].target_residency < RESIDENCY_THRESHOLD_US)
 		goto out_tick;
 
-	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
-	cpu_data->sleep_length_ns = duration_ns;
+	cpu_data->sleep_length_ns = tick_nohz_get_sleep_length(&delta_tick);
+	duration_us = ktime_to_us(cpu_data->sleep_length_ns);
 
 	/*
 	 * If the closest expected timer is before the terget residency of the
 	 * candidate state, a shallower one needs to be found.
 	 */
-	if (drv->states[idx].target_residency_ns > duration_ns) {
-		i = teo_find_shallower_state(drv, dev, idx, duration_ns, false);
+	if (drv->states[idx].target_residency > duration_us) {
+		i = teo_find_shallower_state(drv, dev, idx, duration_us, false);
 		if (teo_state_ok(i, drv))
 			idx = i;
 	}
@@ -606,9 +610,9 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	 * and intercepts occurring before the tick length are the majority of
 	 * total wakeup events, do not stop the tick.
 	 */
-	if (drv->states[idx].target_residency_ns < TICK_NSEC &&
+	if (drv->states[idx].target_residency < TICK_USEC &&
 	    tick_intercept_sum > cpu_data->total / 2 + cpu_data->total / 8)
-		duration_ns = TICK_NSEC / 2;
+		duration_us = TICK_USEC / 2;
 
 end:
 	/*
@@ -617,7 +621,7 @@ end:
 	 * length.
 	 */
 	if ((!(drv->states[idx].flags & CPUIDLE_FLAG_POLLING) &&
-	    duration_ns >= TICK_NSEC) || tick_nohz_tick_stopped())
+	    duration_us >= TICK_USEC) || tick_nohz_tick_stopped())
 		return idx;
 
 	/*
@@ -626,8 +630,8 @@ end:
 	 * timer including the tick, try to correct that.
 	 */
 	if (idx > idx0 &&
-	    drv->states[idx].target_residency_ns > delta_tick)
-		idx = teo_find_shallower_state(drv, dev, idx, delta_tick, false);
+	    drv->states[idx].target_residency > ktime_to_us(delta_tick))
+		idx = teo_find_shallower_state(drv, dev, idx, ktime_to_us(delta_tick), false);
 
 out_tick:
 	*stop_tick = false;
@@ -667,7 +671,7 @@ static int teo_enable_device(struct cpuidle_driver *drv,
 			     struct cpuidle_device *dev)
 {
 	struct teo_cpu *cpu_data = per_cpu_ptr(&teo_cpus, dev->cpu);
-	unsigned long max_capacity = arch_scale_cpu_capacity(dev->cpu);
+	unsigned long max_capacity = arch_scale_cpu_capacity(NULL, dev->cpu);
 	int i;
 
 	memset(cpu_data, 0, sizeof(*cpu_data));
