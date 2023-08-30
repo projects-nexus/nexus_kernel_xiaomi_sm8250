@@ -2730,7 +2730,7 @@ static int32_t nvt_ts_probe(struct platform_device *pdev)
 		ts->irq_enabled = true;
 		ret = request_threaded_irq(ts->client->irq, NULL,
 					   nvt_ts_work_func,
-					   ts->int_trigger_type | IRQF_ONESHOT | IRQF_PERF_AFFINE,
+					   ts->int_trigger_type | IRQF_ONESHOT,
 					   NVT_SPI_NAME, ts);
 		if (ret != 0) {
 			NVT_ERR("request irq failed. ret=%d\n", ret);
