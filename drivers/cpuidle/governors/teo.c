@@ -139,6 +139,7 @@
 #include <linux/sched/clock.h>
 #include <linux/sched/topology.h>
 #include <linux/tick.h>
+#include <linux/pm_qos.h>
 
 /*
  * The number of bits to shift the CPU's capacity by in order to determine
@@ -378,7 +379,8 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 		      bool *stop_tick)
 {
 	struct teo_cpu *cpu_data = per_cpu_ptr(&teo_cpus, dev->cpu);
-	s64 latency_req = cpuidle_governor_latency_req(dev->cpu);
+	s64 latency_req = pm_qos_request_for_cpu(PM_QOS_CPU_DMA_LATENCY,
+							dev->cpu);
 	ktime_t delta_tick = TICK_NSEC / 2;
 	unsigned int tick_intercept_sum = 0;
 	unsigned int idx_intercept_sum = 0;
