@@ -14,8 +14,6 @@
 
 void sde_reg_w(struct sde_io_data *io, u32 offset, u32 value, u32 debug)
 {
-	u32 in_val;
-
 	if (!io || !io->base) {
 		DEV_ERR("%pS->%s: invalid input\n",
 			__builtin_return_address(0), __func__);
@@ -30,14 +28,6 @@ void sde_reg_w(struct sde_io_data *io, u32 offset, u32 value, u32 debug)
 
 	DEV_DBG("sdeio:%6.6x:%8.8x\n", offset, value);
 	writel_relaxed(value, io->base + offset);
-	if (debug) {
-		/* ensure register read is ordered after register write */
-		mb();
-		in_val = readl_relaxed(io->base + offset);
-		DEV_DBG("[%08x] => %08x [%08x]\n",
-			(u32)(unsigned long)(io->base + offset),
-			value, in_val);
-	}
 } /* sde_reg_w */
 
 u32 sde_reg_r(struct sde_io_data *io, u32 offset, u32 debug)
