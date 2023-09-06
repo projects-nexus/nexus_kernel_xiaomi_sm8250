@@ -4997,9 +4997,11 @@ static int cnss_pci_probe(struct pci_dev *pci_dev,
 	if (ret)
 		goto reset_ctx;
 
+#ifdef CONFIG_QCOM_MEMORY_DUMP_V2
 	ret = cnss_register_ramdump(plat_priv);
 	if (ret)
 		goto unregister_subsys;
+#endif
 
 	ret = cnss_pci_init_smmu(pci_priv);
 	if (ret)
@@ -5071,7 +5073,9 @@ deinit_smmu:
 	cnss_pci_deinit_smmu(pci_priv);
 unregister_ramdump:
 	cnss_unregister_ramdump(plat_priv);
+#ifdef CONFIG_QCOM_MEMORY_DUMP_V2
 unregister_subsys:
+#endif
 	cnss_unregister_subsys(plat_priv);
 reset_ctx:
 	plat_priv->bus_priv = NULL;
