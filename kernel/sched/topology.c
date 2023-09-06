@@ -363,7 +363,6 @@ static bool build_perf_domains(const struct cpumask *cpu_map)
 		goto free;
 	}
 #endif
-
 	for_each_cpu(i, cpu_map) {
 		/* Skip already covered CPUs. */
 		if (find_pd(pd, i))
