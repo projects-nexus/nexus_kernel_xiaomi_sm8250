@@ -11,8 +11,8 @@ clear
 # Number of parallel jobs to run
 THREAD="-j$(nproc)"
 
-# AOSP clang 14.0.6 (https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/)
-CLANG_BUILD="r450784d"
+# AOSP clang 17.0.4 (https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/)
+CLANG_BUILD="r498229b"
 
 # Path to executables in LLVM toolchain
 CLANG_BIN="/home/violet/toolchains/clang/clang-$CLANG_BUILD/bin"
