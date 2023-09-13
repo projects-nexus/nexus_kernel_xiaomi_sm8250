@@ -201,7 +201,7 @@ static void set_task_rt_prio(struct task_struct *tsk, int priority)
 
 static void scan_and_kill(void)
 {
-	int i, nr_to_kill, nr_found = 0;
+	int i, nr_to_kill = 0;
 	unsigned long pages_found;
 
 	/*
@@ -213,32 +213,15 @@ static void scan_and_kill(void)
 	write_unlock(&mm_free_lock);
 
 	/* Populate the victims array with tasks sorted by adj and then size */
-	pages_found = find_victims(&nr_found);
-	if (unlikely(!nr_found)) {
+	pages_found = find_victims(&nr_to_kill);
+	if (unlikely(!nr_to_kill)) {
 		pr_err_ratelimited("No processes available to kill!\n");
 		return;
 	}
 
-	/* Minimize the number of victims if we found more pages than needed */
-	if (pages_found > MIN_FREE_PAGES) {
-		/* First round of processing to weed out unneeded victims */
-		nr_to_kill = process_victims(nr_found);
-
-		/*
-		 * Try to kill as few of the chosen victims as possible by
-		 * sorting the chosen victims by size, which means larger
-		 * victims that have a lower adj can be killed in place of
-		 * smaller victims with a high adj.
-		 */
-		sort(victims, nr_to_kill, sizeof(*victims), victim_cmp,
-		     victim_swap);
-
-		/* Second round of processing to finally select the victims */
+	/* Weed out unneeded victims if we found too many */
+	if (pages_found > MIN_FREE_PAGES)
 		nr_to_kill = process_victims(nr_to_kill);
-	} else {
-		/* Too few pages found, so all the victims need to be killed */
-		nr_to_kill = nr_found;
-	}
 
 	/*
 	 * Store the final number of victims for simple_lmk_mm_freed() and the
