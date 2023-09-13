@@ -116,7 +116,7 @@ void lrng_process_ready_list(void)
  * @count: length of buffer
  * @entropy_bits: amount of entropy in buffer (value is in bits)
  */
-void add_hwgenerator_randomness(const void *buffer, size_t count,
+void add_hwgenerator_randomness(const char *buffer, size_t count,
 				size_t entropy_bits)
 {
 	/*
@@ -293,7 +293,7 @@ EXPORT_SYMBOL_GPL(unregister_random_vmfork_notifier);
  * @buf: buffer to store the random bytes
  * @nbytes: size of the buffer
  */
-void get_random_bytes(void *buf, size_t nbytes)
+void get_random_bytes(void *buf, int nbytes)
 {
 	lrng_get_random_bytes(buf, nbytes);
 }

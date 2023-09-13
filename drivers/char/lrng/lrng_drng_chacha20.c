@@ -8,7 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <crypto/chacha20.h>
+#include <crypto/chacha.h>
 #include <linux/lrng.h>
 #include <linux/random.h>
 #include <linux/slab.h>
