@@ -287,6 +287,7 @@ static void lrng_set_operational(void)
 	 */
 	if (lrng_state.lrng_fully_seeded) {
 		lrng_state.lrng_operational = true;
+		lrng_process_ready_list();
 		lrng_init_wakeup();
 		pr_info("LRNG fully operational\n");
 	}
@@ -389,19 +390,12 @@ void __init lrng_rand_initialize_early(void)
 				    sizeof(unsigned long))];
 		struct new_utsname utsname;
 	} seed __aligned(LRNG_KCAPI_ALIGN);
-	size_t longs = 0;
 	unsigned int i;
 
-	for (i = 0; i < ARRAY_SIZE(seed.data); i += longs) {
-		longs = arch_get_random_seed_longs(seed.data + i,
-						   ARRAY_SIZE(seed.data) - i);
-		if (longs)
-			continue;
-		longs = arch_get_random_longs(seed.data + i,
-					      ARRAY_SIZE(seed.data) - i);
-		if (longs)
-			continue;
-		longs = 1;
+	for (i = 0; i < ARRAY_SIZE(seed.data); i++) {
+		if (!arch_get_random_seed_long_early(&(seed.data[i])) &&
+		    !arch_get_random_long_early(&seed.data[i]))
+			seed.data[i] = random_get_entropy();
 	}
 	memcpy(&seed.utsname, init_utsname(), sizeof(*(init_utsname())));
 

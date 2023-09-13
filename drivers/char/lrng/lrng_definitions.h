@@ -6,8 +6,7 @@
 #ifndef _LRNG_DEFINITIONS_H
 #define _LRNG_DEFINITIONS_H
 
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
+#include <crypto/sha.h>
 #include <linux/slab.h>
 
 /*************************** General LRNG parameter ***************************/

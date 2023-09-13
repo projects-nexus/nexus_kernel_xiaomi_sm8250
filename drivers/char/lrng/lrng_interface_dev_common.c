@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/random.h>
+#include <linux/sched/signal.h>
 #include <linux/slab.h>
 
 #include "lrng_drng_mgr.h"
@@ -152,7 +153,7 @@ ssize_t lrng_read_common(char __user *buf, size_t nbytes, bool pr)
 
 	/* Wipe data just returned from memory */
 	if (tmp_large)
-		kfree_sensitive(tmp_large);
+		kzfree(tmp_large);
 	else
 		memzero_explicit(tmpbuf, sizeof(tmpbuf));
 

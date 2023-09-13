@@ -8,7 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <crypto/chacha.h>
+#include <crypto/chacha20.h>
 #include <linux/lrng.h>
 #include <linux/random.h>
 #include <linux/slab.h>
@@ -159,7 +159,7 @@ static void lrng_cc20_drng_dealloc(void *drng)
 	struct chacha20_state *chacha20_state = (struct chacha20_state *)drng;
 
 	pr_debug("ChaCha20 core zeroized and freed\n");
-	kfree_sensitive(chacha20_state);
+	kzfree(chacha20_state);
 }
 
 static const char *lrng_cc20_drng_name(void)

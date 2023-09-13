@@ -13,6 +13,7 @@
 #include <linux/gcd.h>
 #include <linux/module.h>
 #include <linux/random.h>
+#include <linux/ratelimit.h>
 
 #include "lrng_es_aux.h"
 #include "lrng_es_irq.h"

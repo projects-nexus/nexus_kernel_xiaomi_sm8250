@@ -32,7 +32,6 @@ const struct file_operations random_fops = {
 	.write = lrng_drng_write,
 	.poll  = lrng_random_poll,
 	.unlocked_ioctl = lrng_ioctl,
-	.compat_ioctl = compat_ptr_ioctl,
 	.fasync = lrng_fasync,
 	.llseek = noop_llseek,
 };
@@ -41,7 +40,6 @@ const struct file_operations urandom_fops = {
 	.read  = lrng_drng_read,
 	.write = lrng_drng_write,
 	.unlocked_ioctl = lrng_ioctl,
-	.compat_ioctl = compat_ptr_ioctl,
 	.fasync = lrng_fasync,
 	.llseek = noop_llseek,
 };
