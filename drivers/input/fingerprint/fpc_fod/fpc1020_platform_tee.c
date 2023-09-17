@@ -848,7 +848,7 @@ static ssize_t compatible_all_set(struct device *dev,
 			goto exit;
 		}
 
-		irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_PERF_AFFINE;
+		irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
 
 		if (of_property_read_bool(dev->of_node, "fpc,enable-wakeup")) {
 			irqf |= IRQF_NO_SUSPEND;
