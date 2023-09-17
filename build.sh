@@ -40,6 +40,9 @@ MODEL="Mi 10T Pro"
 elif [ "${DEVICE}" = "munch" ]; then
 DEFCONFIG=munch_defconfig
 MODEL="Poco F4"
+elif [ "${DEVICE}" = "cas" ]; then
+DEFCONFIG=cas_defconfig
+MODEL="Mi 10 Ultra"
 fi
 
 # Files
@@ -149,6 +152,8 @@ function cloneTC() {
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b apollo AnyKernel3
         elif [ "${DEVICE}" = "munch" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
+		elif [ "${DEVICE}" = "cas" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b cas AnyKernel3
 		else
 		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
 		fi
