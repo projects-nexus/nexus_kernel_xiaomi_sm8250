@@ -87,6 +87,20 @@ extern unsigned int sysctl_preemptoff_tracing_threshold_ns;
 extern unsigned int sysctl_irqsoff_tracing_threshold_ns;
 #endif
 
+#ifdef CONFIG_PELT_COMPATIBILITY_LAYER
+static unsigned int sysctl_sched_boost;
+static unsigned int sysctl_sched_prefer_spread;
+static unsigned int sysctl_sched_busy_hyst_enable_cpus;
+static unsigned int sysctl_sched_busy_hyst;
+static unsigned int sysctl_sched_group_upmigrate_pct;
+static unsigned int sysctl_sched_group_downmigrate_pct;
+static unsigned int sysctl_sched_ravg_window_nr_ticks;
+static unsigned int sysctl_sched_capacity_margin_up;
+static unsigned int sysctl_sched_capacity_margin_down;
+static unsigned int sysctl_sched_min_task_util_for_colocation;
+static unsigned int sysctl_sched_min_task_util_for_boost;
+#endif /* CONFIG_PELT_COMPATIBILITY_LAYER */
+
 enum sched_tunable_scaling {
 	SCHED_TUNABLESCALING_NONE,
 	SCHED_TUNABLESCALING_LOG,
