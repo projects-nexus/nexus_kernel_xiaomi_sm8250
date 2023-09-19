@@ -6,22 +6,6 @@
 	qcom,msm-id = <356 0x20000>;
 };
 
-&CPU4 {
-	dynamic-power-coefficient = <533>;
-};
-
-&CPU5 {
-	dynamic-power-coefficient = <533>;
-};
-
-&CPU6 {
-	dynamic-power-coefficient = <533>;
-};
-
-&CPU7 {
-	dynamic-power-coefficient = <642>;
-};
-
 &clock_camcc {
 	compatible = "qcom,camcc-kona-v2", "syscon";
 };
@@ -392,10 +376,6 @@
 	interrupt-names = "dcvsh0_int", "dcvsh1_int", "dcvsh2_int";
 
 	qcom,cpufreq-table-0 =
-			< 300000>,
-			< 403200>,
-			< 518400>,
-			< 614400>,
 			< 691200>,
 			< 787200>,
 			< 883200>,
