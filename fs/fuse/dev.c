@@ -2290,44 +2290,37 @@ static int fuse_device_clone(struct fuse_conn *fc, struct file *new)
 static long fuse_dev_ioctl(struct file *file, unsigned int cmd,
 			   unsigned long arg)
 {
-	int res;
-	int oldfd;
-	struct fuse_dev *fud = NULL;
+	int err = -ENOTTY;
 
-	if (_IOC_TYPE(cmd) != FUSE_DEV_IOC_MAGIC)
-		return -EINVAL;
+	if (cmd == FUSE_DEV_IOC_CLONE) {
+		int oldfd;
 
-	switch (_IOC_NR(cmd)) {
-	case _IOC_NR(FUSE_DEV_IOC_CLONE):
-		res = -EFAULT;
-		if (!get_user(oldfd, (__u32 __user *)arg)) {
+		err = -EFAULT;
+		if (!get_user(oldfd, (__u32 __user *) arg)) {
 			struct file *old = fget(oldfd);
 
-			res = -EINVAL;
+			err = -EINVAL;
 			if (old) {
+				struct fuse_dev *fud = NULL;
+
 				/*
 				 * Check against file->f_op because CUSE
 				 * uses the same ioctl handler.
 				 */
 				if (old->f_op == file->f_op &&
-				    old->f_cred->user_ns ==
-					    file->f_cred->user_ns)
+				    old->f_cred->user_ns == file->f_cred->user_ns)
 					fud = fuse_get_dev(old);
 
 				if (fud) {
 					mutex_lock(&fuse_mutex);
-					res = fuse_device_clone(fud->fc, file);
+					err = fuse_device_clone(fud->fc, file);
 					mutex_unlock(&fuse_mutex);
 				}
 				fput(old);
 			}
 		}
-		break;
-	default:
-		res = -ENOTTY;
-		break;
 	}
-	return res;
+	return err;
 }
 
 const struct file_operations fuse_dev_operations = {
