@@ -192,7 +192,8 @@ ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma)
 	return ret;
 }
 
-int fuse_passthrough_open(struct fuse_dev *fud, u32 lower_fd)
+int fuse_passthrough_open(struct fuse_dev *fud,
+			  struct fuse_passthrough_out *pto)
 {
 	int res;
 	struct file *passthrough_filp;
@@ -204,7 +205,11 @@ int fuse_passthrough_open(struct fuse_dev *fud, u32 lower_fd)
 	if (!fc->passthrough)
 		return -EPERM;
 
-	passthrough_filp = fget(lower_fd);
+	/* This field is reserved for future implementation */
+	if (pto->len != 0)
+		return -EINVAL;
+
+	passthrough_filp = fget(pto->fd);
 	if (!passthrough_filp) {
 		pr_err("FUSE: invalid file descriptor for passthrough.\n");
 		return -EBADF;
