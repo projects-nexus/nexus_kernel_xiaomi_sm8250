@@ -25,6 +25,8 @@ export PATH="$CLANG_BIN:$PATH"
 
 # Vars
 ARCH="arm64"
+OS="13.0.0"
+SPL="2023-09"
 KDIR=`readlink -f .`
 RAMFS=`readlink -f $KDIR/ramdisk`
 OUT=`readlink -f $KDIR/out`
@@ -59,22 +61,26 @@ function make_kernel {
 }
 
 function make_bootimg {
-    # ramdisk
-    echo "Making new ramdisk..."
-    pushd $RAMFS >/dev/null 2>&1
-    find . | fakeroot cpio -H newc -o | gzip > $OUT/boot.img-ramdisk >/dev/null 2>&1
-    popd >/dev/null 2>&1
-
-    # boot.img
     echo "Making new boot image..."
     mkbootimg \
         --kernel $OUT/arch/arm64/boot/Image \
-        --ramdisk $OUT/boot.img-ramdisk \
-        --os_version "13.0.0" \
-        --os_patch_level "2023-09" \
+        --ramdisk $RAMFS/ramdisk \
+        --os_version $OS \
+        --os_patch_level $SPL \
         --pagesize 4096 \
         --header_version 3 \
         -o $OUT/boot.img
+}
+
+function make_vendor_bootimg {
+    echo "Making new vendor_boot image..."
+    mkbootimg \
+        --vendor_boot $OUT/vendor_boot.img \
+        --vendor_ramdisk $RAMFS/vendor_ramdisk \
+        --dtb $OUT/arch/arm64/boot/dtb \
+        --vendor_cmdline "androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.init_fatal_reboot_target=recovery androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3 cgroup.memory=nokmem,nosocket console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000 loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048 buildvariant=user" \
+        --pagesize 4096 \
+        --header_version 3
 }
 
 DATE_START=$(date +"%s")
@@ -115,6 +121,7 @@ case "$dchoice" in
     y|Y )
         make_kernel || exit 1
         make_bootimg
+        make_vendor_bootimg
         break
         ;;
     n|N )
