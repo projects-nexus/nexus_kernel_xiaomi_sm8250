@@ -83,6 +83,17 @@ function make_vendor_bootimg {
         --header_version 3
 }
 
+function flash_images {
+    adb reboot fastboot >/dev/null 2>&1
+
+    echo "Flashing kernel images..."
+    sudo fastboot flash dtbo $OUT/arch/arm64/boot/dtbo.img
+    sudo fastboot flash boot $OUT/boot.img
+    sudo fastboot flash vendor_boot $OUT/vendor_boot.img
+
+    sudo fastboot reboot
+}
+
 DATE_START=$(date +"%s")
 
 echo -e "${green}"
@@ -126,7 +137,28 @@ case "$dchoice" in
         ;;
     n|N )
         echo
-        echo "Abort!"
+        echo
+        exit 1
+        ;;
+    * )
+        echo
+        echo "Invalid try again!"
+        echo
+        ;;
+esac
+done
+
+echo
+
+while read -p "Flash kernel images (y/n)? " dchoice
+do
+case "$dchoice" in
+    y|Y )
+        flash_images
+        break
+        ;;
+    n|N )
+        echo
         echo
         break
         ;;
