@@ -25,7 +25,9 @@ export PATH="$CLANG_BIN:$PATH"
 
 # Vars
 ARCH="arm64"
-OUT="out"
+KDIR=`readlink -f .`
+RAMFS=`readlink -f $KDIR/ramdisk`
+OUT=`readlink -f $KDIR/out`
 
 KMAKE_FLAGS=(
     -j"$(nproc)"
@@ -47,7 +49,7 @@ DEFCONFIG="vendor/pipa_user_defconfig"
 # Functions
 function clean_all {
     echo
-    git clean -fdx > /dev/null 2>&1
+    git clean -fdx >/dev/null 2>&1
 }
 
 function make_kernel {
@@ -56,11 +58,30 @@ function make_kernel {
     make "${KMAKE_FLAGS[@]}"
 }
 
+function make_bootimg {
+    # ramdisk
+    echo "Making new ramdisk..."
+    pushd $RAMFS >/dev/null 2>&1
+    find . | fakeroot cpio -H newc -o | gzip > $OUT/boot.img-ramdisk >/dev/null 2>&1
+    popd >/dev/null 2>&1
+
+    # boot.img
+    echo "Making new boot image..."
+    mkbootimg \
+        --kernel $OUT/arch/arm64/boot/Image \
+        --ramdisk $OUT/boot.img-ramdisk \
+        --os_version "13.0.0" \
+        --os_patch_level "2023-09" \
+        --pagesize 4096 \
+        --header_version 3 \
+        -o $OUT/boot.img
+}
+
 DATE_START=$(date +"%s")
 
 echo -e "${green}"
 echo "-----------------"
-echo "Making Kernel:"
+echo "Making Kernel:  "
 echo "-----------------"
 echo -e "${restore}"
 
@@ -92,7 +113,8 @@ while read -p "Start building (y/n)? " dchoice
 do
 case "$dchoice" in
     y|Y )
-        make_kernel
+        make_kernel || exit 1
+        make_bootimg
         break
         ;;
     n|N )
