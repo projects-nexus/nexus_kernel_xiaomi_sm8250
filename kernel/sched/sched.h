@@ -392,7 +392,7 @@ static inline bool __dl_overflow(struct dl_bw *dl_b, unsigned long cap,
  */
 static inline bool dl_task_fits_capacity(struct task_struct *p, int cpu)
 {
-	unsigned long cap = arch_scale_cpu_capacity(cpu);
+	unsigned long cap = arch_scale_cpu_capacity(NULL, cpu);
 
 	return cap_scale(p->dl.dl_deadline, cap) >= p->dl.dl_runtime;
 }
