@@ -101,17 +101,17 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 	int cidx = 0, cpu;
 
 	/* Get the utilization for this task */
-	p_util = clamp(task_util_est(p),
-		       uclamp_eff_value(p, UCLAMP_MIN),
-		       uclamp_eff_value(p, UCLAMP_MAX));
+	p_util = task_util_est(p);
 
 	/*
 	 * Find the best CPU to wake @p on. Although idle_get_state() requires
-	 * an RCU read lock, an RCU read lock isn't needed because we're not
-	 * preemptible and RCU-sched is unified with normal RCU. Therefore,
-	 * non-preemptible contexts are implicitly RCU-safe.
+	 * an RCU read lock, an RCU read lock isn't needed on >=4.20 kernels
+	 * because they're not preemptible and RCU-sched is unified with normal
+	 * RCU. Therefore, non-preemptible contexts are implicitly RCU-safe.
+	 * However, it is required on <4.20 kernels.
 	 */
-	for_each_cpu_and(cpu, p->cpus_ptr, cpu_active_mask) {
+	rcu_read_lock();
+	for_each_cpu_and(cpu, &p->cpus_allowed, cpu_active_mask) {
 		/* Use the free candidate slot */
 		curr = &cands[cidx];
 		curr->cpu = cpu;
@@ -175,12 +175,14 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 			cidx ^= 1;
 		}
 	}
+	rcu_read_unlock();
 
 	return best->cpu;
 }
 
 static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
-				    int sd_flag, int wake_flags)
+				    int sd_flag, int wake_flags,
+				    int sibling_count_hint)
 {
 	bool sync;
 
@@ -193,8 +195,8 @@ static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
 	 * first valid CPU since it's possible for certain types of tasks to run
 	 * on inactive CPUs.
 	 */
-	if (unlikely(!cpumask_intersects(p->cpus_ptr, cpu_active_mask)))
-		return cpumask_first(p->cpus_ptr);
+	if (unlikely(!cpumask_intersects(&p->cpus_allowed, cpu_active_mask)))
+		return cpumask_first(&p->cpus_allowed);
 
 	/* cass_best_cpu() needs the task's utilization, so sync it up */
 	if (!(sd_flag & SD_BALANCE_FORK))
