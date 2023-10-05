@@ -7085,7 +7085,7 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	unsigned long best_active_cuml_util = ULONG_MAX;
 	unsigned long best_idle_cuml_util = ULONG_MAX;
 	bool prefer_idle = schedtune_prefer_idle(p);
-	bool boosted;
+	bool boosted = fbt_env->boosted;
 	/* Initialise with deepest possible cstate (INT_MAX) */
 	unsigned long best_idle_util = ULONG_MAX;
 	int shallowest_idle_cstate = INT_MAX;
@@ -7116,7 +7116,7 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	 * case we initialise target_capacity to 0.
 	 */
 	prefer_idle = uclamp_latency_sensitive(p);
-	boosted = fbt_env->boosted || uclamp_boosted(p);
+	boosted = uclamp_boosted(p);
 	if (prefer_idle && boosted)
 		target_capacity = 0;
 
