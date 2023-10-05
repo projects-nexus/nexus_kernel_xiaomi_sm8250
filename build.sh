@@ -65,7 +65,7 @@ ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=neutron
+COMPILER=slim
 
 # Clone ToolChain
 function cloneTC() {
@@ -131,8 +131,10 @@ function cloneTC() {
 	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	        ;;
 	    slim)
-	        git clone --depth=1 https://gitlab.com/ThankYouMario/android_prebuilts_clang-standalone -b slim-16 clang
-	        PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	        git clone --depth=1 https://gitlab.com/ThankYouMario/android_prebuilts_clang-standalone -b slim-16 clangB
+	        git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
+			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
+			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
 
 		*)
