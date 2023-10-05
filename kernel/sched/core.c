@@ -3883,7 +3883,9 @@ void scheduler_tick(void)
 	u64 wallclock;
 	bool early_notif;
 	u32 old_load;
+#ifdef CONFIG_SCHED_WALT
 	struct related_thread_group *grp;
+#endif
 	unsigned int flag = 0;
 
 	sched_clock_tick();
