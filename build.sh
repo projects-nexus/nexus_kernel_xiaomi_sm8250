@@ -26,7 +26,7 @@ export PATH="$CLANG_BIN:$PATH"
 # Vars
 ARCH="arm64"
 OS="13.0.0"
-SPL="2023-09"
+SPL="2023-11"
 KDIR=`readlink -f .`
 RAMFS=`readlink -f $KDIR/ramdisk`
 OUT=`readlink -f $KDIR/out`
