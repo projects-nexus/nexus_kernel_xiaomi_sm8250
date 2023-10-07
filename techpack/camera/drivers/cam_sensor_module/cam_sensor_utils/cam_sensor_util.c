@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -275,7 +274,6 @@ static int32_t cam_sensor_get_io_buffer(
 			io_cfg->direction);
 		rc = -EINVAL;
 	}
-	cam_mem_put_cpu_buf(io_cfg->mem_handle[0]);
 	return rc;
 }
 
@@ -710,12 +708,9 @@ int cam_sensor_i2c_command_parser(
 			}
 		}
 		i2c_reg_settings->is_settings_valid = 1;
-		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 	}
-	return rc;
 
 end:
-	cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 	return rc;
 }
 
@@ -729,7 +724,7 @@ int cam_sensor_util_i2c_apply_setting(
 	switch (i2c_list->op_code) {
 	case CAM_SENSOR_I2C_WRITE_RANDOM: {
 		rc = camera_io_dev_write(io_master_info,
-			&(i2c_list->i2c_settings), false);
+			&(i2c_list->i2c_settings));
 		if (rc < 0) {
 			CAM_ERR(CAM_SENSOR,
 				"Failed to random write I2C settings: %d",
@@ -740,8 +735,7 @@ int cam_sensor_util_i2c_apply_setting(
 	}
 	case CAM_SENSOR_I2C_WRITE_SEQ: {
 		rc = camera_io_dev_write_continuous(
-			io_master_info, &(i2c_list->i2c_settings),
-			0, false);
+			io_master_info, &(i2c_list->i2c_settings), 0);
 		if (rc < 0) {
 			CAM_ERR(CAM_SENSOR,
 				"Failed to seq write I2C settings: %d",
@@ -752,8 +746,7 @@ int cam_sensor_util_i2c_apply_setting(
 	}
 	case CAM_SENSOR_I2C_WRITE_BURST: {
 		rc = camera_io_dev_write_continuous(
-			io_master_info, &(i2c_list->i2c_settings),
-			1, false);
+			io_master_info, &(i2c_list->i2c_settings), 1);
 		if (rc < 0) {
 			CAM_ERR(CAM_SENSOR,
 				"Failed to burst write I2C settings: %d",
@@ -1043,6 +1036,29 @@ int32_t msm_camera_fill_vreg_params(
 					"cam_v_custom2")) {
 					CAM_DBG(CAM_SENSOR,
 						"i:%d j:%d cam_vcustom2", i, j);
+					power_setting[i].seq_val = j;
+
+					if (VALIDATE_VOLTAGE(
+						soc_info->rgltr_min_volt[j],
+						soc_info->rgltr_max_volt[j],
+						power_setting[i].config_val)) {
+						soc_info->rgltr_min_volt[j] =
+						soc_info->rgltr_max_volt[j] =
+						power_setting[i].config_val;
+					}
+					break;
+				}
+			}
+			if (j == num_vreg)
+				power_setting[i].seq_val = INVALID_VREG;
+			break;
+		case SENSOR_CUSTOM_REG3:
+			for (j = 0; j < num_vreg; j++) {
+
+				if (!strcmp(soc_info->rgltr_name[j],
+					"cam_v_custom3")) {
+					CAM_DBG(CAM_SENSOR,
+						"i:%d j:%d cam_vcustom3", i, j);
 					power_setting[i].seq_val = j;
 
 					if (VALIDATE_VOLTAGE(
@@ -1989,6 +2005,7 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 		case SENSOR_VAF_PWDM:
 		case SENSOR_CUSTOM_REG1:
 		case SENSOR_CUSTOM_REG2:
+		case SENSOR_CUSTOM_REG3:
 			if (power_setting->seq_val == INVALID_VREG)
 				break;
 
@@ -2105,6 +2122,7 @@ power_up_failed:
 		case SENSOR_VAF_PWDM:
 		case SENSOR_CUSTOM_REG1:
 		case SENSOR_CUSTOM_REG2:
+		case SENSOR_CUSTOM_REG3:
 			if (power_setting->seq_val < num_vreg) {
 				CAM_DBG(CAM_SENSOR, "Disable Regulator");
 				vreg_idx = power_setting->seq_val;
@@ -2273,6 +2291,7 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 		case SENSOR_VAF_PWDM:
 		case SENSOR_CUSTOM_REG1:
 		case SENSOR_CUSTOM_REG2:
+		case SENSOR_CUSTOM_REG3:
 			if (pd->seq_val == INVALID_VREG)
 				break;
 
