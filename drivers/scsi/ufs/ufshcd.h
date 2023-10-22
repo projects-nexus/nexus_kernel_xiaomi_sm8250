@@ -61,6 +61,7 @@
 #include <linux/extcon-provider.h>
 #include <linux/devfreq.h>
 #include "unipro.h"
+#include <linux/pm_qos.h>
 
 #include <asm/irq.h>
 #include <asm/byteorder.h>
@@ -1105,6 +1106,14 @@ struct ufs_hba {
 	bool phy_init_g4;
 	bool force_g4;
 	bool wb_enabled;
+	struct {
+		struct pm_qos_request req;
+		struct work_struct get_work;
+		struct work_struct put_work;
+		struct mutex lock;
+		atomic_t count;
+		bool active;
+	} pm_qos;
 
 #ifdef CONFIG_SCSI_UFS_CRYPTO
 	/* crypto */
