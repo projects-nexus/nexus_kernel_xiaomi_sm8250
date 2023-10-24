@@ -13,7 +13,7 @@ obj-y += kernel_compat.o
 
 obj-y += selinux/
 # .git is a text file while the module is imported by 'git submodule add'.
-$(eval KSU_VERSION=11272)
+$(eval KSU_VERSION=11328)
 $(info -- KernelSU version: $(KSU_VERSION))
 ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
 
@@ -23,6 +23,11 @@ endif
 
 ifndef KSU_EXPECTED_HASH
 KSU_EXPECTED_HASH := c371061b19d8c7d7d6133c6a9bafe198fa944e50c1b31c9d8daa8d7f1fc2d2d6
+endif
+
+ifdef KSU_MANAGER_PACKAGE
+ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
+$(info -- KernelSU Manager package name: $(KSU_MANAGER_PACKAGE))
 endif
 
 $(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
