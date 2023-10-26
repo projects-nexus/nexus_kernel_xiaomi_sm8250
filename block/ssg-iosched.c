@@ -651,15 +651,14 @@ static int ssg_request_merge(struct request_queue *q, struct request **rq,
 	return ELEVATOR_NO_MERGE;
 }
 
-static bool ssg_bio_merge(struct request_queue *q, struct bio *bio,
-		unsigned int nr_segs)
+static bool ssg_bio_merge(struct request_queue *q, struct bio *bio)
 {
 	struct ssg_data *ssg = q->elevator->elevator_data;
 	struct request *free = NULL;
 	bool ret;
 
 	spin_lock(&ssg->lock);
-	ret = blk_mq_sched_try_merge(q, bio, nr_segs, &free);
+	ret = blk_mq_sched_try_merge(q, bio, &free);
 	spin_unlock(&ssg->lock);
 
 	if (free)
