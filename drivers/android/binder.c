@@ -6062,6 +6062,7 @@ binder_defer_work(struct binder_proc *proc, enum binder_deferred_state defer)
 	mutex_unlock(&binder_deferred_lock);
 }
 
+#ifdef CONFIG_FTRACE
 static const char *const binder_return_strings[] = {
 	"BR_ERROR",
 	"BR_OK",
@@ -6106,6 +6107,7 @@ static const char *const binder_command_strings[] = {
 	"BC_TRANSACTION_SG",
 	"BC_REPLY_SG",
 };
+#endif
 
 #ifdef CONFIG_ANDROID_BINDER_LOGS
 static void print_binder_transaction_ilocked(struct seq_file *m,
