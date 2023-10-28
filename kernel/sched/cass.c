@@ -25,17 +25,6 @@
  * satisfy the overall load at any given moment.
  */
 
-/*
- * Remove and clamp on negative, from a local variable.
- *
- * A variant of sub_positive(), which does not use explicit load-store
- * and is thus optimized for local variable updates.
- */
-#define lsub_positive(_ptr, _val) do {				\
-	typeof(_ptr) ptr = (_ptr);				\
-	*ptr -= min_t(typeof(*ptr), *ptr, _val);		\
-} while (0)
-
 struct cass_cpu_cand {
 	int cpu;
 	unsigned int exit_lat;
