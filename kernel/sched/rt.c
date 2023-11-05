@@ -1525,6 +1525,7 @@ static void yield_task_rt(struct rq *rq)
 #ifdef CONFIG_SMP
 static int find_lowest_rq(struct task_struct *task);
 
+#ifdef CONFIG_RT_SOFTINT_OPTIMIZATION
 /*
  * Return whether the task on the given cpu is currently non-preemptible
  * while handling a potentially long softint, or if the task is likely
@@ -1536,15 +1537,16 @@ static int find_lowest_rq(struct task_struct *task);
 bool
 task_may_not_preempt(struct task_struct *task, int cpu)
 {
+	struct task_struct *cpu_ksoftirqd = per_cpu(ksoftirqd, cpu);
 	__u32 softirqs = per_cpu(active_softirqs, cpu) |
 			 __IRQ_STAT(cpu, __softirq_pending);
-	struct task_struct *cpu_ksoftirqd = per_cpu(ksoftirqd, cpu);
 
 	return ((softirqs & LONG_SOFTIRQ_MASK) &&
 		(task == cpu_ksoftirqd || is_idle_task(task) ||
 		 (task_thread_info(task)->preempt_count
 			& (HARDIRQ_MASK | SOFTIRQ_MASK))));
 }
+#endif /* CONFIG_RT_SOFTINT_OPTIMIZATION */
 
 static int
 select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
@@ -1566,11 +1568,6 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 
 	/*
 	 * If the current task on @p's runqueue is a softirq task,
-	 * it may run without preemption for a time that is
-	 * ill-suited for a waiting RT task. Therefore, try to
-	 * wake this RT task on another runqueue.
-	 *
-	 * Also, if the current task on @p's runqueue is an RT task, then
 	 * it may run without preemption for a time that is
 	 * ill-suited for a waiting RT task. Therefore, try to
 	 * wake this RT task on another runqueue.
@@ -1601,10 +1598,9 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 	 * systems like big.LITTLE.
 	 */
 	may_not_preempt = task_may_not_preempt(curr, cpu);
-
 	test = static_branch_unlikely(&sched_energy_present) ||
-	       may_not_preempt || (curr && unlikely(rt_task(curr)) &&
-	       (curr->nr_cpus_allowed < 2 || curr->prio <= p->prio));
+	       (curr && (may_not_preempt || (unlikely(rt_task(curr)) &&
+	       (curr->nr_cpus_allowed < 2 || curr->prio <= p->prio))));
 
 	if (test || !rt_task_fits_capacity(p, cpu)) {
 		int target = find_lowest_rq(p);
@@ -1634,8 +1630,8 @@ select_task_rq_rt(struct task_struct *p, int cpu, int sd_flag, int flags,
 		 * destination CPU is not running a lower priority task.
 		 */
 		if (target != -1 &&
-		   (may_not_preempt ||
-		    p->prio < cpu_rq(target)->rt.highest_prio.curr))
+		    (may_not_preempt ||
+		     p->prio < cpu_rq(target)->rt.highest_prio.curr))
 			cpu = target;
 	}
 
