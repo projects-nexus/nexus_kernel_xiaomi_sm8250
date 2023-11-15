@@ -76,7 +76,7 @@
 	pr_err("[%s]" format, dev_name(dev), ##__VA_ARGS__)
 
 #define aw_dev_info(dev, format, ...)                                          \
-	pr_info("[%s]" format, dev_name(dev), ##__VA_ARGS__)
+	pr_debug("[%s]" format, dev_name(dev), ##__VA_ARGS__)
 
 #define aw_dev_dbg(dev, format, ...)                                           \
 	pr_debug("[%s]" format, dev_name(dev), ##__VA_ARGS__)
