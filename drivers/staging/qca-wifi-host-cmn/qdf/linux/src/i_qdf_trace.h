@@ -338,18 +338,6 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 
 #endif
 
-#ifdef QDF_TRACE_PRINT_ENABLE
-static inline void qdf_vprint(const char *fmt, va_list args)
-{
-	QDF_VTRACE_INFO(QDF_MODULE_ID_ANY, fmt, args);
-}
-#else /* QDF_TRACE_PRINT_ENABLE */
-static inline void qdf_vprint(const char *fmt, va_list args)
-{
-	QDF_VTRACE_ERROR(QDF_MODULE_ID_QDF, fmt, args);
-}
-#endif
-
 #ifdef PANIC_ON_BUG
 #ifdef CONFIG_SLUB_DEBUG
 /**
