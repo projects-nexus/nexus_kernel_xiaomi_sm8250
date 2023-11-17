@@ -3009,7 +3009,6 @@ cppflags-y += -DDP_PEER_EXTENDED_API
 cppflags-y += -DDP_POWER_SAVE
 cppflags-y += -DDP_CON_MON
 cppflags-y += -DDP_MOB_DEFS
-cppflags-y += -DDP_PRINT_NO_CONSOLE
 cppflags-y += -DDP_INTR_POLL_BOTH
 cppflags-y += -DDP_INVALID_PEER_ASSERT
 
