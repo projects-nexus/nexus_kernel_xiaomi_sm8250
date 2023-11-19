@@ -2511,7 +2511,6 @@ static ssize_t ufshcd_clkgate_enable_store(struct device *dev,
 
 	value = !!value;
 
-	ufs_spin_lock_irqsave(hba->host->host_lock, flags);
 	if (value == hba->clk_gating.is_enabled)
 		goto out;
 
@@ -2522,7 +2521,6 @@ static ssize_t ufshcd_clkgate_enable_store(struct device *dev,
 
 	hba->clk_gating.is_enabled = value;
 out:
-	ufs_spin_unlock_irqrestore(hba->host->host_lock, flags);
 	return count;
 }
 
