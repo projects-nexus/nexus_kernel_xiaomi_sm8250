@@ -57,16 +57,19 @@ unsigned long cass_cpu_util(int cpu, bool sync)
 static __always_inline
 bool cass_cpu_better(const struct cass_cpu_cand *a,
 		     const struct cass_cpu_cand *b,
-		     int prev_cpu, bool sync)
+		     int prev_cpu, bool sync,  struct task_struct *p)
 {
 #define cass_cmp(a, b) ({ res = (a) - (b); })
 #define cass_eq(a, b) ({ res = (a) == (b); })
 	long res;
 
+	bool low_util = (a->util <= sched_util_threshold[a->cpu] &&
+            		 b->util <= sched_util_threshold[b->cpu]);
+	bool boosted = uclamp_boosted(p) && (p->prio <= DEFAULT_PRIO - 10);
+
 	/* Prefer the CPU with lower orig capacity when util is low */
-	if((a->util <= sched_util_threshold[a->cpu] &&
-	    b->util <= sched_util_threshold[b->cpu]) &&
-	    cass_cmp(capacity_orig_of(b->cpu), capacity_orig_of(a->cpu)))
+	if(low_util && !boosted && cass_cmp(capacity_orig_of(b->cpu),
+					    capacity_orig_of(a->cpu)))
                 goto done;
 
 	/* Prefer the CPU with lower relative utilization */
@@ -180,7 +183,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 			continue;
 
 		/* Check if this CPU is better than the best CPU found */
-		if (cass_cpu_better(curr, best, prev_cpu, sync)) {
+		if (cass_cpu_better(curr, best, prev_cpu, sync, p)) {
 			best = curr;
 			cidx ^= 1;
 		}
