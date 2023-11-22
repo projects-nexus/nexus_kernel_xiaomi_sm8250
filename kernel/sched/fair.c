@@ -7901,6 +7901,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 	unsigned long cpu_util, max_util, sum_util, util_freq, util_running;
 	unsigned long cpu_cap, energy = 0;
 	struct task_struct *tsk;
+	unsigned long min, max;
 	int cpu;
 
 	for (; pd; pd = pd->next) {
@@ -7953,7 +7954,7 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 			 * is already enough to scale the EM reported power
 			 * consumption at the (eventually clamped) cpu_capacity.
 			 */
-			sum_util += schedutil_cpu_util(cpu, util_running, ENERGY_UTIL, NULL);
+			sum_util += schedutil_cpu_util(cpu, util_running, NULL, NULL);
 
 			/*
 			 * Performance domain frequency: utilization clamping
@@ -7962,8 +7963,15 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
 			 * NOTE: in case RT tasks are running, by default the
 			 * FREQUENCY_UTIL's utilization can be max OPP.
 			 */
-			tsk = cpu == dst_cpu ? p : NULL;
-			cpu_util = schedutil_cpu_util(cpu, util_freq, FREQUENCY_UTIL, tsk);
+			cpu_util = schedutil_cpu_util(cpu, util_freq, &min, &max);
+			/* Task's uclamp can modify min and max value */
+			if (uclamp_is_used()) {
+				min = max(min, uclamp_eff_value(p, UCLAMP_MIN));
+
+				max = max(max, uclamp_eff_value(p, UCLAMP_MAX));
+			}
+
+			cpu_util = sugov_effective_cpu_perf(cpu, cpu_util, min, max);
 #endif
 			max_util = max(max_util, cpu_util);
 		}
