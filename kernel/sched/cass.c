@@ -193,7 +193,8 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		curr->cap = capacity_of(cpu);
 
 		/* Calculate the relative utilization for this CPU candidate */
-		curr->util = curr->util * SCHED_CAPACITY_SCALE / curr->cap;
+		curr->util = min_t(unsigned long, SCHED_CAPACITY_SCALE,
+				   curr->util * SCHED_CAPACITY_SCALE / curr->cap);
 
 		/* If @best == @curr then there's no need to compare them */
 		if (best == curr)
