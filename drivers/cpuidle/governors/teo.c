@@ -269,6 +269,8 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	cpu_data->time_span_ns = local_clock();
 
 	cpu_data->sleep_length_ns = tick_nohz_get_sleep_length(&delta_tick);
+	if (cpu_data->sleep_length_ns <= 0)
+		cpu_data->sleep_length_ns = S64_MAX;
 	duration_us = ktime_to_us(cpu_data->sleep_length_ns);
 
 	/* Check if there is any choice in the first place. */
