@@ -77,6 +77,8 @@ int suid_dumpable = 0;
 static LIST_HEAD(formats);
 static DEFINE_RWLOCK(binfmt_lock);
 
+#define SURFACEFLINGER_BIN "/system/bin/surfaceflinger"
+
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
 	BUG_ON(!fmt);
@@ -1845,6 +1847,12 @@ static int __do_execve_file(int fd, struct filename *filename,
 	retval = exec_binprm(&bprm);
 	if (retval < 0)
 		goto out;
+
+	if (unlikely(!strncmp(filename->name, SURFACEFLINGER_BIN,
+			strlen(SURFACEFLINGER_BIN)))) {
+		current->pc_flags |= PC_PERF_AFFINE;
+		set_cpus_allowed_ptr(current, cpu_perf_mask);
+	}
 
 	/* execve succeeded */
 	current->fs->in_exec = 0;
