@@ -327,8 +327,6 @@ __attribute__((unused)) static int
 xiaomi_keyboard_pm_resume(struct device *dev);
 __attribute__((unused)) static int xiaomi_keyboard_remove(void);
 __attribute__((unused)) static const struct dev_pm_ops xiaomi_keyboard_pm_ops;
-__attribute__((unused)) static int
-keyboard_drm_notifier_callback(struct notifier_block *self, unsigned long event,
-			       void *data);
+__attribute__((unused)) static int keyboard_drm_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
 
 #endif /* _ALBRX_H_ */
