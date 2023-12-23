@@ -4,6 +4,7 @@
  * FTS Capacitive touch screen controller (FingerTipS)
  *
  * Copyright (C) 2017, STMicroelectronics
+ * Copyright (C) 2021 XiaoMi, Inc.
  * Authors: AMG(Analog Mems Group)
  *
  * 		marco.cali@st.com
@@ -46,13 +47,14 @@
 */
 
 /**** CODE CONFIGURATION ****/
-#define FTS_TS_DRV_NAME "fts" /*driver name*/
-#define FTS_TS_DRV_VERSION "5.2.4.1" /*driver version string format*/
-#define FTS_TS_DRV_VER 0x05020401 /*driver version u32 format*/
+#define FTS_TS_DRV_NAME                     "fts"			/*driver name*/
+#define FTS_TS_DRV_VERSION                  "5.2.4.1"			/*driver version string format*/
+#define FTS_TS_DRV_VER						0x05020401		/*driver version u32 format*/
 
-#define PINCTRL_STATE_ACTIVE "pmx_ts_active"
-#define PINCTRL_STATE_SUSPEND "pmx_ts_suspend"
-#define PINCTRL_STATE_RELEASE "pmx_ts_release"
+#define PINCTRL_STATE_ACTIVE		"pmx_ts_active"
+#define PINCTRL_STATE_SUSPEND		"pmx_ts_suspend"
+#define PINCTRL_STATE_RELEASE		"pmx_ts_release"
+
 
 #define DRIVER_TEST
 
@@ -71,10 +73,11 @@
 #define LIMITS_ARRAY_NAME myArray2
 #endif
 
+
 /*#define USE_ONE_FILE_NODE*/
 
 #ifndef FW_UPDATE_ON_PROBE
-#define EXP_FN_WORK_DELAY_MS 1000
+#define EXP_FN_WORK_DELAY_MS				1000
 #endif
 
 /**** END ****/
@@ -96,30 +99,31 @@
 
 #define STYLUS_MODE
 
+
 /**** END ****/
 
 /**** PANEL SPECIFICATION ****/
-#define X_AXIS_MAX 1080
-#define X_AXIS_MIN 0
-#define Y_AXIS_MAX 2340
-#define Y_AXIS_MIN 0
+#define X_AXIS_MAX                          1080
+#define X_AXIS_MIN                          0
+#define Y_AXIS_MAX                          2340
+#define Y_AXIS_MIN                          0
 
-#define PRESSURE_MIN 0
+#define PRESSURE_MIN                        0
 #ifdef CONFIG_INPUT_PRESS_NDT
-#define PRESSURE_MAX 2048
+#define PRESSURE_MAX                        2048
 #else
-#define PRESSURE_MAX 127
+#define PRESSURE_MAX                        127
 #endif
 
-#define DISTANCE_MIN 0
-#define DISTANCE_MAX 127
+#define DISTANCE_MIN						0
+#define DISTANCE_MAX						127
 
-#define TOUCH_ID_MAX 10
+#define TOUCH_ID_MAX                        10
 
-#define AREA_MIN PRESSURE_MIN
-#define AREA_MAX PRESSURE_MAX
-#define TXNODE_MAX 40
-#define RXNODE_MAX 40
+#define AREA_MIN                            PRESSURE_MIN
+#define AREA_MAX                            PRESSURE_MAX
+#define TXNODE_MAX							40
+#define RXNODE_MAX							40
 /**** END ****/
 /**@}*/
 /*********************************************************/
@@ -135,20 +139,21 @@
 * The meaning of the the LSB of the bitmask must be interpreted considering that the value defined in @link feat_opt Feature Selection Option @endlink correspond to the position of the corresponding bit in the mask
 * @{
 */
-#define MODE_NOTHING 0x00000000
-#define MODE_ACTIVE(_mask, _sett)                                              \
-	do {                                                                   \
-		_mask |= (SCAN_MODE_ACTIVE << 24) | (_sett << 16);             \
-	} while (0)
-#define MODE_LOW_POWER(_mask, _sett)                                           \
-	do {                                                                   \
-		_mask |= (SCAN_MODE_LOW_POWER << 24) | (_sett << 16);          \
-	} while (0)
+#define MODE_NOTHING						0x00000000
+#define MODE_ACTIVE(_mask, _sett)\
+do {\
+	_mask |= (SCAN_MODE_ACTIVE << 24)|(_sett << 16);\
+} while (0)
+#define MODE_LOW_POWER(_mask, _sett)\
+do {\
+	_mask |= (SCAN_MODE_LOW_POWER << 24)|(_sett << 16);\
+} while (0)
 /** @}*/
 
-#define CMD_STR_LEN 32
+#define CMD_STR_LEN							32
 
-#define TSP_BUF_SIZE PAGE_SIZE
+#define TSP_BUF_SIZE						PAGE_SIZE
+
 
 /**
  * Struct which contains information about the HW platform and set up
@@ -186,7 +191,7 @@ struct fts_config_info {
 };
 
 struct fts_hw_platform_data {
-	int (*power)(bool on);
+	int (*power) (bool on);
 	int irq_gpio;
 	int reset_gpio;
 	unsigned long irq_flags;
@@ -245,8 +250,8 @@ extern char tag[8];
 /*
  * Dispatch event handler
  */
-typedef void (*event_dispatch_handler_t)(struct fts_ts_info *info,
-					 unsigned char *data);
+typedef void (*event_dispatch_handler_t)
+ (struct fts_ts_info *info, unsigned char *data);
 
 #ifdef CONFIG_SECURE_TOUCH
 struct fts_secure_delay {
@@ -274,6 +279,7 @@ struct fts_dma_buf {
 	u8 *wrBuf;
 };
 #endif
+
 
 /**
  * FTS capacitive touch screen device information
@@ -379,7 +385,7 @@ struct fts_ts_info {
 #endif
 	bool lockdown_is_ok;
 	bool irq_status;
-	wait_queue_head_t wait_queue;
+	wait_queue_head_t 	wait_queue;
 	struct completion tp_reset_completion;
 	atomic_t system_is_resetting;
 	int fod_status;
@@ -405,8 +411,6 @@ struct fts_ts_info {
 	int orientation;
 	struct work_struct switch_mode_work;
 	struct work_struct grip_mode_work;
-	struct delayed_work grip_mode_delay_work;
-	struct delayed_work cmd_update_delay_work;
 	bool big_area_fod;
 	struct delayed_work power_supply_work;
 	int charging_status;
