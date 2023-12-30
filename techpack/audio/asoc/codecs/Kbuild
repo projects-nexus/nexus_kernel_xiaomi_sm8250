@@ -243,7 +243,9 @@ else
 	obj-y	+= tfa9874/
 endif
 endif
+ifeq ($(CONFIG_MACH_XIAOMI_PIPA), y)
 	obj-y	+= aw882xx/
+endif
 	obj-y	+= rouleur/
 	obj-y	+= wsa883x/
 	obj-y	+= sdm660_cdc/
