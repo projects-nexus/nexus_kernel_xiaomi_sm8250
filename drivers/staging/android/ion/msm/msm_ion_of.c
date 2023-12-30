@@ -75,8 +75,6 @@ static struct ion_heap_desc ion_heap_meta[] = {
 };
 #endif
 
-static struct ion_heap_data heap_query_data[ARRAY_SIZE(ion_heap_meta)] __cacheline_aligned;
-
 #ifdef CONFIG_OF
 #define MAKE_HEAP_TYPE_MAPPING(h) { .name = #h, \
 			.heap_type = ION_HEAP_TYPE_##h, }
@@ -301,13 +299,6 @@ static int msm_ion_probe(struct platform_device *pdev)
 
 	num_heaps = pdata->nr;
 
-	/*
-	 * This means that either there are multiple heaps that share the same
-	 * ID, or there are heaps missing from ion_heap_meta. Both cases will
-	 * result in major problems, so let's panic to indicate the issue.
-	 */
-	BUG_ON(num_heaps > ARRAY_SIZE(ion_heap_meta));
-
 	heaps = kcalloc(pdata->nr, sizeof(struct ion_heap *), GFP_KERNEL);
 
 	if (!heaps) {
@@ -315,7 +306,7 @@ static int msm_ion_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	new_dev = ion_device_create(heap_query_data);
+	new_dev = ion_device_create();
 	if (IS_ERR_OR_NULL(new_dev)) {
 		/*
 		 * set this to the ERR to indicate to the clients
