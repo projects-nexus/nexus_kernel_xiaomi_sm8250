@@ -10,7 +10,7 @@
 #include "dtc.h"
 #include "srcpos.h"
 
-char *yaml_error_name[] = {
+const char *yaml_error_name[] = {
 	[YAML_NO_ERROR] = "no error",
 	[YAML_MEMORY_ERROR] = "memory error",
 	[YAML_READER_ERROR] = "reader error",
@@ -29,11 +29,12 @@ char *yaml_error_name[] = {
 		    (emitter)->problem, __func__, __LINE__);		\
 })
 
-static void yaml_propval_int(yaml_emitter_t *emitter, struct marker *markers, char *data, int len, int width)
+static void yaml_propval_int(yaml_emitter_t *emitter, struct marker *markers,
+	char *data, unsigned int seq_offset, unsigned int len, int width)
 {
 	yaml_event_t event;
-	void *tag;
-	int off, start_offset = markers->offset;
+	const void *tag;
+	unsigned int off;
 
 	switch(width) {
 		case 1: tag = "!u8"; break;
@@ -46,7 +47,7 @@ static void yaml_propval_int(yaml_emitter_t *emitter, struct marker *markers, ch
 	assert(len % width == 0);
 
 	yaml_sequence_start_event_initialize(&event, NULL,
-		(yaml_char_t *)tag, width == 4, YAML_FLOW_SEQUENCE_STYLE);
+		(const yaml_char_t *)tag, width == 4, YAML_FLOW_SEQUENCE_STYLE);
 	yaml_emitter_emit_or_die(emitter, &event);
 
 	for (off = 0; off < len; off += width) {
@@ -59,31 +60,31 @@ static void yaml_propval_int(yaml_emitter_t *emitter, struct marker *markers, ch
 			sprintf(buf, "0x%"PRIx8, *(uint8_t*)(data + off));
 			break;
 		case 2:
-			sprintf(buf, "0x%"PRIx16, fdt16_to_cpu(*(fdt16_t*)(data + off)));
+			sprintf(buf, "0x%"PRIx16, dtb_ld16(data + off));
 			break;
 		case 4:
-			sprintf(buf, "0x%"PRIx32, fdt32_to_cpu(*(fdt32_t*)(data + off)));
+			sprintf(buf, "0x%"PRIx32, dtb_ld32(data + off));
 			m = markers;
 			is_phandle = false;
 			for_each_marker_of_type(m, REF_PHANDLE) {
-				if (m->offset == (start_offset + off)) {
+				if (m->offset == (seq_offset + off)) {
 					is_phandle = true;
 					break;
 				}
 			}
 			break;
 		case 8:
-			sprintf(buf, "0x%"PRIx64, fdt64_to_cpu(*(fdt64_t*)(data + off)));
+			sprintf(buf, "0x%"PRIx64, dtb_ld64(data + off));
 			break;
 		}
 
 		if (is_phandle)
 			yaml_scalar_event_initialize(&event, NULL,
-				(yaml_char_t*)"!phandle", (yaml_char_t *)buf,
+				(const yaml_char_t*)"!phandle", (const yaml_char_t *)buf,
 				strlen(buf), 0, 0, YAML_PLAIN_SCALAR_STYLE);
 		else
 			yaml_scalar_event_initialize(&event, NULL,
-				(yaml_char_t*)YAML_INT_TAG, (yaml_char_t *)buf,
+				(const yaml_char_t*)YAML_INT_TAG, (const yaml_char_t *)buf,
 				strlen(buf), 1, 1, YAML_PLAIN_SCALAR_STYLE);
 		yaml_emitter_emit_or_die(emitter, &event);
 	}
@@ -101,10 +102,10 @@ static void yaml_propval_string(yaml_emitter_t *emitter, char *str, int len)
 
 	/* Make sure the entire string is in the lower 7-bit ascii range */
 	for (i = 0; i < len; i++)
-		assert(isascii(str[i]));
+		assert(isascii((unsigned char)str[i]));
 
 	yaml_scalar_event_initialize(&event, NULL,
-		(yaml_char_t *)YAML_STR_TAG, (yaml_char_t*)str,
+		(const yaml_char_t *)YAML_STR_TAG, (const yaml_char_t*)str,
 		len-1, 0, 1, YAML_DOUBLE_QUOTED_SCALAR_STYLE);
 	yaml_emitter_emit_or_die(emitter, &event);
 }
@@ -112,20 +113,21 @@ static void yaml_propval_string(yaml_emitter_t *emitter, char *str, int len)
 static void yaml_propval(yaml_emitter_t *emitter, struct property *prop)
 {
 	yaml_event_t event;
-	int len = prop->val.len;
+	unsigned int len = prop->val.len;
 	struct marker *m = prop->val.markers;
+	struct marker *markers = prop->val.markers;
 
 	/* Emit the property name */
 	yaml_scalar_event_initialize(&event, NULL,
-		(yaml_char_t *)YAML_STR_TAG, (yaml_char_t*)prop->name,
+		(const yaml_char_t *)YAML_STR_TAG, (const yaml_char_t*)prop->name,
 		strlen(prop->name), 1, 1, YAML_PLAIN_SCALAR_STYLE);
 	yaml_emitter_emit_or_die(emitter, &event);
 
 	/* Boolean properties are easiest to deal with. Length is zero, so just emit 'true' */
 	if (len == 0) {
 		yaml_scalar_event_initialize(&event, NULL,
-			(yaml_char_t *)YAML_BOOL_TAG,
-			(yaml_char_t*)"true",
+			(const yaml_char_t *)YAML_BOOL_TAG,
+			(const yaml_char_t*)"true",
 			strlen("true"), 1, 0, YAML_PLAIN_SCALAR_STYLE);
 		yaml_emitter_emit_or_die(emitter, &event);
 		return;
@@ -135,7 +137,7 @@ static void yaml_propval(yaml_emitter_t *emitter, struct property *prop)
 		die("No markers present in property '%s' value\n", prop->name);
 
 	yaml_sequence_start_event_initialize(&event, NULL,
-		(yaml_char_t *)YAML_SEQ_TAG, 1, YAML_FLOW_SEQUENCE_STYLE);
+		(const yaml_char_t *)YAML_SEQ_TAG, 1, YAML_FLOW_SEQUENCE_STYLE);
 	yaml_emitter_emit_or_die(emitter, &event);
 
 	for_each_marker(m) {
@@ -151,19 +153,19 @@ static void yaml_propval(yaml_emitter_t *emitter, struct property *prop)
 
 		switch(m->type) {
 		case TYPE_UINT16:
-			yaml_propval_int(emitter, m, data, chunk_len, 2);
+			yaml_propval_int(emitter, markers, data, m->offset, chunk_len, 2);
 			break;
 		case TYPE_UINT32:
-			yaml_propval_int(emitter, m, data, chunk_len, 4);
+			yaml_propval_int(emitter, markers, data, m->offset, chunk_len, 4);
 			break;
 		case TYPE_UINT64:
-			yaml_propval_int(emitter, m, data, chunk_len, 8);
+			yaml_propval_int(emitter, markers, data, m->offset, chunk_len, 8);
 			break;
 		case TYPE_STRING:
 			yaml_propval_string(emitter, data, chunk_len);
 			break;
 		default:
-			yaml_propval_int(emitter, m, data, chunk_len, 1);
+			yaml_propval_int(emitter, markers, data, m->offset, chunk_len, 1);
 			break;
 		}
 	}
@@ -183,7 +185,7 @@ static void yaml_tree(struct node *tree, yaml_emitter_t *emitter)
 		return;
 
 	yaml_mapping_start_event_initialize(&event, NULL,
-		(yaml_char_t *)YAML_MAP_TAG, 1, YAML_ANY_MAPPING_STYLE);
+		(const yaml_char_t *)YAML_MAP_TAG, 1, YAML_ANY_MAPPING_STYLE);
 	yaml_emitter_emit_or_die(emitter, &event);
 
 	for_each_property(tree, prop)
@@ -192,7 +194,7 @@ static void yaml_tree(struct node *tree, yaml_emitter_t *emitter)
 	/* Loop over all the children, emitting them into the map */
 	for_each_child(tree, child) {
 		yaml_scalar_event_initialize(&event, NULL,
-			(yaml_char_t *)YAML_STR_TAG, (yaml_char_t*)child->name,
+			(const yaml_char_t *)YAML_STR_TAG, (const yaml_char_t*)child->name,
 			strlen(child->name), 1, 0, YAML_PLAIN_SCALAR_STYLE);
 		yaml_emitter_emit_or_die(emitter, &event);
 		yaml_tree(child, emitter);
@@ -215,7 +217,7 @@ void dt_to_yaml(FILE *f, struct dt_info *dti)
 	yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 0);
 	yaml_emitter_emit_or_die(&emitter, &event);
 
-	yaml_sequence_start_event_initialize(&event, NULL, (yaml_char_t *)YAML_SEQ_TAG, 1, YAML_ANY_SEQUENCE_STYLE);
+	yaml_sequence_start_event_initialize(&event, NULL, (const yaml_char_t *)YAML_SEQ_TAG, 1, YAML_ANY_SEQUENCE_STYLE);
 	yaml_emitter_emit_or_die(&emitter, &event);
 
 	yaml_tree(dti->dt, &emitter);
