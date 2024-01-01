@@ -54,8 +54,9 @@ fi
 # Files
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
 DTBO=$(pwd)/out/arch/arm64/boot/dtbo.img
+DTB=$(pwd)/out/arch/arm64/boot/dtb.img
 OUT_DIR=out/
-dts_source=arch/arm64/boot/dts/vendor/qcom
+#dts_source=arch/arm64/boot/dts/vendor/qcom
 
 # Verbose Build
 VERBOSE=0
@@ -291,9 +292,6 @@ START=$(date +"%s")
 	   then
 	       push "error.log" "Build Throws Errors"
 	       exit 1
-	   else
-		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
-		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
 	}
 	
@@ -354,8 +352,6 @@ START=$(date +"%s")
 	       exit 1
 	   else
 	       post_msg " Kernel Compilation Finished. Started Zipping "
-		   find ${OUT_DIR}/$dts_source -name '*.dtb' -exec cat {} + >${OUT_DIR}/arch/arm64/boot/dtb
-		   DTB=$(pwd)/out/arch/arm64/boot/dtb
 	fi
 }
 
