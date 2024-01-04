@@ -20477,7 +20477,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 						 bssid.bytes, NULL,
 						 conn_info_channel,
 						 params->chandef.width,
-						 roam_profile->freq_hint);
+						 0);
 
 	if (0 > status) {
 		hdd_err("connect failed");
