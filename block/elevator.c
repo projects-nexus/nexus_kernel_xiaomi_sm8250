@@ -646,7 +646,7 @@ int elevator_init_mq(struct request_queue *q)
 	WARN_ON_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags));
 
 	if (unlikely(q->elevator))
-		goto out_unlock;
+		goto out;
 
 #if defined(CONFIG_BFQ_DEFAULT)
 	e = elevator_get(q, "bfq", false);
@@ -657,7 +657,7 @@ int elevator_init_mq(struct request_queue *q)
 #endif
 
 	if (!e)
-		goto out_unlock;
+		goto out;
 	err = blk_mq_init_sched(q, e);
 	if (err)
 		elevator_put(e);
