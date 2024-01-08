@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "cam_sensor_cmn_header.h"
@@ -96,7 +97,8 @@ int32_t cam_camera_cci_i2c_read_seq(struct cam_sensor_cci_client *cci_client,
 static int32_t cam_cci_i2c_write_table_cmd(
 	struct camera_io_master *client,
 	struct cam_sensor_i2c_reg_setting *write_setting,
-	enum cam_cci_cmd_type cmd)
+	enum cam_cci_cmd_type cmd,
+	bool force_low_priority)
 {
 	int32_t rc = -EINVAL;
 	struct cam_cci_ctrl cci_ctrl;
@@ -117,6 +119,7 @@ static int32_t cam_cci_i2c_write_table_cmd(
 	cci_ctrl.cfg.cci_i2c_write_cfg.data_type = write_setting->data_type;
 	cci_ctrl.cfg.cci_i2c_write_cfg.addr_type = write_setting->addr_type;
 	cci_ctrl.cfg.cci_i2c_write_cfg.size = write_setting->size;
+	cci_ctrl.force_low_priority = force_low_priority;
 	rc = v4l2_subdev_call(client->cci_client->cci_subdev,
 		core, ioctl, VIDIOC_MSM_CCI_CFG, &cci_ctrl);
 	if (rc < 0) {
@@ -136,31 +139,33 @@ static int32_t cam_cci_i2c_write_table_cmd(
 
 int32_t cam_cci_i2c_write_table(
 	struct camera_io_master *client,
-	struct cam_sensor_i2c_reg_setting *write_setting)
+	struct cam_sensor_i2c_reg_setting *write_setting,
+	bool force_low_priority)
 {
 	return cam_cci_i2c_write_table_cmd(client, write_setting,
-		MSM_CCI_I2C_WRITE);
+		MSM_CCI_I2C_WRITE, force_low_priority);
 }
 
 int32_t cam_cci_i2c_write_continuous_table(
 	struct camera_io_master *client,
 	struct cam_sensor_i2c_reg_setting *write_setting,
-	uint8_t cam_sensor_i2c_write_flag)
+	uint8_t cam_sensor_i2c_write_flag,
+	bool force_low_priority)
 {
 	int32_t rc = 0;
 
 	if (cam_sensor_i2c_write_flag == 1)
 		rc = cam_cci_i2c_write_table_cmd(client, write_setting,
-			MSM_CCI_I2C_WRITE_BURST);
+			MSM_CCI_I2C_WRITE_BURST, force_low_priority);
 	else if (cam_sensor_i2c_write_flag == 0)
 		rc = cam_cci_i2c_write_table_cmd(client, write_setting,
-			MSM_CCI_I2C_WRITE_SEQ);
+			MSM_CCI_I2C_WRITE_SEQ, force_low_priority);
 
 	return rc;
 }
 
 static int32_t cam_cci_i2c_compare(struct cam_sensor_cci_client *client,
-	uint32_t addr, uint32_t data, uint32_t data_mask,
+	uint32_t addr, uint16_t data, uint16_t data_mask,
 	enum camera_sensor_i2c_type data_type,
 	enum camera_sensor_i2c_type addr_type)
 {
@@ -171,16 +176,15 @@ static int32_t cam_cci_i2c_compare(struct cam_sensor_cci_client *client,
 		addr_type, data_type);
 	if (rc < 0)
 		return rc;
-	CAM_DBG(CAM_SENSOR, "addr %04x, %04x,compare data = %d", addr, reg_data, (int16_t)reg_data);
 
-	reg_data = reg_data & 0xFFFFFFFF;
+	reg_data = reg_data & 0xFFFF;
 	if (data == (reg_data & ~data_mask))
 		return I2C_COMPARE_MATCH;
 	return I2C_COMPARE_MISMATCH;
 }
 
 int32_t cam_cci_i2c_poll(struct cam_sensor_cci_client *client,
-	uint32_t addr, uint32_t data, uint32_t data_mask,
+	uint32_t addr, uint16_t data, uint16_t data_mask,
 	enum camera_sensor_i2c_type data_type,
 	enum camera_sensor_i2c_type addr_type,
 	uint32_t delay_ms)
