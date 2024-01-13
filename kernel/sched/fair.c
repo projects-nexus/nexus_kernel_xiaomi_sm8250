@@ -9578,29 +9578,19 @@ static void update_cpu_capacity(struct sched_domain *sd, int cpu)
 {
 	unsigned long capacity = arch_scale_cpu_capacity(sd, cpu);
 	struct sched_group *sdg = sd->groups;
-	bool update = false;
 
 	capacity *= arch_scale_max_freq_capacity(sd, cpu);
 	capacity >>= SCHED_CAPACITY_SHIFT;
 
 	capacity = min(capacity, thermal_cap(cpu));
-	if (cpu_rq(cpu)->cpu_capacity_orig != capacity) {
-		cpu_rq(cpu)->cpu_capacity_orig = capacity;
-		update = true;
-	}
+	cpu_rq(cpu)->cpu_capacity_orig = capacity;
 
 	capacity = scale_rt_capacity(cpu, capacity);
 
 	if (!capacity)
 		capacity = 1;
 
-	if (cpu_rq(cpu)->cpu_capacity != capacity) {
-		cpu_rq(cpu)->cpu_capacity = capacity;
-		update = true;
-	}
-	if (update)
-		trace_sched_capacity_update(cpu);
-
+	cpu_rq(cpu)->cpu_capacity = capacity;
 	sdg->sgc->capacity = capacity;
 	sdg->sgc->min_capacity = capacity;
 	sdg->sgc->max_capacity = capacity;
