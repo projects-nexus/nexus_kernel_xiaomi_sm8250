@@ -6894,7 +6894,7 @@ static inline int select_idle_sibling_cstate_aware(struct task_struct *p,
 					goto next;
 
 				/* figure out if the task can fit here at all */
-				new_usage = uclamp_task(p);
+				new_usage = boosted_task_util(p);
 				capacity_orig = capacity_orig_of(i);
 
 				if (new_usage > capacity_orig)
