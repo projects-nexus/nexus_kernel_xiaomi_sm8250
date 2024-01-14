@@ -730,22 +730,6 @@ static int fg_mac_write_block(struct bq_fg_chip *bq, u16 cmd, u8 *data, u8 len)
 
 	return ret;
 }
-/*
-static int fg_get_fastcharge_mode(struct bq_fg_chip *bq)
-{
-	u8 data[3];
-	int ret;
-
-	ret = fg_mac_read_block(bq, FG_MAC_CMD_CHARGING_STATUS, data, 3);
-	if (ret < 0) {
-		bq_dbg(PR_OEM, "could not write fastcharge = %d\n", ret);
-		return ret;
-	}
-
-	return (data[2] & FG_FLAGS_FASTCHAGE) >> 5;
-}
-*/
-
 static int fg_set_fastcharge_mode(struct bq_fg_chip *bq, bool enable)
 {
 	u8 data[2];
@@ -755,13 +739,13 @@ static int fg_set_fastcharge_mode(struct bq_fg_chip *bq, bool enable)
 
 	bq_dbg(PR_OEM, "set fastcharge mode: enable: %d\n", enable);
 	if (enable) {
-		ret = fg_mac_write_block(bq, FG_MAC_CMD_FASTCHARGE_EN, data, 2);
+		ret = fg_mac_write_block(bq, FG_MAC_CMD_FASTCHARGE_DIS, data, 2);
 		if (ret < 0) {
 			bq_dbg(PR_OEM, "could not write fastcharge = %d\n", ret);
 			return ret;
 		}
 	} else {
-		ret = fg_mac_write_block(bq, FG_MAC_CMD_FASTCHARGE_DIS, data, 2);
+		ret = fg_mac_write_block(bq, FG_MAC_CMD_FASTCHARGE_EN, data, 2);
 		if (ret < 0) {
 			bq_dbg(PR_OEM, "could not write fastcharge = %d\n", ret);
 			return ret;
@@ -2804,12 +2788,12 @@ static int bq_fg_probe(struct i2c_client *client,
 	if (!bq->regmap)
 		return -ENODEV;
 
-	fg_get_manufacture_data(bq);
-	fg_set_fastcharge_mode(bq, false);
-
 	mutex_init(&bq->i2c_rw_lock);
 	mutex_init(&bq->data_lock);
 	device_init_wakeup(bq->dev, 1);
+
+    fg_get_manufacture_data(bq);
+	fg_set_fastcharge_mode(bq, false);
 
 	fg_psy_register(bq);
 	fg_update_status(bq);

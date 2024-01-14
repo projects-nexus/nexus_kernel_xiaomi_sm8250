@@ -1508,7 +1508,7 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 		val->intval = get_client_vote(chg->usb_icl_votable, PD_VOTER);
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		if (smblib_get_fastcharge_mode(chg))
+		if (smblib_get_fastcharge_mode(chg)) {
 #if IS_ENABLED(CONFIG_BOARD_CAS)
 			val->intval = 12000000;
 #elif IS_ENABLED(CONFIG_BOARD_CMI)
@@ -1516,8 +1516,11 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 #else
 			val->intval = 6000000;
 #endif
-		else
+            pr_info("Fastcharge is enabled: %d", val->intval);
+		} else {
 			rc = smblib_get_prop_input_current_max(chg, val);
+			pr_info("Fastcharge is disabled: %d", val->intval);
+		}
 		break;
 	case POWER_SUPPLY_PROP_TYPE:
 		val->intval = POWER_SUPPLY_TYPE_USB_PD;
