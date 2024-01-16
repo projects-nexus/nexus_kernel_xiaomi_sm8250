@@ -8507,9 +8507,9 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 {
 	int err;
 	size_t buff_len;
-	u8 model_index, lun;
+	u8 __maybe_unused model_index, lun;
 	u8 *desc_buf;
-	u32 d_lu_wb_buf_alloc;
+	u32 __maybe_unused d_lu_wb_buf_alloc;
 
 	buff_len = max_t(size_t, hba->desc_size.dev_desc,
 			 QUERY_DESC_MAX_SIZE + 1);
@@ -8578,12 +8578,13 @@ static int ufs_get_device_desc(struct ufs_hba *hba,
 	}
 	*/
 
+/*
 skip_unit_desc:
-	/* Zero-pad entire buffer for string termination. */
+	// Zero-pad entire buffer for string termination.
 	memset(desc_buf, 0, buff_len);
 
 	err = ufshcd_read_string_desc(hba, model_index, desc_buf,
-				      QUERY_DESC_MAX_SIZE, true/*ASCII*/);
+				      QUERY_DESC_MAX_SIZE, true);
 	if (err) {
 		dev_err(hba->dev, "%s: Failed reading Product Name. err = %d\n",
 			__func__, err);
@@ -8595,8 +8596,9 @@ skip_unit_desc:
 		min_t(u8, desc_buf[QUERY_DESC_LENGTH_OFFSET],
 		      MAX_MODEL_LEN));
 
-	/* Null terminate the model string */
+	// Null terminate the model string
 	dev_desc->model[MAX_MODEL_LEN] = '\0';
+*/
 
 out:
 	kfree(desc_buf);
