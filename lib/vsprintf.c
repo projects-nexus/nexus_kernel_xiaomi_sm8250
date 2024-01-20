@@ -1706,7 +1706,8 @@ static inline int __ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
 		static DECLARE_WORK(enable_ptr_key_work, enable_ptr_key_workfn);
 		unsigned long flags;
 
-		if (!system_unbound_wq || !rng_is_initialized() ||
+		if (!system_unbound_wq ||
+		    (!rng_is_initialized() && !rng_has_arch_random()) ||
 		    !spin_trylock_irqsave(&filling, flags))
 			return -EAGAIN;
 
