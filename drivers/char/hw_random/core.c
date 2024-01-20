@@ -425,7 +425,6 @@ static int __init register_miscdev(void)
 
 static int hwrng_fillfn(void *unused)
 {
-	size_t entropy, entropy_credit = 0; /* in 1/1024 of a bit */
 	long rc;
 
 	while (!kthread_should_stop()) {
@@ -447,17 +446,9 @@ static int hwrng_fillfn(void *unused)
 			msleep_interruptible(10000);
 			continue;
 		}
-
-		/* If we cannot credit at least one bit of entropy,
-		 * keep track of the remainder for the next iteration
-		 */
-		entropy = rc * current_quality * 8 + entropy_credit;
-		if ((entropy >> 10) == 0)
-			entropy_credit = entropy;
-
 		/* Outside lock, sure, but y'know: randomness. */
 		add_hwgenerator_randomness((void *)rng_fillbuf, rc,
-					   entropy >> 10);
+					   rc * current_quality * 8 >> 10);
 	}
 	hwrng_fill = NULL;
 	return 0;
