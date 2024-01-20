@@ -87,8 +87,7 @@ struct pipe_buf_operations {
 	 * hook. Returns 0 for good, or a negative error value in case of
 	 * error.
 	 */
-	int (*confirm)(struct pipe_inode_info *, struct pipe_buffer *,
-			bool nonblock);
+	int (*confirm)(struct pipe_inode_info *, struct pipe_buffer *);
 
 	/*
 	 * When the contents of this pipe buffer has been completely
@@ -145,9 +144,9 @@ static inline void pipe_buf_release(struct pipe_inode_info *pipe,
  * @buf:	the buffer to confirm
  */
 static inline int pipe_buf_confirm(struct pipe_inode_info *pipe,
-				   struct pipe_buffer *buf, bool nonblock)
+				   struct pipe_buffer *buf)
 {
-	return buf->ops->confirm(pipe, buf, nonblock);
+	return buf->ops->confirm(pipe, buf);
 }
 
 /**
@@ -182,7 +181,7 @@ void free_pipe_info(struct pipe_inode_info *);
 
 /* Generic pipe buffer ops functions */
 bool generic_pipe_buf_get(struct pipe_inode_info *, struct pipe_buffer *);
-int generic_pipe_buf_confirm(struct pipe_inode_info *, struct pipe_buffer *, bool nonblock);
+int generic_pipe_buf_confirm(struct pipe_inode_info *, struct pipe_buffer *);
 int generic_pipe_buf_steal(struct pipe_inode_info *, struct pipe_buffer *);
 int generic_pipe_buf_nosteal(struct pipe_inode_info *, struct pipe_buffer *);
 void generic_pipe_buf_release(struct pipe_inode_info *, struct pipe_buffer *);
