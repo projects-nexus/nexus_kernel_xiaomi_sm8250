@@ -52,7 +52,7 @@ MODULE_PARM_DESC(default_quality,
 
 static void drop_current_rng(void);
 static int hwrng_init(struct hwrng *rng);
-static void hwrng_manage_rngd(void);
+static void start_khwrngd(void);
 
 static inline int rng_get_data(struct hwrng *rng, u8 *buffer, size_t size,
 			       int wait);
@@ -165,7 +165,10 @@ skip_init:
 	if (current_quality > 1024)
 		current_quality = 1024;
 
-	hwrng_manage_rngd();
+	if (current_quality == 0 && hwrng_fill)
+		kthread_stop(hwrng_fill);
+	if (current_quality > 0 && !hwrng_fill)
+		start_khwrngd();
 
 	return 0;
 }
@@ -464,19 +467,12 @@ static int hwrng_fillfn(void *unused)
 	return 0;
 }
 
-static void hwrng_manage_rngd(void)
+static void start_khwrngd(void)
 {
-	if (WARN_ON(!mutex_is_locked(&rng_mutex)))
-		return;
-
-	if (current_quality == 0 && hwrng_fill)
-		kthread_stop(hwrng_fill);
-	if (current_quality > 0 && !hwrng_fill) {
-		hwrng_fill = kthread_run(hwrng_fillfn, NULL, "hwrng");
-		if (IS_ERR(hwrng_fill)) {
-			pr_err("hwrng_fill thread creation failed\n");
-			hwrng_fill = NULL;
-		}
+	hwrng_fill = kthread_run(hwrng_fillfn, NULL, "hwrng");
+	if (IS_ERR(hwrng_fill)) {
+		pr_err("hwrng_fill thread creation failed\n");
+		hwrng_fill = NULL;
 	}
 }
 
