@@ -394,6 +394,8 @@ static int parse_power_params(struct device_node *dn, struct power_params *pwr)
 	if (ret)
 		return ret;
 
+	pwr->exit_latency = pwr->exit_latency + pwr->entry_latency;
+
 	ret = lpm_of_read_u32(dn, "qcom,min-residency-us",
 			      &pwr->min_residency, true);
 
