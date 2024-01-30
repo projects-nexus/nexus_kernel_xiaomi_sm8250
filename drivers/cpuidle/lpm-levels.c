@@ -1000,8 +1000,7 @@ static int cluster_select(struct lpm_cluster *cluster, bool from_idle,
 		if (from_idle && latency_us <= pwr_params->exit_latency)
 			break;
 
-		if (sleep_us < (pwr_params->exit_latency +
-						pwr_params->entry_latency))
+		if (sleep_us < pwr_params->exit_latency)
 			break;
 
 		if (suspend_in_progress && from_idle && level->notify_rpm)
