@@ -24,7 +24,6 @@ struct cass_cpu_cand {
 	unsigned int exit_lat;
 	unsigned long cap;
 	unsigned long util;
-        unsigned long raw_util;
 };
 
 static __always_inline
@@ -56,13 +55,17 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 	long res;
 	bool boost = uclamp_boosted(p);
 
-	/* Prefer the CPU with higher cap and lower utilization */
-	if (boost && cass_cmp_r(a->cap - a->raw_util, b->cap - b->raw_util, 64))
+	/* Prefer the CPU with lower relative utilization */
+	if (boost && cass_cmp_r(b->util, a->util, 64))
 		goto done;
 
 	/* Prefer the current CPU for sync wakes */
 	if (sync && (cass_eq(a->cpu, smp_processor_id()) ||
 		     !cass_cmp(b->cpu, smp_processor_id())))
+		goto done;
+
+	/* Prefer the CPU with higher capacity */
+	if (boost && cass_cmp_r(a->cap, b->cap, 64))
 		goto done;
 
 	/* Prefer the CPU with lower idle exit latency */
@@ -171,7 +174,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		}
 
 		/* Get this CPU's utilization, possibly without @current */
-		curr->raw_util = cass_cpu_util(cpu, sync);
+		curr->util = cass_cpu_util(cpu, sync);
 
 		/*
 		 * Add @p's utilization to this CPU if it's not @p's CPU, to
@@ -179,7 +182,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		 * if @p were on it.
 		 */
 		if (cpu != task_cpu(p))
-			curr->raw_util += p_util;
+			curr->util += p_util;
 
 		/*
 		 * Get the current capacity of this CPU adjusted for thermal
@@ -188,7 +191,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync)
 		curr->cap = capacity_of(cpu);
 
 		/* Calculate the relative utilization for this CPU candidate */
-		curr->util = curr->raw_util * SCHED_CAPACITY_SCALE / curr->cap;
+		curr->util = curr->util * SCHED_CAPACITY_SCALE / curr->cap;
 
 		/* If @best == @curr then there's no need to compare them */
 		if (best == curr)
