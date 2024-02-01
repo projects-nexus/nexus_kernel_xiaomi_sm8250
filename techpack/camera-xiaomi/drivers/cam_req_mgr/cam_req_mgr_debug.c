@@ -73,14 +73,14 @@ static ssize_t session_info_read(struct file *t_file, char *t_char,
 	if (!list_empty(&core_dev->session_head)) {
 		list_for_each_entry(session,
 			&core_dev->session_head, entry) {
-			snprintf(line_buffer, sizeof(line_buffer),
+			scnprintf(line_buffer, sizeof(line_buffer),
 				"session_hdl = %x \t"
 				"num_links = %d\n",
 				session->session_hdl, session->num_links);
 			strlcat(out_buffer, line_buffer,
 				sizeof(sess_info_buffer));
 			for (i = 0; i < session->num_links; i++) {
-				snprintf(line_buffer, sizeof(line_buffer),
+				scnprintf(line_buffer, sizeof(line_buffer),
 					"link_hdl[%d] = 0x%x, num_devs connected = %d\n",
 					i, session->links[i]->link_hdl,
 					session->links[i]->num_devs);
@@ -115,7 +115,7 @@ int cam_req_mgr_debug_register(struct cam_req_mgr_core_device *core_dev)
 	struct dentry *debugfs_root;
 	char dirname[32] = {0};
 
-	snprintf(dirname, sizeof(dirname), "cam_req_mgr");
+	scnprintf(dirname, sizeof(dirname), "cam_req_mgr");
 	debugfs_root = debugfs_create_dir(dirname, NULL);
 	if (!debugfs_root)
 		return -ENOMEM;

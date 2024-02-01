@@ -1019,7 +1019,7 @@ int cam_lrme_mgr_register_device(
 	INIT_LIST_HEAD(&hw_device->frame_pending_list_high);
 	INIT_LIST_HEAD(&hw_device->frame_pending_list_normal);
 
-	rc = snprintf(buf, sizeof(buf), "cam_lrme_device_submit_worker%d",
+	rc = scnprintf(buf, sizeof(buf), "cam_lrme_device_submit_worker%d",
 		lrme_hw_intf->hw_idx);
 	CAM_DBG(CAM_LRME, "Create submit workq for %s", buf);
 	rc = cam_req_mgr_workq_create(buf,

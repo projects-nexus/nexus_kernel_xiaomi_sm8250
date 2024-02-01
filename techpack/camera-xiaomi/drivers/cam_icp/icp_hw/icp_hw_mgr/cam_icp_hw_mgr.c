@@ -77,7 +77,7 @@ static int cam_icp_dump_io_cfg(struct cam_icp_hw_ctx_data *ctx_data,
 	len = len / sizeof(uint32_t);
 	ptr = (uint32_t *)vaddr_ptr;
 	for (i = 0; i < len; i++) {
-		used += snprintf(buf + used,
+		used += scnprintf(buf + used,
 			sizeof(buf) - used, "0X%08X-", ptr[i]);
 		if (!(i % 8)) {
 			CAM_INFO(CAM_ICP, "%s: %s", __func__, buf);

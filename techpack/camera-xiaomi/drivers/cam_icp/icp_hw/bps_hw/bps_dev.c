@@ -108,7 +108,7 @@ int cam_bps_probe(struct platform_device *pdev)
 	}
 
 	memset(bps_dev_name, 0, sizeof(bps_dev_name));
-	snprintf(bps_dev_name, sizeof(bps_dev_name),
+	scnprintf(bps_dev_name, sizeof(bps_dev_name),
 		"bps%1u", bps_dev_intf->hw_idx);
 
 	bps_dev->soc_info.pdev = pdev;

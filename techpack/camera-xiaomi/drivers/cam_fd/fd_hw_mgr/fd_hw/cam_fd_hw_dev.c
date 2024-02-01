@@ -56,7 +56,7 @@ static int cam_fd_hw_dev_probe(struct platform_device *pdev)
 	fd_hw_intf->hw_idx = hw_idx;
 
 	memset(fd_dev_name, 0, sizeof(fd_dev_name));
-	snprintf(fd_dev_name, sizeof(fd_dev_name),
+	scnprintf(fd_dev_name, sizeof(fd_dev_name),
 		"fd%1u", fd_hw_intf->hw_idx);
 
 	fd_hw->hw_state = CAM_HW_STATE_POWER_DOWN;

@@ -120,7 +120,7 @@ int cam_eeprom_parse_dt_memory_map(struct device_node *node,
 	uint32_t  count = MSM_EEPROM_MEM_MAP_PROPERTIES_CNT;
 	struct    cam_eeprom_memory_map_t *map;
 
-	snprintf(property, PROPERTY_MAXSIZE, "num-blocks");
+	scnprintf(property, PROPERTY_MAXSIZE, "num-blocks");
 	rc = of_property_read_u32(node, property, &data->num_map);
 	if (rc < 0) {
 		CAM_ERR(CAM_EEPROM, "failed: num-blocks not available rc %d",
@@ -136,7 +136,7 @@ int cam_eeprom_parse_dt_memory_map(struct device_node *node,
 	data->map = map;
 
 	for (i = 0; i < data->num_map; i++) {
-		snprintf(property, PROPERTY_MAXSIZE, "page%d", i);
+		scnprintf(property, PROPERTY_MAXSIZE, "page%d", i);
 		rc = of_property_read_u32_array(node, property,
 			(uint32_t *) &map[i].page, count);
 		if (rc < 0) {
@@ -145,19 +145,19 @@ int cam_eeprom_parse_dt_memory_map(struct device_node *node,
 			goto ERROR;
 		}
 
-		snprintf(property, PROPERTY_MAXSIZE, "pageen%d", i);
+		scnprintf(property, PROPERTY_MAXSIZE, "pageen%d", i);
 		rc = of_property_read_u32_array(node, property,
 			(uint32_t *) &map[i].pageen, count);
 		if (rc < 0)
 			CAM_DBG(CAM_EEPROM, "pageen not needed");
 
-		snprintf(property, PROPERTY_MAXSIZE, "saddr%d", i);
+		scnprintf(property, PROPERTY_MAXSIZE, "saddr%d", i);
 		rc = of_property_read_u32_array(node, property,
 			(uint32_t *) &map[i].saddr, 1);
 		if (rc < 0)
 			CAM_DBG(CAM_EEPROM, "saddr not needed - block %d", i);
 
-		snprintf(property, PROPERTY_MAXSIZE, "poll%d", i);
+		scnprintf(property, PROPERTY_MAXSIZE, "poll%d", i);
 		rc = of_property_read_u32_array(node, property,
 			(uint32_t *) &map[i].poll, count);
 		if (rc < 0) {
@@ -166,7 +166,7 @@ int cam_eeprom_parse_dt_memory_map(struct device_node *node,
 			goto ERROR;
 		}
 
-		snprintf(property, PROPERTY_MAXSIZE, "mem%d", i);
+		scnprintf(property, PROPERTY_MAXSIZE, "mem%d", i);
 		rc = of_property_read_u32_array(node, property,
 			(uint32_t *) &map[i].mem, count);
 		if (rc < 0) {

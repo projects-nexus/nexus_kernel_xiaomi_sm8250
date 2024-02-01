@@ -93,7 +93,7 @@ int cam_ipe_probe(struct platform_device *pdev)
 	}
 
 	memset(ipe_dev_name, 0, sizeof(ipe_dev_name));
-	snprintf(ipe_dev_name, sizeof(ipe_dev_name),
+	scnprintf(ipe_dev_name, sizeof(ipe_dev_name),
 		"ipe%1u", ipe_dev_intf->hw_idx);
 
 	ipe_dev->soc_info.pdev = pdev;

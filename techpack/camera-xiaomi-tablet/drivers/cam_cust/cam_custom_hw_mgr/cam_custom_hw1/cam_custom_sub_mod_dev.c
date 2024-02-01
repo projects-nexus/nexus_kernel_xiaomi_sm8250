@@ -61,7 +61,7 @@ int cam_custom_hw_sub_mod_probe(struct platform_device *pdev)
 
 	memset(cam_custom_hw_sub_mod_name, 0,
 		sizeof(cam_custom_hw_sub_mod_name));
-	snprintf(cam_custom_hw_sub_mod_name, sizeof(cam_custom_hw_sub_mod_name),
+	scnprintf(cam_custom_hw_sub_mod_name, sizeof(cam_custom_hw_sub_mod_name),
 		"custom_hw%1u", hw_intf->hw_idx);
 
 	hw->soc_info.pdev = pdev;

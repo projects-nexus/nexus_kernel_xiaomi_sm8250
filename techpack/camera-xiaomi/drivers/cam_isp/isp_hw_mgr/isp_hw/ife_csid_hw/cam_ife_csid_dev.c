@@ -59,7 +59,7 @@ int cam_ife_csid_probe(struct platform_device *pdev)
 	}
 
 	memset(csid_dev_name, 0, sizeof(csid_dev_name));
-	snprintf(csid_dev_name, sizeof(csid_dev_name),
+	scnprintf(csid_dev_name, sizeof(csid_dev_name),
 		"csid%1u", csid_dev_idx);
 
 	csid_hw_intf->hw_idx = csid_dev_idx;

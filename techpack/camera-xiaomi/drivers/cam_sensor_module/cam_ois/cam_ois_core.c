@@ -327,13 +327,13 @@ static int cam_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 	mem_addr = o_ctrl->opcode.memory;
 	pheripheral_addr = o_ctrl->opcode.pheripheral;
 
-	snprintf(name_coeff, 32, "%s.coeff", o_ctrl->ois_name);
+	scnprintf(name_coeff, 32, "%s.coeff", o_ctrl->ois_name);
 
-	snprintf(name_prog, 32, "%s.prog", o_ctrl->ois_name);
+	scnprintf(name_prog, 32, "%s.prog", o_ctrl->ois_name);
 
-	snprintf(name_mem, 32, "%s.mem", o_ctrl->ois_name);
+	scnprintf(name_mem, 32, "%s.mem", o_ctrl->ois_name);
 
-	snprintf(name_ph, 32, "%s.ph", o_ctrl->ois_name);
+	scnprintf(name_ph, 32, "%s.ph", o_ctrl->ois_name);
 
 	/* cast pointer as const pointer*/
 	fw_name_prog = name_prog;
@@ -586,11 +586,11 @@ static int cam_lc898124_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 	coeff_addr = o_ctrl->opcode.coeff;
 	/* mem_addr = o_ctrl->opcode.memory; */
 
-	snprintf(name_coeff, 32, "%s.coeff", o_ctrl->ois_name);
+	scnprintf(name_coeff, 32, "%s.coeff", o_ctrl->ois_name);
 
-	snprintf(name_prog, 32, "%s.prog", o_ctrl->ois_name);
+	scnprintf(name_prog, 32, "%s.prog", o_ctrl->ois_name);
 
-	/* snprintf(name_mem, 32, "%s.mem", o_ctrl->ois_name); */
+	/* scnprintf(name_mem, 32, "%s.mem", o_ctrl->ois_name); */
 
 	/* cast pointer as const pointer*/
 	fw_name_prog = name_prog;

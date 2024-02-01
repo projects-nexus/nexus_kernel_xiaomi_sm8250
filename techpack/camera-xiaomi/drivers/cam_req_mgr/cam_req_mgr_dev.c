@@ -635,7 +635,7 @@ int cam_register_subdev(struct cam_subdev *csd)
 	sd = &csd->sd;
 	v4l2_subdev_init(sd, csd->ops);
 	sd->internal_ops = csd->internal_ops;
-	snprintf(sd->name, ARRAY_SIZE(sd->name), csd->name);
+	scnprintf(sd->name, ARRAY_SIZE(sd->name), csd->name);
 	v4l2_set_subdevdata(sd, csd->token);
 
 	sd->flags = csd->sd_flags;

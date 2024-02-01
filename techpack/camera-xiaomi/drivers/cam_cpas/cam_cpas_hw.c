@@ -1383,11 +1383,11 @@ static int cam_cpas_hw_register_client(struct cam_hw_info *cpas_hw,
 		register_params->identifier, register_params->cell_index);
 
 	if (soc_private->client_id_based)
-		snprintf(client_name, sizeof(client_name), "%s%d",
+		scnprintf(client_name, sizeof(client_name), "%s%d",
 			register_params->identifier,
 			register_params->cell_index);
 	else
-		snprintf(client_name, sizeof(client_name), "%s",
+		scnprintf(client_name, sizeof(client_name), "%s",
 			register_params->identifier);
 
 	mutex_lock(&cpas_hw->hw_mutex);
