@@ -135,8 +135,8 @@ static int qcom_ice_set_bus_vote(struct ice_device *ice_dev, int vote)
 				ice_dev->bus_vote.client_handle, vote);
 		if (err) {
 			dev_err(ice_dev->pdev,
-				"%s:failed:client_handle=0x%x, vote=%d,
-				err=%d\n", __func__,
+				"%s:failed:client_handle=0x%x, vote=%d, err=%d\n"
+				, __func__,
 				ice_dev->bus_vote.client_handle,
 				vote, err);
 			goto out;
