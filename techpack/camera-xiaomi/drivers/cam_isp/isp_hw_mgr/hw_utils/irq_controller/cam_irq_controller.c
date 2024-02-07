@@ -718,7 +718,7 @@ irqreturn_t cam_irq_controller_handle_irq(int irq_num, void *priv)
 			controller->irq_register_arr[i].status_reg_offset,
 			controller->irq_status_arr[i]);
 		for (j = 0; j < CAM_IRQ_PRIORITY_MAX; j++) {
-			if (irq_register->top_half_enable_mask[j] &
+				if (irq_register->top_half_enable_mask[j] &
 				controller->irq_status_arr[i])
 				need_th_processing[j] = true;
 				CAM_DBG(CAM_IRQ_CTRL,
