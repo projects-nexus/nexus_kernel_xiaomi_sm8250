@@ -40,6 +40,15 @@ MODEL="Mi 10T Pro"
 elif [ "${DEVICE}" = "munch" ]; then
 DEFCONFIG=munch_defconfig
 MODEL="Poco F4"
+elif [ "${DEVICE}" = "cas" ]; then
+DEFCONFIG=cas_defconfig
+MODEL="Mi 10 Ultra"
+elif [ "${DEVICE}" = "cmi" ]; then
+DEFCONFIG=cmi_defconfig
+MODEL="Mi 10 Pro"
+elif [ "${DEVICE}" = "umi" ]; then
+DEFCONFIG=umi_defconfig
+MODEL="Mi 10"
 fi
 
 # Files
@@ -105,7 +114,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo "××××××××××××××××××××××××××××"
 			else
-			export CLANG_VERSION="clang-r498229"
+			export CLANG_VERSION="clang-r498229b"
 			echo "* It's not cloned, cloning it..."
         		mkdir clangB
         		cd clangB || exit
@@ -131,8 +140,10 @@ function cloneTC() {
 	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
 	        ;;
 	    slim)
-	        git clone --depth=1 https://gitlab.com/ThankYouMario/android_prebuilts_clang-standalone -b slim-16 clang
-	        PATH="${KERNEL_DIR}/clang/bin:$PATH"
+	        git clone --depth=1 https://gitlab.com/ThankYouMario/android_prebuilts_clang-standalone -b slim-16 clangB
+	        git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
+			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
+			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
 
 		*)
@@ -147,6 +158,12 @@ function cloneTC() {
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b apollo AnyKernel3
         elif [ "${DEVICE}" = "munch" ]; then
           git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b munch AnyKernel3
+		elif [ "${DEVICE}" = "cas" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b cas AnyKernel3
+		elif [ "${DEVICE}" = "cmi" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b cmi AnyKernel3
+		elif [ "${DEVICE}" = "umi" ]; then
+          git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b umi AnyKernel3
 		else
 		  git clone --depth=1 https://github.com/NotZeetaa/AnyKernel3 -b lmi AnyKernel3
 		fi
