@@ -74,7 +74,7 @@ ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-RC3.0-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=nex14
+COMPILER=aosp
 
 # Clone ToolChain
 function cloneTC() {
@@ -114,7 +114,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo "××××××××××××××××××××××××××××"
 			else
-			export CLANG_VERSION="clang-r498229b"
+			export CLANG_VERSION="clang-r510928"
 			echo "* It's not cloned, cloning it..."
         		mkdir clangB
         		cd clangB || exit
