@@ -39,7 +39,7 @@ static struct policydb *get_policydb(void)
 void apply_kernelsu_rules()
 {
 	if (!getenforce()) {
-		pr_info("SELinux permissive or disabled, apply rules!");
+		pr_info("SELinux permissive or disabled, apply rules!\n");
 	}
 
 	rcu_read_lock();
@@ -63,6 +63,7 @@ void apply_kernelsu_rules()
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "blk_file", ALL);
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "fifo_file", ALL);
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "chr_file", ALL);
+		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "file", ALL);
 	}
 
 	// we need to save allowlist in /data/adb/ksu
@@ -83,7 +84,10 @@ void apply_kernelsu_rules()
 	ksu_allow(db, "kernel", "system_data_file", "dir", ALL);
 	// our ksud triggered by init
 	ksu_allow(db, "init", "adb_data_file", "file", ALL);
+	ksu_allow(db, "init", "adb_data_file", "dir", ALL); // #1289
 	ksu_allow(db, "init", KERNEL_SU_DOMAIN, ALL, ALL);
+	// we need to umount modules in zygote
+	ksu_allow(db, "zygote", "adb_data_file", "dir", "search");
 
 	// copied from Magisk rules
 	// suRights
@@ -126,6 +130,10 @@ void apply_kernelsu_rules()
 		  "read");
 	ksu_allow(db, "system_server", "untrusted_app_all_devpts", "chr_file",
 		  "write");
+
+    // Allow system server kill su process
+    ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
+    ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
 
 	rcu_read_unlock();
 }
@@ -174,7 +182,8 @@ static int get_object(char *buf, char __user *user_object, size_t buf_sz,
 // reset avc cache table, otherwise the new rules will not take effect if already denied
 static void reset_avc_cache()
 {
-#ifndef KSU_COMPAT_USE_SELINUX_STATE
+#if ((!defined(KSU_COMPAT_USE_SELINUX_STATE)) || \
+        LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0))
 	avc_ss_reset(0);
 	selnl_notify_policyload(0);
 	selinux_status_update_policyload(0);
@@ -249,7 +258,7 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 		} else if (subcmd == 4) {
 			success = ksu_dontaudit(db, s, t, c, p);
 		} else {
-			pr_err("sepol: unknown subcmd: %d", subcmd);
+			pr_err("sepol: unknown subcmd: %d\n", subcmd);
 		}
 		ret = success ? 0 : -1;
 
@@ -294,7 +303,7 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 		} else if (subcmd == 3) {
 			success = ksu_dontauditxperm(db, s, t, c, perm_set);
 		} else {
-			pr_err("sepol: unknown subcmd: %d", subcmd);
+			pr_err("sepol: unknown subcmd: %d\n", subcmd);
 		}
 		ret = success ? 0 : -1;
 	} else if (cmd == CMD_TYPE_STATE) {
@@ -311,7 +320,7 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 		} else if (subcmd == 2) {
 			success = ksu_enforce(db, src);
 		} else {
-			pr_err("sepol: unknown subcmd: %d", subcmd);
+			pr_err("sepol: unknown subcmd: %d\n", subcmd);
 		}
 		if (success)
 			ret = 0;
@@ -426,7 +435,7 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 			success = ksu_type_member(db, src, tgt, cls,
 						  default_type);
 		} else {
-			pr_err("sepol: unknown subcmd: %d", subcmd);
+			pr_err("sepol: unknown subcmd: %d\n", subcmd);
 		}
 		if (success)
 			ret = 0;
