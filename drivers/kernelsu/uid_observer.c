@@ -20,16 +20,18 @@ static struct work_struct ksu_update_uid_work;
 struct uid_data {
 	struct list_head list;
 	u32 uid;
+	char package[KSU_MAX_PACKAGE_NAME];
 };
 
-static bool is_uid_exist(uid_t uid, void *data)
+static bool is_uid_exist(uid_t uid, char *package, void *data)
 {
 	struct list_head *list = (struct list_head *)data;
 	struct uid_data *np;
 
 	bool exist = false;
 	list_for_each_entry (np, list, list) {
-		if (np->uid == uid % 100000) {
+		if (np->uid == uid % 100000 &&
+		    strncmp(np->package, package, KSU_MAX_PACKAGE_NAME) == 0) {
 			exist = true;
 			break;
 		}
@@ -39,10 +41,11 @@ static bool is_uid_exist(uid_t uid, void *data)
 
 static void do_update_uid(struct work_struct *work)
 {
-	struct file *fp = ksu_filp_open_compat(SYSTEM_PACKAGES_LIST_PATH, O_RDONLY, 0);
+	struct file *fp =
+		ksu_filp_open_compat(SYSTEM_PACKAGES_LIST_PATH, O_RDONLY, 0);
 	if (IS_ERR(fp)) {
 		pr_err("do_update_uid, open " SYSTEM_PACKAGES_LIST_PATH
-		       " failed: %d\n",
+		       " failed: %ld\n",
 		       PTR_ERR(fp));
 		return;
 	}
@@ -53,7 +56,7 @@ static void do_update_uid(struct work_struct *work)
 	char chr = 0;
 	loff_t pos = 0;
 	loff_t line_start = 0;
-	char buf[128];
+	char buf[KSU_MAX_PACKAGE_NAME];
 	for (;;) {
 		ssize_t count =
 			ksu_kernel_read_compat(fp, &chr, sizeof(chr), &pos);
@@ -66,26 +69,27 @@ static void do_update_uid(struct work_struct *work)
 					       &line_start);
 
 		struct uid_data *data =
-			kmalloc(sizeof(struct uid_data), GFP_ATOMIC);
+			kzalloc(sizeof(struct uid_data), GFP_ATOMIC);
 		if (!data) {
 			goto out;
 		}
 
 		char *tmp = buf;
 		const char *delim = " ";
-		strsep(&tmp, delim); // skip package
+		char *package = strsep(&tmp, delim);
 		char *uid = strsep(&tmp, delim);
-		if (!uid) {
-			pr_err("update_uid: uid is NULL!\n");
-			continue;
+		if (!uid || !package) {
+			pr_err("update_uid: package or uid is NULL!\n");
+			break;
 		}
 
 		u32 res;
 		if (kstrtou32(uid, 10, &res)) {
 			pr_err("update_uid: uid parse err\n");
-			continue;
+			break;
 		}
 		data->uid = res;
+		strncpy(data->package, package, KSU_MAX_PACKAGE_NAME);
 		list_add_tail(&data->list, &uid_list);
 		// reset line start
 		line_start = pos;
