@@ -372,13 +372,15 @@ function move_ksu() {
 }
 
 function zipping() {
-# Zipping and Push Kernel
-	cd AnyKernel3 || exit 1
-        zip -r9 ${FINAL_ZIP} *
-        MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
-        push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code>"
-		cd ..
-        rm -rf AnyKernel3
+    # Zipping and Push Kernel
+    cd AnyKernel3 || exit 1
+    zip -r9 ${FINAL_ZIP} *
+    MD5CHECK=$(md5sum "$FINAL_ZIP" | cut -d' ' -f1)
+    UPLOAD_GOFILE=$(curl -F file=@$FINAL_ZIP https://store1.gofile.io/uploadFile)
+    DOWNLOAD_LINK_GOFILE=$(echo $UPLOAD_GOFILE | awk -F '"' '{print $10}')
+    push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code> | GOFILE Download link: $DOWNLOAD_LINK_GOFILE"
+    cd ..
+    rm -rf AnyKernel3
 }
 
 cloneTC
