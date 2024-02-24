@@ -30,7 +30,7 @@
 #define CAM_SOC_MAX_BASE            CAM_SOC_MAX_BLOCK
 
 /* maximum number of device regulator */
-#define CAM_SOC_MAX_REGULATOR       5
+#define CAM_SOC_MAX_REGULATOR       10
 
 /* maximum number of device clock */
 #define CAM_SOC_MAX_CLK             32
@@ -405,6 +405,20 @@ int cam_soc_util_disable_platform_resource(struct cam_hw_soc_info *soc_info,
  */
 long cam_soc_util_get_clk_round_rate(struct cam_hw_soc_info *soc_info,
 	uint32_t clk_index, unsigned long clk_rate);
+
+/**
+ * cam_soc_util_set_clk_flags()
+ *
+ * @brief:              Camera SOC util to set the flags for a specified clock
+ *
+ * @soc_info:           Device soc information
+ * @clk_index:          Clock index in soc_info for which flags are to be set
+ * @flags:              Flags to set
+ *
+ * @return:             Success or Failure
+ */
+int cam_soc_util_set_clk_flags(struct cam_hw_soc_info *soc_info,
+	 uint32_t clk_index, unsigned long flags);
 
 /**
  * cam_soc_util_set_src_clk_rate()
