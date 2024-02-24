@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/err.h>
@@ -2166,8 +2167,13 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			prtd->lsm_client->get_param_payload = NULL;
 			goto done;
 		}
+		if (__builtin_uadd_overflow(sizeof(p_info_32), p_info_32.param_size, &size)) {
+			pr_err("%s: param size exceeds limit of %u bytes.\n",
+				__func__, UINT_MAX);
+			err = -EINVAL;
+			goto done;
+		}
 
-		size = sizeof(p_info_32) + p_info_32.param_size;
 		param_info_rsp = kzalloc(size, GFP_KERNEL);
 
 		if (!param_info_rsp) {
@@ -2430,6 +2436,15 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			err = -EFAULT;
 			goto done;
 		}
+
+		if (temp_p_info.param_size > 0 &&
+			((INT_MAX - sizeof(temp_p_info)) <
+				temp_p_info.param_size)) {
+			pr_err("%s: Integer overflow\n", __func__);
+			err = -EINVAL;
+			goto done;
+		}
+
 		size = sizeof(temp_p_info) + temp_p_info.param_size;
 		p_info = kzalloc(size, GFP_KERNEL);
 
