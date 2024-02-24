@@ -267,6 +267,11 @@ int cam_mem_get_cpu_buf(int32_t buf_handle, uintptr_t *vaddr_ptr, size_t *len)
 		return -EINVAL;
 	}
 
+	if (!atomic_read(&cam_mem_mgr_state)) {
+		CAM_ERR(CAM_MEM, "failed. mem_mgr not initialized");
+		return -EINVAL;
+	}
+
 	if (!buf_handle || !vaddr_ptr || !len)
 		return -EINVAL;
 
@@ -599,10 +604,10 @@ static int cam_mem_util_map_hw_va(uint32_t flags,
 	return rc;
 multi_map_fail:
 	if (flags & CAM_MEM_FLAG_PROTECTED_MODE)
-		for (--i; i > 0; i--)
+		for (--i; i >= 0; i--)
 			cam_smmu_unmap_stage2_iova(mmu_hdls[i], fd);
 	else
-		for (--i; i > 0; i--)
+		for (--i; i >= 0; i--)
 			cam_smmu_unmap_user_iova(mmu_hdls[i],
 				fd,
 				CAM_SMMU_REGION_IO);
@@ -737,6 +742,8 @@ map_hw_fail:
 	cam_mem_put_slot(idx);
 slot_fail:
 	dma_buf_put(dmabuf);
+	fput(dmabuf->file);
+	put_unused_fd(fd);
 	return rc;
 }
 
@@ -864,7 +871,7 @@ static int cam_mem_util_unmap_hw_va(int32_t idx,
 	fd = tbl.bufq[idx].fd;
 
 	CAM_DBG(CAM_MEM,
-		"unmap_hw_va : idx=%d, fd=%x, flags=0x%x, num_hdls=%d, client=%d",
+		"unmap_hw_va : idx=%d, fd=%d, flags=0x%x, num_hdls=%d, client=%d",
 		idx, fd, flags, num_hdls, client);
 
 	if (flags & CAM_MEM_FLAG_PROTECTED_MODE) {
