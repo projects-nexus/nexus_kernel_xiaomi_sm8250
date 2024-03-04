@@ -67,6 +67,7 @@ enum flat_binder_object_flags {
 	 * @FLAT_BINDER_FLAG_ACCEPTS_FDS: whether the node accepts fds.
 	 */
 	FLAT_BINDER_FLAG_ACCEPTS_FDS = 0x100,
+
 	/**
 	 * @FLAT_BINDER_FLAG_SCHED_POLICY_MASK: bit-mask for scheduling policy
 	 *
@@ -89,7 +90,6 @@ enum flat_binder_object_flags {
 	 */
 	FLAT_BINDER_FLAG_INHERIT_RT = 0x800,
 
-#ifdef __KERNEL__
 	/**
 	 * @FLAT_BINDER_FLAG_TXN_SECURITY_CTX: request security contexts
 	 *
@@ -97,7 +97,6 @@ enum flat_binder_object_flags {
 	 * context
 	 */
 	FLAT_BINDER_FLAG_TXN_SECURITY_CTX = 0x1000,
-#endif /* __KERNEL__ */
 };
 
 #ifdef BINDER_IPC_32BIT
@@ -297,6 +296,7 @@ struct binder_frozen_status_info {
 #define BINDER_SET_CONTEXT_MGR_EXT	_IOW('b', 13, struct flat_binder_object)
 #define BINDER_FREEZE			_IOW('b', 14, struct binder_freeze_info)
 #define BINDER_GET_FROZEN_INFO		_IOWR('b', 15, struct binder_frozen_status_info)
+#define BINDER_ENABLE_ONEWAY_SPAM_DETECTION	_IOW('b', 16, __u32)
 
 /*
  * NOTE: Two special error codes you should check for when calling
@@ -357,12 +357,10 @@ struct binder_transaction_data {
 	} data;
 };
 
-#ifdef __KERNEL__
 struct binder_transaction_data_secctx {
 	struct binder_transaction_data transaction_data;
 	binder_uintptr_t secctx;
 };
-#endif /* __KERNEL__ */
 
 struct binder_transaction_data_sg {
 	struct binder_transaction_data transaction_data;
@@ -399,13 +397,11 @@ enum binder_driver_return_protocol {
 	BR_OK = _IO('r', 1),
 	/* No parameters! */
 
-#ifdef __KERNEL__
 	BR_TRANSACTION_SEC_CTX = _IOR('r', 2,
 				      struct binder_transaction_data_secctx),
 	/*
 	 * binder_transaction_data_secctx: the received command.
 	 */
-#endif /* __KERNEL__ */
 	BR_TRANSACTION = _IOR('r', 2, struct binder_transaction_data),
 	BR_REPLY = _IOR('r', 3, struct binder_transaction_data),
 	/*
@@ -480,7 +476,7 @@ enum binder_driver_return_protocol {
 
 	BR_FAILED_REPLY = _IO('r', 17),
 	/*
-	 * The the last transaction (either a bcTRANSACTION or
+	 * The last transaction (either a bcTRANSACTION or
 	 * a bcATTEMPT_ACQUIRE) failed (e.g. out of memory).  No parameters.
 	 */
 
@@ -488,6 +484,13 @@ enum binder_driver_return_protocol {
 	/*
 	 * The target of the last transaction (either a bcTRANSACTION or
 	 * a bcATTEMPT_ACQUIRE) is frozen.  No parameters.
+	 */
+
+	BR_ONEWAY_SPAM_SUSPECT = _IO('r', 19),
+	/*
+	 * Current process sent too many oneway calls to target, and the last
+	 * asynchronous transaction makes the allocated async buffer size exceed
+	 * detection threshold.  No parameters.
 	 */
 };
 
