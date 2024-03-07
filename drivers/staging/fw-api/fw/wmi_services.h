@@ -634,6 +634,25 @@ typedef  enum  {
     WMI_SERVICE_N_LINK_MLO_SUPPORT = 381,  /* Indicate FW supports N MLO link & vdev re-purpose between links */
     WMI_SERVICE_ATF_MAX_CLIENT_512_SUPPORT = 382, /* Indicates FW supports maximum of 512 clients when ATF is enabled */
     WMI_SERVICE_FISA_DYNAMIC_MSDU_AGGR_SIZE_SUPPORT = 383, /* Indicates FW support for FISA aggregation size up to 64 instead of only 16 */
+    WMI_SERVICE_BRIDGE_VDEV_SUPPORT = 384, /* Indicated FW supports Bridge VDEV */
+    WMI_SERVICE_MLO_MODE1_RECOVERY_SUPPORTED = 385, /* Indicate fw support for mlo mode1 recovery */
+    WMI_SERVICE_TX_PWR_PER_PPDU_STATS_SUPPORT = 386, /* FW support to check tx power stats per PPDU */
+    WMI_SERVICE_DISABLE_WDS_PEER_MAP_UNMAP_EVENT_SUPPORT = 387, /* Indicate FW support to disable wds peer map/unmap events */
+    WMI_SERVICE_PDEV_WSI_STATS_INFO_SUPPORT = 388, /* Support for WSI Stats Info. */
+    WMI_SERVICE_MULTIPLE_RF_PATH_SOC_SUPPORT = 389, /* Indicates FW supports Multiple RF Path on SOC Level */
+    WMI_SERVICE_RADAR_FLAGS_SUPPORT = 390, /* Indicates FW supports radar flags, such as full bandwidth need put to NOL */
+    WMI_SERVICE_XPAN_SUPPORT = 391, /* Indicate FW support XPAN configuration */
+    WMI_SERVICE_5GHZ_HI_RSSI_ROAM_SUPPORT = 392, /* Indicate FW supports High RSSI Roam from 5 GHz Band to 6 GHz Band */
+    WMI_SERVICE_BOTH_PSD_EIRP_FOR_AP_SP_CLIENT_SP_SUPPORT = 393, /* Support for CTL regeneration where both PSD and EIRP will be sent in 6GHZ SET_TPC WMI for SP and SP_CLIENT power modes */
+    WMI_SERVICE_PDEV_PARAM_IN_UTF_WMI = 394, /* FW supports receiving and sending pdev_id parameter in WMI_PDEV_UTF_(CMD/EVENT) */
+    WMI_SERVICE_SW_PROG_DFS_SUPPORT = 395, /* Indicate FW support SW progressive DFS */
+    WMI_SERVICE_MULTIPLE_REORDER_QUEUE_SETUP_SUPPORT = 396, /* Indicate FW supports multiple TID reorder queues setup in one cmd */
+    WMI_SERVICE_MULTIPLE_COEX_CONFIG_SUPPORT = 397, /* FW supports mutiple coex configs in one cmd */
+    WMI_SERVICE_PCIE_DATA_RATE_LED_BLINK_SUPPORT = 398, /* FW supports Data Rate based LED blinking for PCI chips */
+    WMI_SERVICE_VDEV_DCS_STATS_SUPPORT = 399, /* FW supports VDEV level DCS stats reporting */
+    WMI_SERVICE_WIFI_RADAR_SUPPORT = 400, /* FW supports wifi radar */
+    WMI_SERVICE_P2P_DEVICE_UPDATE_MAC_ADDR_SUPPORT = 401, /* indicate FW support dynamic update mac address for P2P device */
+
 
     WMI_MAX_EXT2_SERVICE
 
