@@ -11,22 +11,19 @@ clear
 # Number of parallel jobs to run
 THREAD="-j$(nproc)"
 
-# AOSP clang 17.0.4 (https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/)
-CLANG_BUILD="r498229b"
-
 # Path to executables in LLVM toolchain
-CLANG_BIN="/home/violet/toolchains/clang/clang-$CLANG_BUILD/bin"
+CLANG_BIN="/home/utziacre/ClangBuiltLinux/bin"
 
 # GCC toolchain prefix
-GCC_PREFIX="/home/violet/toolchains/gcc/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
+GCC_PREFIX="/home/utziacre/ClangBuiltLinux/bin/aarch64-linux-gnu-"
 
 # Environment
 export PATH="$CLANG_BIN:$PATH"
 
 # Vars
 ARCH="arm64"
-OS="13.0.0"
-SPL="2023-11"
+OS="14.0.0"
+SPL="2023-12"
 KDIR=`readlink -f .`
 RAMFS=`readlink -f $KDIR/ramdisk`
 OUT=`readlink -f $KDIR/out`
@@ -46,7 +43,7 @@ KMAKE_FLAGS=(
 )
 
 # Kernel defconfig
-DEFCONFIG="vendor/pipa_user_defconfig"
+DEFCONFIG="pipa_defconfig"
 
 # Functions
 function clean_all {
@@ -87,7 +84,6 @@ function flash_images {
     adb reboot fastboot >/dev/null 2>&1
 
     echo "Flashing kernel images..."
-    sudo fastboot flash dtbo $OUT/arch/arm64/boot/dtbo.img
     sudo fastboot flash boot $OUT/boot.img
     sudo fastboot flash vendor_boot $OUT/vendor_boot.img
 
