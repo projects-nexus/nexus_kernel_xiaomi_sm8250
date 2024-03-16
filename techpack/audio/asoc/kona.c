@@ -8260,12 +8260,14 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 						sizeof(pri_mi2s_rx_tfa9874_dai_links));
 					total_links += ARRAY_SIZE(pri_mi2s_rx_tfa9874_dai_links);
 					dev_info(dev, "%s: Using pri_mi2s_rx_tfa9874_dai_links\n", __func__);
+/*
 #elif CONFIG_MACH_XIAOMI_PIPA
 					memcpy(msm_kona_dai_links + total_links,
 						tert_mi2s_rx_aw882xx_dai_links,
 						sizeof(tert_mi2s_rx_aw882xx_dai_links));
 					total_links += ARRAY_SIZE(tert_mi2s_rx_aw882xx_dai_links);
 					dev_info(dev, "%s: Using tert_mi2s_rx_aw882xx_dai_links\n", __func__);
+*/
 #else
 					memcpy(msm_kona_dai_links + total_links,
 						tert_mi2s_rx_cs35l41_dai_links,
