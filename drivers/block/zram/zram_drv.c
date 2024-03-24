@@ -2188,7 +2188,7 @@ static ssize_t disksize_store(struct device *dev,
 	int err;
 	u32 prio;
 
-	disksize = (u64)4096 * SZ_1M;
+	disksize = (u64)4096 * 1.5 * SZ_1M;
 	if (!disksize)
 		return -EINVAL;
 
