@@ -246,7 +246,7 @@ struct erofs_inode {
 
 	unsigned char datalayout;
 	unsigned char inode_isize;
-	unsigned short xattr_isize;
+	unsigned int xattr_isize;
 
 	unsigned int xattr_shared_count;
 	unsigned int *xattr_shared_xattrs;
@@ -395,21 +395,6 @@ int erofs_namei(struct inode *dir, struct qstr *name,
 
 /* dir.c */
 extern const struct file_operations erofs_dir_fops;
-
-static inline void *erofs_vm_map_ram(struct page **pages, unsigned int count)
-{
-	int retried = 0;
-
-	while (1) {
-		void *p = vm_map_ram(pages, count, -1, PAGE_KERNEL);
-
-		/* retry two more times (totally 3 times) */
-		if (p || ++retried >= 3)
-			return p;
-		vm_unmap_aliases();
-	}
-	return NULL;
-}
 
 /* pcpubuf.c */
 void *erofs_get_pcpubuf(unsigned int requiredpages);
