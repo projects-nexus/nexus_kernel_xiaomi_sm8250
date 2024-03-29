@@ -7,6 +7,9 @@
 # Specify Kernel Directory
 KERNEL_DIR="$(pwd)"
 
+# Default linker to use for builds
+export LINKER="ld.lld"
+
 BUILD=$1
 
 if [ "$BUILD" = "local" ]; then
@@ -76,7 +79,7 @@ FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 FINAL_ZIP_AOSPA=${ZIPNAME}-${VERSION}-AOSPA-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=zyc
+COMPILER=eva-gcc
 
 # Clone ToolChain
 function cloneTC() {
@@ -147,7 +150,11 @@ function cloneTC() {
 			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
 			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
-
+	    eva-gcc)
+	        git clone https://github.com/cyberknight777/gcc-arm64 --depth=1 gcc64
+	        git clone https://github.com/cyberknight777/gcc-arm --depth=1 gcc32
+            PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
+            ;;
 		*)
 			echo "Compiler not defined"
 			;;
@@ -263,12 +270,13 @@ START=$(date +"%s")
 	       ARCH=arm64 \
 	       CROSS_COMPILE_COMPAT=arm-eabi- \
 	       CROSS_COMPILE=aarch64-elf- \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       OBJSIZE=llvm-size \
+	       LD="${KDIR}"/gcc64/bin/aarch64-elf-"${LINKER}" \
+	       AR=aarch64-elf-ar \
+	       AS=aarch64-elf-as \
+		   NM=aarch64-elf-nm \
+	       OBJDUMP=aarch64-elf-objdump \
+		   OBJCOPY=aarch64-elf-objcopy \
+		   CC=aarch64-elf-gcc \
 	       V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
