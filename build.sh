@@ -150,8 +150,8 @@ function cloneTC() {
 			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
 	    eva-gcc)
-	        git clone https://github.com/cyberknight777/gcc-arm64 --depth=1 gcc64
-	        git clone https://github.com/cyberknight777/gcc-arm --depth=1 gcc32
+	        git clone https://github.com/mvaisakh/gcc-arm64 --depth=1 gcc64
+	        git clone https://github.com/mvaisakh/gcc-arm --depth=1 gcc32
             PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
             ;;
 		*)
@@ -269,7 +269,6 @@ START=$(date +"%s")
 	       ARCH=arm64 \
 	       CROSS_COMPILE_COMPAT=arm-eabi- \
 	       CROSS_COMPILE=aarch64-elf- \
-	       LD="${KDIR}"/gcc64/bin/aarch64-elf-"${LINKER}" \
 	       AR=aarch64-elf-ar \
 	       AS=aarch64-elf-as \
 		   NM=aarch64-elf-nm \
