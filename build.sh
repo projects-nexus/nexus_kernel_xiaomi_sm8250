@@ -73,6 +73,7 @@ TM=$(date +"%F%S")
 # Specify Final Zip Name
 ZIPNAME=Nexus
 FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
+FINAL_ZIP_AOSPA=${ZIPNAME}-${VERSION}-AOSPA-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
 COMPILER=neutron
@@ -379,6 +380,161 @@ function zipping() {
     rm -rf AnyKernel3
 }
 
+function compile_aospa() {
+START=$(date +"%s")
+	# Push Notification
+	post_msg "<b>$KBUILD_BUILD_VERSION CI Build Triggered</b>%0A<b>Docker OS: </b><code>$DISTRO</code>%0A<b>Kernel Version : </b><code>$KERVER - AOSPA</code>%0A<b>Date : </b><code>$(TZ=Europe/Lisbon date)</code>%0A<b>Device : </b><code>$MODEL [$DEVICE]</code>%0A<b>Pipeline Host : </b><code>$KBUILD_BUILD_HOST</code>%0A<b>Host Core Count : </b><code>$PROCS</code>%0A<b>Compiler Used : </b><code>$KBUILD_COMPILER_STRING</code>%0A<b>Branch : </b><code>$CI_BRANCH</code>%0A<b>Top Commit : </b><a href='$DRONE_COMMIT_LINK'>$COMMIT_HEAD</a>"
+	
+	# Compile
+	if [ -d ${KERNEL_DIR}/clang ];
+	   then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CROSS_COMPILE=aarch64-linux-gnu- \
+	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+	   then
+           make O=out ARCH=arm64 ${DEFCONFIG}
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size \
+	       V=$VERBOSE 2>&1 | tee error.log
+        elif [ -d ${KERNEL_DIR}/clangB ];
+           then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+           make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CLANG_TRIPLE=aarch64-linux-gnu- \
+	       CROSS_COMPILE=aarch64-linux-android- \
+	       CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	fi
+	
+	# Verify Files
+	if ! [ -a "$IMAGE" ];
+	   then
+	       push "error.log" "Build Throws Errors"
+	       exit 1
+	fi
+	}
+	
+function compile_ksu_aospa() {
+START=$(date +"%s")
+	# Compile
+	if [ -d ${KERNEL_DIR}/clang ];
+	   then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+		   scripts/config --file ${OUT_DIR}/.config \
+    		-d SDCARD_FS \
+    		-e UNICODE \
+			-e F2FS_FS_COMPRESSION \
+			-e RD_LZ4
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CROSS_COMPILE=aarch64-linux-gnu- \
+	       CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	elif [ -d ${KERNEL_DIR}/gcc64 ];
+	   then
+           make O=out ARCH=arm64 ${DEFCONFIG}
+	       make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       CROSS_COMPILE_COMPAT=arm-eabi- \
+	       CROSS_COMPILE=aarch64-elf- \
+	       AR=llvm-ar \
+	       NM=llvm-nm \
+	       OBJCOPY=llvm-objcopy \
+	       OBJDUMP=llvm-objdump \
+	       STRIP=llvm-strip \
+	       OBJSIZE=llvm-size \
+	       V=$VERBOSE 2>&1 | tee error.log
+        elif [ -d ${KERNEL_DIR}/clangB ];
+           then
+           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e LTO_CLANG \
+             -d THINLTO
+           fi
+		   scripts/config --file ${OUT_DIR}/.config \
+    		-d SDCARD_FS \
+    		-e UNICODE \
+			-e F2FS_FS_COMPRESSION \
+			-e RD_LZ4
+           make -kj$(nproc --all) O=out \
+	       ARCH=arm64 \
+	       LLVM=1 \
+	       LLVM_IAS=1 \
+	       CLANG_TRIPLE=aarch64-linux-gnu- \
+	       CROSS_COMPILE=aarch64-linux-android- \
+	       CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+	       V=$VERBOSE 2>&1 | tee error.log
+	fi
+	
+	# Verify Files
+	if ! [ -a "$IMAGE" ];
+	   then
+	       push "error.log" "Build Throws Errors"
+	       exit 1
+	   else
+	       post_msg " Kernel Compilation Finished. Started Zipping "
+	fi
+}
+
+# Zipping
+function move_aospa() {
+	# Copy Files To AnyKernel3 Zip
+	mv $IMAGE AnyKernel3
+    mv $DTBO AnyKernel3
+    mv $DTB AnyKernel3
+}
+
+function move_ksu_aospa() {
+	mv $IMAGE AnyKernel3/ksu/
+}
+
+function zipping_aospa() {
+    # Zipping and Push Kernel
+    cd AnyKernel3 || exit 1
+    zip -r9 ${FINAL_ZIP_AOSPA} *
+    MD5CHECK=$(md5sum "$FINAL_ZIP_AOSPA" | cut -d' ' -f1)
+    UPLOAD_GOFILE=$(curl -F file=@$FINAL_ZIP_AOSPA https://store1.gofile.io/uploadFile)
+    DOWNLOAD_LINK_GOFILE=$(echo $UPLOAD_GOFILE | awk -F '"' '{print $10}')
+    push "$FINAL_ZIP_AOSPA" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code> | GOFILE Download link: $DOWNLOAD_LINK_GOFILE"
+    cd ..
+    rm -rf AnyKernel3
+}
+
 cloneTC
 exports
 compile
@@ -392,5 +548,26 @@ move_ksu
 zipping
 if [ "$BUILD" = "local" ]; then
 # Discard KSU changes in defconfig
-git restore arch/arm64/configs/$DEFCONFIGf
+git restore arch/arm64/configs/$DEFCONFIG
+fi
+if [ "${DEVICE}" = "alioth" ]; then
+	compile_aospa
+	END=$(date +"%s")
+	DIFF=$(($END - $START))
+	move_aospa
+	# KernelSU
+	echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
+	compile_ksu_aospa
+	move_ksu_aospa
+	zipping_aospa
+elif [ "${DEVICE}" = "munch" ]; then
+	compile_aospa
+	END=$(date +"%s")
+	DIFF=$(($END - $START))
+	move_aospa
+	# KernelSU
+	echo "CONFIG_KSU=y" >> $(pwd)/arch/arm64/configs/$DEFCONFIG
+	compile_ksu_aospa
+	move_ksu_aospa
+	zipping_aospa
 fi
