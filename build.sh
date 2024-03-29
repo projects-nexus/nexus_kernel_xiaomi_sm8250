@@ -135,8 +135,8 @@ function cloneTC() {
             	cd clang
 		    	wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-lastbuild.txt
 		    	V="$(cat Clang-main-lastbuild.txt)"
-            	wget -q https://github.com/ZyCromerZ/Clang/releases/download/18.0.0-$V-release/Clang-18.0.0-$V.tar.gz
-	        	tar -xf Clang-18.0.0-$V.tar.gz
+            	wget -q https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-$V-release/Clang-19.0.0git-$V.tar.gz
+	        	tar -xf Clang-19.0.0git-$V.tar.gz
 	        	cd ..
 				fi
 	        	PATH="${KERNEL_DIR}/clang/bin:$PATH"
