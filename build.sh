@@ -269,6 +269,7 @@ START=$(date +"%s")
 	       ARCH=arm64 \
 	       CROSS_COMPILE_COMPAT=arm-eabi- \
 	       CROSS_COMPILE=aarch64-elf- \
+		   LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
 	       AR=aarch64-elf-ar \
 	       AS=aarch64-elf-as \
 		   NM=aarch64-elf-nm \
