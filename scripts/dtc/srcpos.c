@@ -3,7 +3,9 @@
  * Copyright 2007 Jon Loeliger, Freescale Semiconductor, Inc.
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <stdio.h>
 
@@ -20,7 +22,7 @@ struct search_path {
 static struct search_path *search_path_head, **search_path_tail;
 
 /* Detect infinite include recursion. */
-#define MAX_SRCFILE_DEPTH     (100)
+#define MAX_SRCFILE_DEPTH     (200)
 static int srcfile_depth; /* = 0 */
 
 static char *get_dirname(const char *path)
@@ -311,8 +313,8 @@ srcpos_string(struct srcpos *pos)
 static char *
 srcpos_string_comment(struct srcpos *pos, bool first_line, int level)
 {
-	char *pos_str, *fname, *first, *rest;
-	bool fresh_fname = false;
+	char *pos_str, *fresh_fname = NULL, *first, *rest;
+	const char *fname;
 
 	if (!pos) {
 		if (level > 1) {
@@ -330,9 +332,9 @@ srcpos_string_comment(struct srcpos *pos, bool first_line, int level)
 	else if (level > 1)
 		fname = pos->file->name;
 	else {
-		fname = shorten_to_initial_path(pos->file->name);
-		if (fname)
-			fresh_fname = true;
+		fresh_fname = shorten_to_initial_path(pos->file->name);
+		if (fresh_fname)
+			fname = fresh_fname;
 		else
 			fname = pos->file->name;
 	}
@@ -346,7 +348,7 @@ srcpos_string_comment(struct srcpos *pos, bool first_line, int level)
 			  first_line ? pos->first_line : pos->last_line);
 
 	if (fresh_fname)
-		free(fname);
+		free(fresh_fname);
 
 	if (pos->next != NULL) {
 		rest = srcpos_string_comment(pos->next, first_line, level);
