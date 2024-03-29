@@ -2239,6 +2239,8 @@ EXPORT_SYMBOL(cpufreq_get_policy);
  * policy : current policy.
  * new_policy: policy to be set.
  */
+ 
+extern int kp_active_mode(void);
 static int cpufreq_set_policy(struct cpufreq_policy *policy,
 				struct cpufreq_policy *new_policy)
 {
@@ -2254,8 +2256,15 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	* This check works well when we store new min/max freq attributes,
 	* because new_policy is a copy of policy with one field updated.
 	*/
-	if (new_policy->min > new_policy->max)
-		new_policy->min = new_policy->max;
+	if (new_policy->min > new_policy->max) {
+		if (kp_active_mode() == 1) {
+			new_policy->min = new_policy->max;
+			pr_info("kprofiles: battery");
+		} else {
+			pr_info("kprofiles: no");
+			return -EINVAL;
+		}
+	}
 
 	/* verify the cpu speed can be set within this limit */
 	ret = cpufreq_driver->verify(new_policy);
