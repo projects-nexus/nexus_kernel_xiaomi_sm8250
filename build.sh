@@ -264,19 +264,22 @@ START=$(date +"%s")
 	       V=$VERBOSE 2>&1 | tee error.log
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
-           make O=out ARCH=arm64 ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
-	       ARCH=arm64 \
-	       CROSS_COMPILE_COMPAT=arm-eabi- \
-	       CROSS_COMPILE=aarch64-elf- \
-		   LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
-	       AR=aarch64-elf-ar \
-	       AS=aarch64-elf-as \
-		   NM=aarch64-elf-nm \
-	       OBJDUMP=aarch64-elf-objdump \
-		   OBJCOPY=aarch64-elf-objcopy \
-		   CC=aarch64-elf-gcc \
-	       V=$VERBOSE 2>&1 | tee error.log
+           	make O=out ARCH=arm64 ${DEFCONFIG}
+	       	make -kj$(nproc --all) O=out \
+	       	ARCH=arm64 \
+	       	CC=aarch64-elf-gcc \
+			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
+			AR=llvm-ar \
+			NM=llvm-nm \
+			OBJCOPY=llvm-objcopy \
+			OBJDUMP=llvm-objdump \
+			OBJCOPY=llvm-objcopy \
+			OBJSIZE=llvm-size \
+			STRIP=llvm-strip \
+			CROSS_COMPILE=aarch64-elf- \
+			CROSS_COMPILE_COMPAT=arm-eabi- \
+			CC_COMPAT=arm-eabi-gcc \
+	       	V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
            make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
