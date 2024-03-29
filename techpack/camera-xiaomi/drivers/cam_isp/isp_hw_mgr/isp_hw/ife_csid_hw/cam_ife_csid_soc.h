@@ -66,7 +66,7 @@ int cam_ife_csid_deinit_soc_resources(struct cam_hw_soc_info *soc_info);
  *
  */
 int cam_ife_csid_enable_soc_resources(struct cam_hw_soc_info  *soc_info,
-	uint32_t clk_lvl);
+	enum cam_vote_level clk_lvl);
 
 /**
  * cam_ife_csid_disable_soc_resources()
