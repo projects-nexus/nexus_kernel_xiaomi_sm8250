@@ -1640,7 +1640,7 @@ static int dsi_panel_parse_qsync_caps(struct dsi_panel *panel,
 	u32 val = 0, i;
 	struct dsi_qsync_capabilities *qsync_caps = &panel->qsync_caps;
 	struct dsi_parser_utils *utils = &panel->utils;
-	const char *name = panel->name;
+	const __maybe_unused char *name = panel->name;
 
 	/**
 	 * "mdss-dsi-qsync-min-refresh-rate" is defined in cmd mode and
