@@ -377,7 +377,6 @@ function zipping() {
     DOWNLOAD_LINK_GOFILE=$(echo $UPLOAD_GOFILE | awk -F '"' '{print $10}')
     push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code> | GOFILE Download link: $DOWNLOAD_LINK_GOFILE"
     cd ..
-    rm -rf AnyKernel3
 }
 
 function compile_aospa() {
