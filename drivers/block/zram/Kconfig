@@ -31,6 +31,10 @@ config ZRAM_DEF_COMP_LZ4
 	bool "lz4"
 	select CRYPTO_LZ4
 
+config ZRAM_DEF_COMP_LZ4KD
+	bool "lz4kd"
+	select CRYPTO_LZ4KD
+
 endchoice
 
 config ZRAM_DEF_COMP
@@ -38,6 +42,7 @@ config ZRAM_DEF_COMP
 	default "lzo" if ZRAM_DEF_COMP_LZO
 	default "zstd" if ZRAM_DEF_COMP_ZSTD
 	default "lz4" if ZRAM_DEF_COMP_LZ4
+	default "lz4kd" if ZRAM_DEF_COMP_LZ4KD
 
 config ZRAM_WRITEBACK
        bool "Write back incompressible or idle page to backing device"
