@@ -266,6 +266,10 @@ START=$(date +"%s")
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
            make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
 	       make -kj$(nproc --all) O=out \
 	       	ARCH=arm64 \
 	       	CC=aarch64-elf-gcc \
@@ -328,7 +332,11 @@ START=$(date +"%s")
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
            make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       CC=aarch64-elf-gcc \
 			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
@@ -418,7 +426,11 @@ START=$(date +"%s")
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
            make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       CC=aarch64-elf-gcc \
 			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
@@ -485,7 +497,11 @@ START=$(date +"%s")
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
            make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
 	       CC=aarch64-elf-gcc \
 			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
