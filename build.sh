@@ -7,6 +7,9 @@
 # Specify Kernel Directory
 KERNEL_DIR="$(pwd)"
 
+# Default linker to use for builds
+export LINKER="ld.lld"
+
 BUILD=$1
 
 if [ "$BUILD" = "local" ]; then
@@ -29,25 +32,25 @@ DEVICE=$2
 
 VERSION=BETA
 if [ "${DEVICE}" = "alioth" ]; then
-DEFCONFIG=alioth_defconfig
+DEFCONFIG=vendor/xiaomi/alioth.config
 MODEL="Poco F3"
 elif [ "${DEVICE}" = "lmi" ]; then
-DEFCONFIG=lmi_defconfig
+DEFCONFIG=vendor/xiaomi/lmi.config
 MODEL="Poco F2 Pro"
 elif [ "${DEVICE}" = "apollo" ]; then
-DEFCONFIG=apollo_defconfig
+DEFCONFIG=vendor/xiaomi/apollo.config
 MODEL="Mi 10T Pro"
 elif [ "${DEVICE}" = "munch" ]; then
-DEFCONFIG=munch_defconfig
+DEFCONFIG=vendor/xiaomi/munch.config
 MODEL="Poco F4"
 elif [ "${DEVICE}" = "cas" ]; then
-DEFCONFIG=cas_defconfig
+DEFCONFIG=vendor/xiaomi/cas.config
 MODEL="Mi 10 Ultra"
 elif [ "${DEVICE}" = "cmi" ]; then
-DEFCONFIG=cmi_defconfig
+DEFCONFIG=vendor/xiaomi/cmi.config
 MODEL="Mi 10 Pro"
 elif [ "${DEVICE}" = "umi" ]; then
-DEFCONFIG=umi_defconfig
+DEFCONFIG=vendor/xiaomi/umi.config
 MODEL="Mi 10"
 fi
 
@@ -147,7 +150,11 @@ function cloneTC() {
 			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
 			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
-
+	    eva-gcc)
+	        git clone https://github.com/mvaisakh/gcc-arm64 --depth=1 gcc64
+	        git clone https://github.com/mvaisakh/gcc-arm --depth=1 gcc32
+            PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
+            ;;
 		*)
 			echo "Compiler not defined"
 			;;
@@ -243,7 +250,7 @@ START=$(date +"%s")
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -258,21 +265,29 @@ START=$(date +"%s")
 	       V=$VERBOSE 2>&1 | tee error.log
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
-           make O=out ARCH=arm64 ${DEFCONFIG}
+           make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
+		   if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
 	       make -kj$(nproc --all) O=out \
-	       ARCH=arm64 \
-	       CROSS_COMPILE_COMPAT=arm-eabi- \
-	       CROSS_COMPILE=aarch64-elf- \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       OBJSIZE=llvm-size \
-	       V=$VERBOSE 2>&1 | tee error.log
+	       	ARCH=arm64 \
+	       	CC=aarch64-elf-gcc \
+			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
+			AR=llvm-ar \
+			NM=llvm-nm \
+			OBJCOPY=llvm-objcopy \
+			OBJDUMP=llvm-objdump \
+			OBJCOPY=llvm-objcopy \
+			OBJSIZE=llvm-size \
+			STRIP=llvm-strip \
+			CROSS_COMPILE=aarch64-elf- \
+			CROSS_COMPILE_COMPAT=arm-eabi- \
+			CC_COMPAT=arm-eabi-gcc \
+	       	V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -301,7 +316,7 @@ START=$(date +"%s")
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -316,21 +331,29 @@ START=$(date +"%s")
 	       V=$VERBOSE 2>&1 | tee error.log
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
-           make O=out ARCH=arm64 ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+           make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
-	       CROSS_COMPILE_COMPAT=arm-eabi- \
-	       CROSS_COMPILE=aarch64-elf- \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       OBJSIZE=llvm-size \
+	       CC=aarch64-elf-gcc \
+			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
+			AR=llvm-ar \
+			NM=llvm-nm \
+			OBJCOPY=llvm-objcopy \
+			OBJDUMP=llvm-objdump \
+			OBJCOPY=llvm-objcopy \
+			OBJSIZE=llvm-size \
+			STRIP=llvm-strip \
+			CROSS_COMPILE=aarch64-elf- \
+			CROSS_COMPILE_COMPAT=arm-eabi- \
+			CC_COMPAT=arm-eabi-gcc \
 	       V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -376,6 +399,7 @@ function zipping() {
     UPLOAD_GOFILE=$(curl -F file=@$FINAL_ZIP https://store1.gofile.io/uploadFile)
     DOWNLOAD_LINK_GOFILE=$(echo $UPLOAD_GOFILE | awk -F '"' '{print $10}')
     push "$FINAL_ZIP" "Build took : $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s) | For <b>$MODEL ($DEVICE)</b> | <b>${KBUILD_COMPILER_STRING}</b> | <b>MD5 Checksum : </b><code>$MD5CHECK</code> | GOFILE Download link: $DOWNLOAD_LINK_GOFILE"
+	rm *.zip
     cd ..
 }
 
@@ -387,7 +411,7 @@ START=$(date +"%s")
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -402,21 +426,29 @@ START=$(date +"%s")
 	       V=$VERBOSE 2>&1 | tee error.log
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
-           make O=out ARCH=arm64 ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+           make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
-	       CROSS_COMPILE_COMPAT=arm-eabi- \
-	       CROSS_COMPILE=aarch64-elf- \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       OBJSIZE=llvm-size \
+	       CC=aarch64-elf-gcc \
+			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
+			AR=llvm-ar \
+			NM=llvm-nm \
+			OBJCOPY=llvm-objcopy \
+			OBJDUMP=llvm-objdump \
+			OBJCOPY=llvm-objcopy \
+			OBJSIZE=llvm-size \
+			STRIP=llvm-strip \
+			CROSS_COMPILE=aarch64-elf- \
+			CROSS_COMPILE_COMPAT=arm-eabi- \
+			CC_COMPAT=arm-eabi-gcc \
 	       V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -445,7 +477,7 @@ START=$(date +"%s")
 	# Compile
 	if [ -d ${KERNEL_DIR}/clang ];
 	   then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
@@ -465,21 +497,29 @@ START=$(date +"%s")
 	       V=$VERBOSE 2>&1 | tee error.log
 	elif [ -d ${KERNEL_DIR}/gcc64 ];
 	   then
-           make O=out ARCH=arm64 ${DEFCONFIG}
-	       make -kj$(nproc --all) O=out \
+           make O=out ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
+	       if [ "$METHOD" = "lto" ]; then
+		     scripts/config --file ${OUT_DIR}/.config \
+             -e CONFIG_LTO_GCC
+           fi
+		   make -kj$(nproc --all) O=out \
 	       ARCH=arm64 \
-	       CROSS_COMPILE_COMPAT=arm-eabi- \
-	       CROSS_COMPILE=aarch64-elf- \
-	       AR=llvm-ar \
-	       NM=llvm-nm \
-	       OBJCOPY=llvm-objcopy \
-	       OBJDUMP=llvm-objdump \
-	       STRIP=llvm-strip \
-	       OBJSIZE=llvm-size \
+	       CC=aarch64-elf-gcc \
+			LD="${KERNEL_DIR}/gcc64/bin/aarch64-elf-ld.lld" \
+			AR=llvm-ar \
+			NM=llvm-nm \
+			OBJCOPY=llvm-objcopy \
+			OBJDUMP=llvm-objdump \
+			OBJCOPY=llvm-objcopy \
+			OBJSIZE=llvm-size \
+			STRIP=llvm-strip \
+			CROSS_COMPILE=aarch64-elf- \
+			CROSS_COMPILE_COMPAT=arm-eabi- \
+			CC_COMPAT=arm-eabi-gcc \
 	       V=$VERBOSE 2>&1 | tee error.log
         elif [ -d ${KERNEL_DIR}/clangB ];
            then
-           make O=out CC=clang ARCH=arm64 ${DEFCONFIG}
+           make O=out CC=clang ARCH=arm64 vendor/kona-perf_defconfig vendor/xiaomi/sm8250-common.config ${DEFCONFIG}
 		   if [ "$METHOD" = "lto" ]; then
 		     scripts/config --file ${OUT_DIR}/.config \
              -e LTO_CLANG \
