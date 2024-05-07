@@ -79,7 +79,7 @@ FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 FINAL_ZIP_AOSPA=${ZIPNAME}-${VERSION}-AOSPA-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=zyc
+COMPILER=aosp
 
 # Clone ToolChain
 function cloneTC() {
@@ -119,7 +119,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo "××××××××××××××××××××××××××××"
 			else
-			export CLANG_VERSION="clang-r510928"
+			export CLANG_VERSION="clang-r522817"
 			echo "* It's not cloned, cloning it..."
         		mkdir clangB
         		cd clangB || exit
