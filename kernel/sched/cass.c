@@ -38,7 +38,7 @@ struct cass_cpu_cand {
 };
 
 static __always_inline
-void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu, bool sync)
+void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu)
 {
 	struct rq *rq = cpu_rq(c->cpu);
 	struct cfs_rq *cfs_rq = &rq->cfs;
@@ -50,17 +50,9 @@ void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu, bool sync)
 		est = READ_ONCE(cfs_rq->avg.util_est.enqueued);
 		if (est > c->util) {
 			/* Don't deduct @current's util from estimated util */
-			sync = false;
 			c->util = est;
 		}
 	}
-
-	/*
-	 * Deduct @current's util from this CPU if this is a sync wake, unless
-	 * @current is an RT task; RT tasks don't have per-entity load tracking.
-	 */
-	if (sync && c->cpu == this_cpu && !rt_task(current))
-		c->util -= min(c->util, task_util(current));
 
 	/* Get the utilization of everything other than CFS tasks */
 	c->hard_util = cpu_util_rt(rq) + cpu_util_dl(rq) + cpu_util_irq(rq);
@@ -81,7 +73,7 @@ void cass_cpu_util(struct cass_cpu_cand *c, int this_cpu, bool sync)
 static __always_inline
 bool cass_cpu_better(const struct cass_cpu_cand *a,
 		     const struct cass_cpu_cand *b,
-		     int this_cpu, int prev_cpu, bool sync)
+		     int this_cpu, int prev_cpu)
 {
 #define cass_cmp(a, b) ({ res = (a) - (b); })
 #define cass_eq(a, b) ({ res = (a) == (b); })
@@ -103,10 +95,6 @@ bool cass_cpu_better(const struct cass_cpu_cand *a,
 
 	/* Prefer the CPU that is idle (only relevant for uclamped tasks) */
 	if (cass_cmp(!!a->exit_lat, !!b->exit_lat))
-		goto done;
-
-	/* Prefer the current CPU for sync wakes */
-	if (sync && (cass_eq(a->cpu, this_cpu) || !cass_cmp(b->cpu, this_cpu)))
 		goto done;
 
 	/* Prefer the CPU with higher capacity */
@@ -132,7 +120,7 @@ done:
 	return res > 0;
 }
 
-static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt)
+static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool rt)
 {
 	/* Initialize @best such that @best always has a valid CPU at the end */
 	struct cass_cpu_cand cands[2], *best = cands;
@@ -176,12 +164,9 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 			continue;
 
 		/*
-		 * Check if this CPU is idle or only has SCHED_IDLE tasks. For
-		 * sync wakes, treat the current CPU as idle if @current is the
-		 * only running task.
+		 * Check if this CPU is idle or only has SCHED_IDLE tasks.
 		 */
-		if ((sync && cpu == this_cpu && rq->nr_running == 1) ||
-		    available_idle_cpu(cpu) || sched_idle_cpu(cpu)) {
+		if (available_idle_cpu(cpu) || sched_idle_cpu(cpu)) {
 			/*
 			 * A non-idle candidate may be better when @p is uclamp
 			 * boosted. Otherwise, always prefer idle candidates.
@@ -211,7 +196,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 
 		/* Get this CPU's capacity and utilization */
 		curr->cpu = cpu;
-		cass_cpu_util(curr, this_cpu, sync);
+		cass_cpu_util(curr, this_cpu);
 
 		/*
 		 * Add @p's utilization to this CPU if it's not @p's CPU, to
@@ -256,7 +241,7 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 		 * cidx still needs to be changed to the other candidate slot.
 		 */
 		if (best == curr ||
-		    cass_cpu_better(curr, best, this_cpu, prev_cpu, sync)) {
+		    cass_cpu_better(curr, best, this_cpu, prev_cpu)) {
 			best = curr;
 			cidx ^= 1;
 		}
@@ -268,8 +253,6 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool sync, bool rt
 static int cass_select_task_rq(struct task_struct *p, int prev_cpu,
 			       int sd_flag, int wake_flags, bool rt)
 {
-	bool sync;
-
 	/* Don't balance on exec since we don't know what @p will look like */
 	if (sd_flag & SD_BALANCE_EXEC)
 		return prev_cpu;
@@ -286,8 +269,10 @@ static int cass_select_task_rq(struct task_struct *p, int prev_cpu,
 	if (!rt && !(sd_flag & SD_BALANCE_FORK))
 		sync_entity_load_avg(&p->se);
 
-	sync = (wake_flags & WF_SYNC) && !(current->flags & PF_EXITING);
-	return cass_best_cpu(p, prev_cpu, sync, rt);
+	if((wake_flags & WF_SYNC) && !(current->flags & PF_EXITING))
+		return raw_smp_processor_id();
+
+	return cass_best_cpu(p, prev_cpu, rt);
 }
 
 static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
