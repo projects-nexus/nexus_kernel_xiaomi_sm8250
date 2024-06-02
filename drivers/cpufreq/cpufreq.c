@@ -2261,13 +2261,10 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	* because new_policy is a copy of policy with one field updated.
 	*/
 	if (new_policy->min > new_policy->max) {
-		if (kp_active_mode() == 1) {
+		if (kp_active_mode() == 1)
 			new_policy->min = new_policy->max;
-			pr_info("kprofiles: battery");
-		} else {
-			pr_info("kprofiles: no");
+		else
 			return -EINVAL;
-		}
 	}
 
 	/* verify the cpu speed can be set within this limit */
