@@ -76,7 +76,7 @@ FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 FINAL_ZIP_AOSPA=${ZIPNAME}-${VERSION}-AOSPA-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=zyc
+COMPILER=aosp
 
 # Clone ToolChain
 function cloneTC() {
