@@ -76,7 +76,7 @@ FINAL_ZIP=${ZIPNAME}-${VERSION}-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 FINAL_ZIP_AOSPA=${ZIPNAME}-${VERSION}-AOSPA-${DEVICE}-BETA2-KERNEL-AOSP-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=aosp
+COMPILER=yuki
 
 # Clone ToolChain
 function cloneTC() {
@@ -147,7 +147,10 @@ function cloneTC() {
 			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
 			PATH="${KERNEL_DIR}/clangB/bin:${KERNEL_DIR}/gcc/bin:${KERNEL_DIR}/gcc32/bin:${PATH}"
 	        ;;
-
+		yuki)
+			git clone --depth=1 https://bitbucket.org/thexperienceproject/yuki-clang.git -b 19.0.0git clang
+			PATH="${KERNEL_DIR}/clang/bin:$PATH"
+			;;
 		*)
 			echo "Compiler not defined"
 			;;
