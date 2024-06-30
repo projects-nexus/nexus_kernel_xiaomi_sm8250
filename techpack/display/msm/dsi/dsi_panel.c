@@ -524,8 +524,9 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 {
 	int rc = 0;
 
-	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
+	if (gpio_is_valid(panel->reset_config.disp_en_gpio)) {
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
+	}
 
 	if (panel->mi_cfg.panel_id == 0x4C334100420200) {
 		mdelay(2);
@@ -533,56 +534,59 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 
 	if (panel->mi_cfg.is_tddi_flag) {
 		if (!panel->mi_cfg.tddi_doubleclick_flag || panel->mi_cfg.panel_dead_flag) {
-			if (gpio_is_valid(panel->reset_config.reset_gpio))
+			if (gpio_is_valid(panel->reset_config.reset_gpio)) {
 				gpio_set_value(panel->reset_config.reset_gpio, 0);
+			}
 
-				if (gpio_is_valid(panel->reset_config.tp_reset_gpio) && !panel->reset_gpio_always_on
-					&& panel->mi_cfg.panel_id == 0x4C38314100420400){
-					rc=gpio_direction_output(panel->reset_config.tp_reset_gpio, 0);
-					if (rc){
-							DSI_ERR("unable to set direction for gpio [%d]\n",
-							panel->reset_config.tp_reset_gpio);
-					}
+			if (gpio_is_valid(panel->reset_config.tp_reset_gpio) &&
+			    !panel->reset_gpio_always_on &&
+			    panel->mi_cfg.panel_id == 0x4C38314100420400) {
+				rc = gpio_direction_output(panel->reset_config.tp_reset_gpio, 0);
+				if (rc) {
+					DSI_ERR("unable to set direction for gpio [%d]\n",
+					        panel->reset_config.tp_reset_gpio);
 				}
+			}
 		}
 	} else {
-		if (gpio_is_valid(panel->reset_config.reset_gpio) &&
-						!panel->reset_gpio_always_on)
+		if (gpio_is_valid(panel->reset_config.reset_gpio) && !panel->reset_gpio_always_on) {
 			gpio_set_value(panel->reset_config.reset_gpio, 0);
+		}
 	}
 
 	if (panel->reset_config.reset_powerdown_delay) {
 		usleep_range(panel->reset_config.reset_powerdown_delay * 1000,
-			(panel->reset_config.reset_powerdown_delay * 1000) + 100);
+		             (panel->reset_config.reset_powerdown_delay * 1000) + 100);
 		DSI_WARN("reset_powerdown_delay = %d\n", panel->reset_config.reset_powerdown_delay);
 	}
 
-	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
+	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio)) {
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
+	}
 
 	if (gpio_is_valid(panel->panel_test_gpio)) {
 		rc = gpio_direction_input(panel->panel_test_gpio);
-		if (rc)
-			DSI_WARN("set dir for panel test gpio failed rc=%d\n",
-				 rc);
+		if (rc) {
+			DSI_WARN("set dir for panel test gpio failed rc=%d\n", rc);
+		}
 	}
 
 	rc = dsi_panel_set_pinctrl_state(panel, false);
 	if (rc) {
-		DSI_ERR("[%s] failed set pinctrl state, rc=%d\n", panel->name,
-		       rc);
+		DSI_ERR("[%s] failed set pinctrl state, rc=%d\n", panel->name, rc);
 	}
 
-	if (!panel->mi_cfg.is_tddi_flag
-			|| (!panel->mi_cfg.tddi_doubleclick_flag || panel->mi_cfg.panel_dead_flag)) {
+	if (!panel->mi_cfg.is_tddi_flag ||
+	    (!panel->mi_cfg.tddi_doubleclick_flag || panel->mi_cfg.panel_dead_flag)) {
 		rc = dsi_pwr_enable_regulator(&panel->power_info, false);
-		if (rc)
-			DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
-					panel->name, rc);
+		if (rc) {
+			DSI_ERR("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
+		}
 	}
 
 	return rc;
 }
+
 int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 				enum dsi_cmd_set_type type)
 {
