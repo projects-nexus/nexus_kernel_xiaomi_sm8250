@@ -77,7 +77,7 @@ TM=$(date +"%F%S")
 FINAL_ZIP=Nexus-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=zyc
+COMPILER=nex14
 
 # Clone ToolChain
 function cloneTC() {
