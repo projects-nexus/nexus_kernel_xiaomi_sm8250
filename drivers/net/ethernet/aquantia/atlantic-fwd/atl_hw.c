@@ -183,8 +183,8 @@ int atl_hw_reset(struct atl_hw *hw)
 		if (!reg || reg == 0xdead)
 			continue;
 
-		/* if (reg != 0xf1a7) */
-			break;
+		/* if (reg != 0xf1a7) 
+			break; */
 
 		/* if (host_load_done) */
 		/* 	continue; */
