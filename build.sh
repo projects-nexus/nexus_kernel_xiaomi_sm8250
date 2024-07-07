@@ -77,7 +77,7 @@ TM=$(date +"%F%S")
 FINAL_ZIP=Nexus-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=nex14
+COMPILER=aosp
 
 # Clone ToolChain
 function cloneTC() {
@@ -113,12 +113,12 @@ function cloneTC() {
 	  		echo "××××××××××××××××××××××××××××"
 			else
 			export CLANG_VERSION="clang-r522817"
-			echo "* It's not cloned, cloning it..."
-        		mkdir clangB
-        		cd clangB || exit
-			wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz
-        		tar -xf ${CLANG_VERSION}.tgz
-        		cd .. || exit
+            mkdir -p clangB
+            (
+              cd clangB || exit
+              wget -q -O - https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/${CLANG_VERSION}.tgz | tar -xzf -
+            )
+
 			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git --depth=1 gcc
 			git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git  --depth=1 gcc32
 			fi
