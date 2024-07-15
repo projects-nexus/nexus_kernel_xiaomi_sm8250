@@ -59,3 +59,41 @@ ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-
 ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
 
 # Keep a new line here!! Because someone may append config
+ifeq ($(shell test -e $(srctree)/fs/susfs.c; echo $$?),0)
+ifdef KSU_SUSFS
+ccflags-y += -DKSU_SUSFS
+endif
+ifdef KSU_SUSFS_SUS_PATH
+ccflags-y += -DKSU_SUSFS_SUS_PATH
+endif
+ifdef KSU_SUSFS_SUS_MOUNT
+ccflags-y += -DKSU_SUSFS_SUS_MOUNT
+endif
+ifdef KSU_SUSFS_SUS_MOUNT_MNT_ID_REORDER
+ccflags-y += -DKSU_SUSFS_SUS_MOUNT_MNT_ID_REORDER
+endif
+ifdef KSU_SUSFS_SUS_KSTAT
+ccflags-y += -DKSU_SUSFS_SUS_KSTAT
+endif
+ifdef KSU_SUSFS_SUS_MAPS
+ccflags-y += -DKSU_SUSFS_SUS_MAPS
+endif
+ifdef KSU_SUSFS_SUS_PROC_FD_LINK
+ccflags-y += -DKSU_SUSFS_SUS_PROC_FD_LINK
+endif
+ifdef KSU_SUSFS_SUS_MEMFD
+ccflags-y += -DKSU_SUSFS_SUS_MEMFD
+endif
+ifdef KSU_SUSFS_TRY_UMOUNT
+ccflags-y += -DKSU_SUSFS_TRY_UMOUNT
+endif
+ifdef KSU_SUSFS_SPOOF_UNAME
+ccflags-y += -DKSU_SUSFS_SPOOF_UNAME
+endif
+ifdef KSU_SUSFS_ENABLE_LOG
+ccflags-y += -DKSU_SUSFS_ENABLE_LOG
+endif
+else
+$(info -- You have not integrate susfs in your kernel.)
+$(info -- Read: https://gitlab.com/simonpunk/susfs4ksu)
+endif
