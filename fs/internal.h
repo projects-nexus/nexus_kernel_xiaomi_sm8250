@@ -81,6 +81,10 @@ extern void __init mnt_init(void);
 extern int __mnt_want_write_file(struct file *);
 extern void __mnt_drop_write_file(struct file *);
 
+#ifdef CONFIG_KSU_SUSFS
+int path_umount(struct path *path, int flags);
+#endif
+
 /*
  * fs_struct.c
  */
