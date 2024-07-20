@@ -112,7 +112,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo "××××××××××××××××××××××××××××"
 			else
-			export CLANG_VERSION="clang-r522817"
+			export CLANG_VERSION="clang-r530567"
             mkdir -p clangB
             (
               cd clangB || exit
