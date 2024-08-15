@@ -94,7 +94,7 @@ config KSU_SUSFS_SPOOF_UNAME
 config KSU_SUSFS_ENABLE_LOG
     bool "Enable logging susfs log to kernel"
     depends on KSU_SUSFS
-    default y
+    default n
     help
       Allow logging susfs log to kernel, uncheck it to completely disable all susfs log
 endmenu
