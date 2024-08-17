@@ -77,7 +77,7 @@ TM=$(date +"%F%S")
 FINAL_ZIP=Nexus-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=aosp
+COMPILER=yuki
 
 # Clone ToolChain
 function cloneTC() {
@@ -149,7 +149,7 @@ function cloneTC() {
             PATH="${KERNEL_DIR}"/gcc32/bin:"${KERNEL_DIR}"/gcc64/bin:/usr/bin/:${PATH}
             ;;
 		yuki)
-			git clone --depth=1 https://bitbucket.org/thexperienceproject/yuki-clang.git -b 19.0.0git clang
+			git clone --depth=1 https://bitbucket.org/thexperienceproject/yuki-clang.git -b 20.0.0git clang
 			PATH="${KERNEL_DIR}/clang/bin:$PATH"
 			;;
 		*)
