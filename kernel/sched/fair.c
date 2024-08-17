@@ -3986,18 +3986,21 @@ static inline bool task_fits_capacity(struct task_struct *p,
 	 * Derive upmigration/downmigrate margin wrt the src/dest
 	 * CPU.
 	 */
-	if (capacity_orig_of(task_cpu(p)) > capacity_orig_of(cpu))
-		margin = schedtune_task_boost(p) > 0 &&
+	if (capacity_orig_of(task_cpu(p)) > capacity_orig_of(cpu)) {
+	    int task_boost = schedtune_task_boost(p);
+		margin = task_boost > 0 &&
 			  !schedtune_prefer_high_cap(p) &&
 			   p->prio <= DEFAULT_PRIO ?
 			sched_capacity_margin_down_boosted[task_cpu(p)] :
 			sched_capacity_margin_down[task_cpu(p)];
-	else
-		margin = schedtune_task_boost(p) > 0 &&
+	} else {
+	    int task_boost = schedtune_task_boost(p);
+		margin = task_boost > 0 &&
 			  !schedtune_prefer_high_cap(p) &&
 			   p->prio <= DEFAULT_PRIO ?
 			sched_capacity_margin_up_boosted[task_cpu(p)] :
 			sched_capacity_margin_up[task_cpu(p)];
+	}
 
 	return capacity * 1024 > uclamp_task(p) * margin;
 }
