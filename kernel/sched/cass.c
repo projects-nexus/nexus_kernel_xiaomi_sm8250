@@ -142,14 +142,14 @@ static int cass_best_cpu(struct task_struct *p, int prev_cpu, bool rt)
 	 * otherwise, if only one CPU is allowed and it is skipped before
 	 * @curr->cpu is set, then @best->cpu will be garbage.
 	 */
-	for_each_cpu_and(cpu, p->cpus_ptr, cpu_active_mask) {
+	for_each_cpu_and(cpu, &p->cpus_allowed, cpu_active_mask) {
 		/* Use the free candidate slot for @curr */
 		struct cass_cpu_cand *curr = &cands[cidx];
 		struct cpuidle_state *idle_state;
 		struct rq *rq = cpu_rq(cpu);
 
 		/* Get the original, maximum _possible_ capacity of this CPU */
-		curr->cap_max = arch_scale_cpu_capacity(cpu);
+		curr->cap_max = arch_scale_cpu_capacity(NULL, cpu);
 
 		/* Prefer the CPU that more closely meets the uclamp minimum */
 		if (curr->cap_max < uc_min && curr->cap_max < best->cap_max)
@@ -254,8 +254,8 @@ static int cass_select_task_rq(struct task_struct *p, int prev_cpu,
 	 * first valid CPU since it's possible for certain types of tasks to run
 	 * on inactive CPUs.
 	 */
-	if (unlikely(!cpumask_intersects(p->cpus_ptr, cpu_active_mask)))
-		return cpumask_first(p->cpus_ptr);
+	if (unlikely(!cpumask_intersects(&p->cpus_allowed, cpu_active_mask)))
+		return cpumask_first(&p->cpus_allowed);
 
 	/* cass_best_cpu() needs the CFS task's utilization, so sync it up */
 	if (!rt && !(sd_flag & SD_BALANCE_FORK))
@@ -265,13 +265,6 @@ static int cass_select_task_rq(struct task_struct *p, int prev_cpu,
 		return raw_smp_processor_id();
 
 	return cass_best_cpu(p, prev_cpu, rt);
-}
-
-static int cass_select_task_rq_fair(struct task_struct *p, int prev_cpu,
-                                    int sd_flag, int wake_flags,
-                                    int sibling_count_hint)
-{
-	return cass_select_task_rq(p, prev_cpu, sd_flag, wake_flags, false);
 }
 
 int cass_select_task_rq_rt(struct task_struct *p, int prev_cpu, int sd_flag,
