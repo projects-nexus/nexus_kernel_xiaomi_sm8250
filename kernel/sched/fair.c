@@ -4090,7 +4090,7 @@ static inline bool cpu_is_in_target_set(struct task_struct *p, int cpu)
 #ifdef CONFIG_SCHED_TUNE
 	if (schedtune_prefer_high_cap(p)) {
 #else
-	if (uclamp_boosted(p) && p->prio <= DEFAULT_PRIO) {
+	if (uclamp_boosted(p)) {
 #endif
 		first_cpu = rd->mid_cap_orig_cpu != -1 ? rd->mid_cap_orig_cpu :
 			    rd->max_cap_orig_cpu;
@@ -7237,7 +7237,7 @@ static int get_start_cpu(struct task_struct *p, bool sync_boost)
 	bool boosted = (schedtune_prefer_high_cap(p) &&
 				    p->prio <= DEFAULT_PRIO) ||
 #else
-	bool boosted = (uclamp_boosted(p) && p->prio <= DEFAULT_PRIO ) ||
+	bool boosted = uclamp_boosted(p) ||
 #endif
 			task_boost_policy(p) == SCHED_BOOST_ON_BIG ||
 			task_boost == TASK_BOOST_ON_MID;
