@@ -77,7 +77,7 @@ TM=$(date +"%F%S")
 FINAL_ZIP=Nexus-${VERSION}-${DEVICE}-KERNEL-${TM}.zip
 
 # Specify compiler [ proton, nexus, aosp ]
-COMPILER=nex14
+COMPILER=aosp
 
 # Clone ToolChain
 function cloneTC() {
@@ -112,7 +112,7 @@ function cloneTC() {
 	  		echo "  Already Cloned Aosp Clang"
 	  		echo ""
 			else
-			export CLANG_VERSION="clang-r530567"
+			export CLANG_VERSION="clang-r536225"
             mkdir -p clangB
             (
               cd clangB || exit
