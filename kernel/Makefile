@@ -128,7 +128,7 @@ obj-$(CONFIG_RSEQ) += rseq.o
 $(obj)/configs.o: $(obj)/config_data.h
 
 targets += config_data.gz
-ifeq ($(CONFIG_BOARD_ALIOTH),y)
+ifeq ($(CONFIG_MACH_XIAOMI_ALIOTH),y)
 $(obj)/config_data.gz: arch/arm64/configs/alioth_stock-defconfig FORCE
 else ifeq ($(CONFIG_BOARD_APOLLO),y)
 $(obj)/config_data.gz: arch/arm64/configs/apollo_stock-defconfig FORCE
