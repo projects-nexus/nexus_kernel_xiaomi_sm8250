@@ -1024,7 +1024,7 @@ static void check_i2c_bus_bridge(struct check *c, struct dt_info *dti, struct no
 	} else if (strprefixeq(node->name, node->basenamelen, "i2c")) {
 		struct node *child;
 		for_each_child(node, child) {
-			if (strprefixeq(child->name, node->basenamelen, "i2c-bus"))
+			if (strprefixeq(child->name, child->basenamelen, "i2c-bus"))
 				return;
 		}
 		node->bus = &i2c_bus;
@@ -1217,9 +1217,7 @@ WARNING(avoid_default_addr_size, check_avoid_default_addr_size, NULL,
 static void check_avoid_unnecessary_addr_size(struct check *c, struct dt_info *dti,
 					      struct node *node)
 {
-	struct property *prop;
 	struct node *child;
-	bool has_reg = false;
 
 	if (!node->parent || node->addr_cells < 0 || node->size_cells < 0)
 		return;
@@ -1228,13 +1226,18 @@ static void check_avoid_unnecessary_addr_size(struct check *c, struct dt_info *d
 		return;
 
 	for_each_child(node, child) {
-		prop = get_property(child, "reg");
-		if (prop)
-			has_reg = true;
+		/*
+		 * Even if the child devices' address space is not mapped into
+		 * the parent bus (no 'ranges' property on node), children can
+		 * still have registers on a local bus, or map local addresses
+		 * to another subordinate address space. The properties on the
+		 * child nodes then make #address-cells/#size-cells necessary:
+		 */
+		if (get_property(child, "reg") || get_property(child, "ranges"))
+			return;
 	}
 
-	if (!has_reg)
-		FAIL(c, dti, node, "unnecessary #address-cells/#size-cells without \"ranges\", \"dma-ranges\" or child \"reg\" property");
+	FAIL(c, dti, node, "unnecessary #address-cells/#size-cells without \"ranges\", \"dma-ranges\" or child \"reg\" or \"ranges\" property");
 }
 WARNING(avoid_unnecessary_addr_size, check_avoid_unnecessary_addr_size, NULL, &avoid_default_addr_size);
 
@@ -1673,6 +1676,10 @@ static void check_interrupt_map(struct check *c,
 		cellprop = get_property(provider_node, "#address-cells");
 		if (cellprop)
 			parent_cellsize += propval_cell(cellprop);
+		else
+			FAIL_PROP(c, dti, node, irq_map_prop,
+				"Missing property '#address-cells' in node %s, using 0 as fallback",
+				provider_node->fullpath);
 
 		cell += 1 + parent_cellsize;
 		if (cell > map_cells)
@@ -1826,10 +1833,14 @@ static void check_graph_port(struct check *c, struct dt_info *dti,
 	if (node->bus != &graph_port_bus)
 		return;
 
+	check_graph_reg(c, dti, node);
+
+	/* skip checks below for overlays */
+	if (dti->dtsflags & DTSF_PLUGIN)
+		return;
+
 	if (!strprefixeq(node->name, node->basenamelen, "port"))
 		FAIL(c, dti, node, "graph port node name should be 'port'");
-
-	check_graph_reg(c, dti, node);
 }
 WARNING(graph_port, check_graph_port, NULL, &graph_nodes);
 
@@ -1864,10 +1875,14 @@ static void check_graph_endpoint(struct check *c, struct dt_info *dti,
 	if (!node->parent || node->parent->bus != &graph_port_bus)
 		return;
 
+	check_graph_reg(c, dti, node);
+
+	/* skip checks below for overlays */
+	if (dti->dtsflags & DTSF_PLUGIN)
+		return;
+
 	if (!strprefixeq(node->name, node->basenamelen, "endpoint"))
 		FAIL(c, dti, node, "graph endpoint node name should be 'endpoint'");
-
-	check_graph_reg(c, dti, node);
 
 	remote_node = get_remote_endpoint(c, dti, node);
 	if (!remote_node)

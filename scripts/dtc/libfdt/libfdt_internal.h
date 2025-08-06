@@ -6,6 +6,7 @@
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
 #include <fdt.h>
+#include <string.h>
 
 #define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
 #define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))
@@ -20,7 +21,15 @@ int32_t fdt_ro_probe_(const void *fdt);
 
 int fdt_check_node_offset_(const void *fdt, int offset);
 int fdt_check_prop_offset_(const void *fdt, int offset);
-const char *fdt_find_string_(const char *strtab, int tabsize, const char *s);
+
+const char *fdt_find_string_len_(const char *strtab, int tabsize, const char *s,
+				 int s_len);
+static inline const char *fdt_find_string_(const char *strtab, int tabsize,
+					   const char *s)
+{
+	return fdt_find_string_len_(strtab, tabsize, s, strlen(s));
+}
+
 int fdt_node_end_offset_(void *fdt, int nodeoffset);
 
 static inline const void *fdt_offset_ptr_(const void *fdt, int offset)
@@ -47,8 +56,8 @@ static inline struct fdt_reserve_entry *fdt_mem_rsv_w_(void *fdt, int n)
 }
 
 /*
- * Internal helpers to access tructural elements of the device tree
- * blob (rather than for exaple reading integers from within property
+ * Internal helpers to access structural elements of the device tree
+ * blob (rather than for example reading integers from within property
  * values).  We assume that we are either given a naturally aligned
  * address for the platform or if we are not, we are on a platform
  * where unaligned memory reads will be handled in a graceful manner.
