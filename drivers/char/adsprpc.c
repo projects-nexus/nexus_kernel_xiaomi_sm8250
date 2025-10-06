@@ -780,6 +780,10 @@ static int fastrpc_mmap_find(struct fastrpc_file *fl, int fd,
 	if ((va + len) < va)
 		return -EOVERFLOW;
 
+	if ((mflags == ADSP_MMAP_HEAP_ADDR) ||
+		(mflags == ADSP_MMAP_REMOTE_HEAP_ADDR))
+		return -EFAULT;
+
 	hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
 		if (va >= map->va &&
 			va + len <= map->va + map->len &&
@@ -1026,6 +1030,12 @@ static int fastrpc_mmap_create(struct fastrpc_file *fl, int fd,
 		map->size = len;
 		map->va = (uintptr_t)region_vaddr;
 	} else if (mflags == FASTRPC_DMAHANDLE_NOMAP) {
+		if (map->attr & FASTRPC_ATTR_KEEP_MAP) {
+			pr_err("adsprpc: %s: Invalid attribute 0x%x for fd %d\n",
+				__func__, map->attr, fd);
+			err = -EINVAL;
+			goto bail;
+		}
 		VERIFY(err, !IS_ERR_OR_NULL(map->buf = dma_buf_get(fd)));
 		if (err)
 			goto bail;

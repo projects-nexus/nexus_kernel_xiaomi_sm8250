@@ -107,7 +107,7 @@ long get_nr_dirty_inodes(void)
  */
 #ifdef CONFIG_SYSCTL
 int proc_nr_inodes(struct ctl_table *table, int write,
-		   void __user *buffer, size_t *lenp, loff_t *ppos)
+		   void *buffer, size_t *lenp, loff_t *ppos)
 {
 	inodes_stat.nr_inodes = get_nr_inodes();
 	inodes_stat.nr_unused = get_nr_inodes_unused();
@@ -203,12 +203,28 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 }
 EXPORT_SYMBOL(inode_init_always);
 
+void free_inode_nonrcu(struct inode *inode)
+{
+	kmem_cache_free(inode_cachep, inode);
+}
+EXPORT_SYMBOL(free_inode_nonrcu);
+
+static void i_callback(struct rcu_head *head)
+{
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	if (inode->free_inode)
+		inode->free_inode(inode);
+	else
+		free_inode_nonrcu(inode);
+}
+
 static struct inode *alloc_inode(struct super_block *sb)
 {
+	const struct super_operations *ops = sb->s_op;
 	struct inode *inode;
 
-	if (sb->s_op->alloc_inode)
-		inode = sb->s_op->alloc_inode(sb);
+	if (ops->alloc_inode)
+		inode = ops->alloc_inode(sb);
 	else
 		inode = kmem_cache_alloc(inode_cachep, GFP_KERNEL);
 
@@ -216,21 +232,18 @@ static struct inode *alloc_inode(struct super_block *sb)
 		return NULL;
 
 	if (unlikely(inode_init_always(sb, inode))) {
-		if (inode->i_sb->s_op->destroy_inode)
-			inode->i_sb->s_op->destroy_inode(inode);
-		else
-			kmem_cache_free(inode_cachep, inode);
+		if (ops->destroy_inode) {
+			ops->destroy_inode(inode);
+			if (!ops->free_inode)
+				return NULL;
+		}
+		inode->free_inode = ops->free_inode;
+		i_callback(&inode->i_rcu);
 		return NULL;
 	}
 
 	return inode;
 }
-
-void free_inode_nonrcu(struct inode *inode)
-{
-	kmem_cache_free(inode_cachep, inode);
-}
-EXPORT_SYMBOL(free_inode_nonrcu);
 
 void __destroy_inode(struct inode *inode)
 {
@@ -254,20 +267,19 @@ void __destroy_inode(struct inode *inode)
 }
 EXPORT_SYMBOL(__destroy_inode);
 
-static void i_callback(struct rcu_head *head)
-{
-	struct inode *inode = container_of(head, struct inode, i_rcu);
-	kmem_cache_free(inode_cachep, inode);
-}
-
 static void destroy_inode(struct inode *inode)
 {
+	const struct super_operations *ops = inode->i_sb->s_op;
+
 	BUG_ON(!list_empty(&inode->i_lru));
 	__destroy_inode(inode);
-	if (inode->i_sb->s_op->destroy_inode)
-		inode->i_sb->s_op->destroy_inode(inode);
-	else
-		call_rcu(&inode->i_rcu, i_callback);
+	if (ops->destroy_inode) {
+		ops->destroy_inode(inode);
+		if (!ops->free_inode)
+			return;
+	}
+	inode->free_inode = ops->free_inode;
+	call_rcu(&inode->i_rcu, i_callback);
 }
 
 /**
@@ -1587,25 +1599,31 @@ retry:
 }
 EXPORT_SYMBOL(iput);
 
+#ifdef CONFIG_BLOCK
 /**
  *	bmap	- find a block number in a file
- *	@inode: inode of file
- *	@block: block to find
+ *	@inode:  inode owning the block number being requested
+ *	@block: pointer containing the block to find
  *
- *	Returns the block number on the device holding the inode that
- *	is the disk block number for the block of the file requested.
- *	That is, asked for block 4 of inode 1 the function will return the
- *	disk block relative to the disk start that holds that block of the
- *	file.
+ *	Replaces the value in *block with the block number on the device holding
+ *	corresponding to the requested block number in the file.
+ *	That is, asked for block 4 of inode 1 the function will replace the
+ *	4 in *block, with disk block relative to the disk start that holds that
+ *	block of the file.
+ *
+ *	Returns -EINVAL in case of error, 0 otherwise. If mapping falls into a
+ *	hole, returns 0 and *block is also set to 0.
  */
-sector_t bmap(struct inode *inode, sector_t block)
+int bmap(struct inode *inode, sector_t *block)
 {
-	sector_t res = 0;
-	if (inode->i_mapping->a_ops->bmap)
-		res = inode->i_mapping->a_ops->bmap(inode->i_mapping, block);
-	return res;
+	if (!inode->i_mapping->a_ops->bmap)
+		return -EINVAL;
+
+	*block = inode->i_mapping->a_ops->bmap(inode->i_mapping, *block);
+	return 0;
 }
 EXPORT_SYMBOL(bmap);
+#endif
 
 /*
  * With relative atime, only update atime if the previous atime is
@@ -1897,6 +1915,26 @@ int file_update_time(struct file *file)
 	return ret;
 }
 EXPORT_SYMBOL(file_update_time);
+
+/* Caller must hold the file's inode lock */
+int file_modified(struct file *file)
+{
+	int err;
+
+	/*
+	 * Clear the security bits if the process is not being run by root.
+	 * This keeps people from modifying setuid and setgid binaries.
+	 */
+	err = file_remove_privs(file);
+	if (err)
+		return err;
+
+	if (unlikely(file->f_mode & FMODE_NOCMTIME))
+		return 0;
+
+	return file_update_time(file);
+}
+EXPORT_SYMBOL(file_modified);
 
 int inode_needs_sync(struct inode *inode)
 {
